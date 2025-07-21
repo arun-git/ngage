@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../models/consent.dart';
 import '../models/privacy_request.dart';
 import '../models/enums.dart';
 import '../repositories/privacy_request_repository.dart';
@@ -367,7 +368,7 @@ class PrivacyService {
     
     // Deduct points for expired consents that haven't been renewed
     final expiredConsents = consents.where((c) => 
-      c.expiresAt != null && 
+      c.expiresAt != null &&
       DateTime.now().isAfter(c.expiresAt!)
     ).length;
     score -= (expiredConsents * 10); // -10 points per expired consent

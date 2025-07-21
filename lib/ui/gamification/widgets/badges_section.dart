@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ngage/models/enums.dart';
 import '../../../models/badge.dart';
 import '../../../providers/badge_providers.dart';
 

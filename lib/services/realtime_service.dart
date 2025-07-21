@@ -270,4 +270,5 @@ class RealtimeService {
 enum ConnectionStatus {
   connected,
   disconnected,
+  reconnecting,
 }

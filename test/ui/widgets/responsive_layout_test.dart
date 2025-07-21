@@ -85,15 +85,15 @@ void main() {
 
   group('ResponsiveScaffold Tests', () {
     final destinations = [
-      const NavigationDestination(
+      const ResponsiveNavigationDestination(
         icon: Icon(Icons.home),
         label: 'Home',
       ),
-      const NavigationDestination(
+      const ResponsiveNavigationDestination(
         icon: Icon(Icons.search),
         label: 'Search',
       ),
-      const NavigationDestination(
+      const ResponsiveNavigationDestination(
         icon: Icon(Icons.person),
         label: 'Profile',
       ),

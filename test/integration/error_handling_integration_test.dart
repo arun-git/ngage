@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:ngage/models/enums.dart';
 
 import 'package:ngage/utils/error_handler.dart';
 import 'package:ngage/utils/error_types.dart';

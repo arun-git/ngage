@@ -502,3 +502,4 @@ class TeamDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}

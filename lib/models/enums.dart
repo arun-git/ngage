@@ -476,7 +476,10 @@ enum BadgeCategory {
   milestone('milestone'),
   special('special'),
   streak('streak'),
-  achievement('achievement');
+  achievement('achievement'),
+  consistency('consistency'),
+  creativity('creativity'),
+  leadership('leadership');
 
   const BadgeCategory(this.value);
   final String value;

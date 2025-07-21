@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/content_report.dart';
+import '../../../models/enums.dart';
 import '../../../providers/moderation_providers.dart';
 
 class PendingReportsList extends ConsumerWidget {

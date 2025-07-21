@@ -3,6 +3,7 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:ngage/models/enums.dart';
 
 import 'package:ngage/services/auth_service.dart';
 import 'package:ngage/services/enhanced_auth_service.dart';

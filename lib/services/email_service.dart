@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/event.dart';
 import '../models/integration.dart';
 import '../models/enums.dart';
+import '../models/leaderboard.dart';
 
 /// Service for handling email notifications
 /// Supports multiple email providers (SendGrid, Mailgun, SES, SMTP)

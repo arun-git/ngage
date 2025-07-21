@@ -9,6 +9,7 @@ import 'package:ngage/services/offline_service.dart';
 import 'package:ngage/models/models.dart';
 
 // Generate mocks
+import '../repositories/analytics_repository_test.mocks.dart';
 @GenerateMocks([
   FirebaseFirestore,
   CollectionReference,
@@ -341,7 +342,7 @@ void main() {
         when(mockFirestore.collection('posts')).thenReturn(mockCollection);
         when(mockCollection.doc(any)).thenReturn(MockDocumentReference());
         when(MockDocumentReference().set(any)).thenAnswer((_) async {
-          return null;
+          return;
         });
 
         // Act - Simulate connection restored

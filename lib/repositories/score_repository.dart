@@ -151,6 +151,7 @@ class ScoreRepository {
     
     final totalScore = scores.fold<double>(
       0.0,
+      // ignore: avoid_types_as_parameter_names
       (sum, score) => sum + score.totalScore,
     );
     

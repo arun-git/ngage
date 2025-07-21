@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/team.dart';
 import '../../providers/team_providers.dart';
 import '../../providers/group_providers.dart';
 import '../../models/group_member.dart';
@@ -220,7 +221,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                         items: groupMembers.map((member) {
                           return DropdownMenuItem(
                             value: member.memberId,
-                            child: Text('${member.memberId} (${member.role.displayName})'),
+                            child: Text('${member.memberId} (${member.role.name})'),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -268,7 +269,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                         
                         return CheckboxListTile(
                           title: Text(member.memberId),
-                          subtitle: Text(member.role.displayName),
+                          subtitle: Text(member.role.name),
                           value: isSelected,
                           onChanged: isTeamLead ? null : (value) {
                             setState(() {

@@ -24,19 +24,23 @@ final leaderboardServiceProvider = Provider<LeaderboardService>((ref) {
 // ===== LEADERBOARD PROVIDERS =====
 
 /// Provider for getting event leaderboard
-final eventLeaderboardProvider = FutureProvider.family<Leaderboard, String>((ref, eventId) async {
+final eventLeaderboardProvider =
+    FutureProvider.family<Leaderboard, String>((ref, eventId) async {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return await leaderboardService.calculateEventLeaderboard(eventId);
 });
 
 /// Provider for getting individual leaderboard
-final individualLeaderboardProvider = FutureProvider.family<IndividualLeaderboard, String>((ref, eventId) async {
+final individualLeaderboardProvider =
+    FutureProvider.family<IndividualLeaderboard, String>((ref, eventId) async {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return await leaderboardService.calculateIndividualLeaderboard(eventId);
 });
 
 /// Provider for getting filtered leaderboard
-final filteredLeaderboardProvider = FutureProvider.family<Leaderboard, LeaderboardRequest>((ref, request) async {
+final filteredLeaderboardProvider =
+    FutureProvider.family<Leaderboard, LeaderboardRequest>(
+        (ref, request) async {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return await leaderboardService.getFilteredLeaderboard(
     eventId: request.eventId,
@@ -48,25 +52,29 @@ final filteredLeaderboardProvider = FutureProvider.family<Leaderboard, Leaderboa
 });
 
 /// Stream provider for real-time event leaderboard
-final eventLeaderboardStreamProvider = StreamProvider.family<Leaderboard, String>((ref, eventId) {
+final eventLeaderboardStreamProvider =
+    StreamProvider.family<Leaderboard, String>((ref, eventId) {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return leaderboardService.streamEventLeaderboard(eventId);
 });
 
 /// Stream provider for real-time individual leaderboard
-final individualLeaderboardStreamProvider = StreamProvider.family<IndividualLeaderboard, String>((ref, eventId) {
+final individualLeaderboardStreamProvider =
+    StreamProvider.family<IndividualLeaderboard, String>((ref, eventId) {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return leaderboardService.streamIndividualLeaderboard(eventId);
 });
 
 /// Provider for getting leaderboard from repository
-final storedLeaderboardProvider = FutureProvider.family<Leaderboard?, String>((ref, eventId) async {
+final storedLeaderboardProvider =
+    FutureProvider.family<Leaderboard?, String>((ref, eventId) async {
   final repository = ref.read(leaderboardRepositoryProvider);
   return await repository.getLatestByEventId(eventId);
 });
 
 /// Stream provider for stored leaderboard
-final storedLeaderboardStreamProvider = StreamProvider.family<Leaderboard?, String>((ref, eventId) {
+final storedLeaderboardStreamProvider =
+    StreamProvider.family<Leaderboard?, String>((ref, eventId) {
   final repository = ref.read(leaderboardRepositoryProvider);
   return repository.streamLatestByEventId(eventId);
 });
@@ -74,7 +82,9 @@ final storedLeaderboardStreamProvider = StreamProvider.family<Leaderboard?, Stri
 // ===== SCORE HISTORY PROVIDERS =====
 
 /// Provider for getting team score history
-final teamScoreHistoryProvider = FutureProvider.family<ScoreHistory, ScoreHistoryRequest>((ref, request) async {
+final teamScoreHistoryProvider =
+    FutureProvider.family<ScoreHistory, ScoreHistoryRequest>(
+        (ref, request) async {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return await leaderboardService.getTeamScoreHistory(
     teamId: request.teamId,
@@ -86,7 +96,8 @@ final teamScoreHistoryProvider = FutureProvider.family<ScoreHistory, ScoreHistor
 });
 
 /// Provider for getting team score trend
-final teamScoreTrendProvider = FutureProvider.family<ScoreTrend, ScoreTrendRequest>((ref, request) async {
+final teamScoreTrendProvider =
+    FutureProvider.family<ScoreTrend, ScoreTrendRequest>((ref, request) async {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return await leaderboardService.getTeamScoreTrend(
     teamId: request.teamId,
@@ -97,7 +108,9 @@ final teamScoreTrendProvider = FutureProvider.family<ScoreTrend, ScoreTrendReque
 });
 
 /// Provider for getting team position history
-final teamPositionHistoryProvider = FutureProvider.family<PositionHistory, PositionHistoryRequest>((ref, request) async {
+final teamPositionHistoryProvider =
+    FutureProvider.family<PositionHistory, PositionHistoryRequest>(
+        (ref, request) async {
   final repository = ref.read(leaderboardRepositoryProvider);
   return await repository.getTeamPositionHistory(
     teamId: request.teamId,
@@ -108,7 +121,8 @@ final teamPositionHistoryProvider = FutureProvider.family<PositionHistory, Posit
 });
 
 /// Stream provider for team score history
-final teamScoreHistoryStreamProvider = StreamProvider.family<ScoreHistory?, String>((ref, teamId) {
+final teamScoreHistoryStreamProvider =
+    StreamProvider.family<ScoreHistory?, String>((ref, teamId) {
   final repository = ref.read(leaderboardRepositoryProvider);
   return repository.streamScoreHistoryByTeamId(teamId);
 });
@@ -116,13 +130,16 @@ final teamScoreHistoryStreamProvider = StreamProvider.family<ScoreHistory?, Stri
 // ===== LEADERBOARD STATISTICS PROVIDERS =====
 
 /// Provider for getting leaderboard statistics
-final leaderboardStatisticsProvider = FutureProvider.family<LeaderboardStatistics, String>((ref, eventId) async {
+final leaderboardStatisticsProvider =
+    FutureProvider.family<LeaderboardStatistics, String>((ref, eventId) async {
   final repository = ref.read(leaderboardRepositoryProvider);
   return await repository.getLeaderboardStatistics(eventId);
 });
 
 /// Provider for getting leaderboard snapshots
-final leaderboardSnapshotsProvider = FutureProvider.family<List<Leaderboard>, LeaderboardSnapshotRequest>((ref, request) async {
+final leaderboardSnapshotsProvider =
+    FutureProvider.family<List<Leaderboard>, LeaderboardSnapshotRequest>(
+        (ref, request) async {
   final repository = ref.read(leaderboardRepositoryProvider);
   return await repository.getLeaderboardSnapshots(
     eventId: request.eventId,
@@ -135,7 +152,8 @@ final leaderboardSnapshotsProvider = FutureProvider.family<List<Leaderboard>, Le
 // ===== ACTION PROVIDERS =====
 
 /// Provider for saving leaderboard
-final saveLeaderboardProvider = Provider<Future<Leaderboard> Function(Leaderboard)>((ref) {
+final saveLeaderboardProvider =
+    Provider<Future<Leaderboard> Function(Leaderboard)>((ref) {
   final repository = ref.read(leaderboardRepositoryProvider);
   return (leaderboard) async {
     return await repository.create(leaderboard);
@@ -143,7 +161,8 @@ final saveLeaderboardProvider = Provider<Future<Leaderboard> Function(Leaderboar
 });
 
 /// Provider for saving leaderboard snapshot
-final saveLeaderboardSnapshotProvider = Provider<Future<void> Function(Leaderboard)>((ref) {
+final saveLeaderboardSnapshotProvider =
+    Provider<Future<void> Function(Leaderboard)>((ref) {
   final repository = ref.read(leaderboardRepositoryProvider);
   return (leaderboard) async {
     await repository.saveLeaderboardSnapshot(leaderboard);
@@ -151,7 +170,8 @@ final saveLeaderboardSnapshotProvider = Provider<Future<void> Function(Leaderboa
 });
 
 /// Provider for saving score history
-final saveScoreHistoryProvider = Provider<Future<ScoreHistory> Function(ScoreHistory)>((ref) {
+final saveScoreHistoryProvider =
+    Provider<Future<ScoreHistory> Function(ScoreHistory)>((ref) {
   final repository = ref.read(leaderboardRepositoryProvider);
   return (history) async {
     return await repository.saveScoreHistory(history);
@@ -159,12 +179,13 @@ final saveScoreHistoryProvider = Provider<Future<ScoreHistory> Function(ScoreHis
 });
 
 /// Provider for refreshing leaderboard
-final refreshLeaderboardProvider = Provider<Future<Leaderboard> Function(String)>((ref) {
+final refreshLeaderboardProvider =
+    Provider<Future<Leaderboard> Function(String)>((ref) {
   final leaderboardService = ref.read(leaderboardServiceProvider);
   return (eventId) async {
     // Invalidate cached leaderboard
     ref.invalidate(eventLeaderboardProvider(eventId));
-    
+
     // Calculate fresh leaderboard
     return await leaderboardService.calculateEventLeaderboard(eventId);
   };

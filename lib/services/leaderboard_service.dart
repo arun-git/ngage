@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:ngage/repositories/team_repository.dart';
+
 import '../models/models.dart';
 import '../repositories/score_repository.dart';
 import '../repositories/submission_repository.dart';
@@ -19,7 +21,7 @@ class LeaderboardService {
     ScoreRepository? scoreRepository,
     SubmissionRepository? submissionRepository,
     EventRepository? eventRepository,
-    JudgingService? judgingService,
+    JudgingService? judgingService, required TeamRepository teamRepository,
   })  : _scoreRepository = scoreRepository ?? ScoreRepository(),
         _submissionRepository = submissionRepository ?? SubmissionRepository(),
         _eventRepository = eventRepository ?? EventRepository(),

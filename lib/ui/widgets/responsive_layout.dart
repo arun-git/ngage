@@ -148,7 +148,7 @@ class ResponsiveNavigationDestination {
   final String label;
   final String? tooltip;
   
-  const NavigationDestination({
+  const ResponsiveNavigationDestination({
     required this.icon,
     this.selectedIcon,
     required this.label,
