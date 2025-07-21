@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'email', 'createdAt', 'updatedAt']) &&
+             data.id is string &&
+             data.email is string &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (data.phone == null || data.phone is string) &&
+             (data.defaultMember == null || data.defaultMember is string);
+    }
+    
+    function isValidMember(data) {
+      return data.keys().hasAll(['id', 'email', 'firstName', 'lastName', 'isActive', 'createdAt', 'updatedAt']) &&
+             data.id is string &&
+             data.email is string &&
+             data.firstName is string &&
+             data.lastName is string &&
+             data.isActive is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (data.userId == null || data.userId is string) &&
+             (data.phone == null || data.phone is string) &&
+             (data.externalId == null || data.externalId is string) &&
+             (data.category == null || data.category is string) &&
+             (data.title == null || data.title is string) &&
+             (data.profilePhoto == null || data.profilePhoto is string) &&
+             (data.bio == null || data.bio is string) &&
+             (data.importedAt == null || data.importedAt is timestamp) &&
+             (data.claimedAt == null || data.claimedAt is timestamp);
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      // Users can read and write their own user document
+      allow read, write: if isOwner(userId) && isValidUser(resource.data);
+      
+      // Allow creation of user document during authentication
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      
+      // Allow updates to user document by owner
+      allow update: if isOwner(userId) && 
+                       isValidUser(request.resource.data) &&
+                       request.resource.data.id == resource.data.id &&
+                       request.resource.data.email == resource.data.email &&
+                       request.resource.data.createdAt == resource.data.createdAt;
+    }
+    
+    // Members collection rules
+    match /members/{memberId} {
+      // Allow reading member documents if:
+      // 1. User owns the member profile (userId matches)
+      // 2. Member is unclaimed (userId is null) - for claiming process
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid || 
+                      resource.data.userId == null);
+      
+      // Allow creating member documents (for bulk import by admins)
+      // This will be restricted further in future tasks with admin roles
+      allow create: if isAuthenticated() && isValidMember(request.resource.data);
+      
+      // Allow updating member documents if:
+      // 1. User owns the member profile
+      // 2. Or claiming an unclaimed profile (userId is null -> user's uid)
+      allow update: if isAuthenticated() && 
+                       isValidMember(request.resource.data) &&
+                       (resource.data.userId == request.auth.uid ||
+                        (resource.data.userId == null && 
+                         request.resource.data.userId == request.auth.uid)) &&
+                       request.resource.data.id == resource.data.id &&
+                       request.resource.data.email == resource.data.email &&
+                       request.resource.data.createdAt == resource.data.createdAt;
+      
+      // Allow deletion only by owner
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Default deny all other collections for now
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
