@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'error_types.dart';
 import 'logger.dart';
 

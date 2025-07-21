@@ -1,12 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../services/judging_service.dart';
-import '../repositories/score_repository.dart';
-import '../repositories/scoring_rubric_repository.dart';
-import '../repositories/submission_repository.dart';
-import '../repositories/team_repository.dart';
-import '../repositories/judge_comment_repository.dart';
-import '../repositories/judge_assignment_repository.dart';
 import '../repositories/repository_providers.dart';
 
 /// Provider for the JudgingService

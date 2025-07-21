@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/event.dart';
-import '../models/submission.dart';
 import '../models/enums.dart';
 import '../repositories/event_repository.dart';
 import '../repositories/submission_repository.dart';
@@ -171,10 +169,10 @@ class DeadlineEnforcementService {
     
     // Define notification intervals (in hours before deadline)
     final notificationIntervals = [
-      Duration(hours: 24), // 1 day before
-      Duration(hours: 4),  // 4 hours before
-      Duration(hours: 1),  // 1 hour before
-      Duration(minutes: 15), // 15 minutes before
+      const Duration(hours: 24), // 1 day before
+      const Duration(hours: 4),  // 4 hours before
+      const Duration(hours: 1),  // 1 hour before
+      const Duration(minutes: 15), // 15 minutes before
     ];
     
     for (final interval in notificationIntervals) {

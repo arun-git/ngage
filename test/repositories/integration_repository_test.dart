@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import '../../lib/models/models.dart';
-import '../../lib/repositories/integration_repository.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/repositories/integration_repository.dart';
 
 void main() {
   group('IntegrationRepository', () {

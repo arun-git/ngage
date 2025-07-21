@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-import '../../lib/models/submission.dart';
-import '../../lib/models/enums.dart';
-import '../../lib/services/submission_service.dart';
-import '../../lib/repositories/submission_repository.dart';
+import 'package:ngage/models/submission.dart';
+import 'package:ngage/models/enums.dart';
+import 'package:ngage/services/submission_service.dart';
+import 'package:ngage/repositories/submission_repository.dart';
 
 import 'submission_service_test.mocks.dart';
 

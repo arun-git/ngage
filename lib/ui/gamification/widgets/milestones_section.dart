@@ -278,7 +278,7 @@ class MilestonesSection extends ConsumerWidget {
                   ),
                 ),
                 if (isCompleted) ...[
-                  Icon(
+                  const Icon(
                     Icons.emoji_events,
                     color: Colors.amber,
                   ),
@@ -359,7 +359,7 @@ class MilestonesSection extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.military_tech,
                       color: Colors.purple,
                       size: 16,
@@ -412,7 +412,7 @@ class MilestonesSection extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.lightbulb_outline,
                   color: Colors.amber,
                 ),

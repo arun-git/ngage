@@ -40,9 +40,9 @@ class _ModerationDashboardScreenState extends ConsumerState<ModerationDashboardS
         bottom: TabBar(
           controller: _tabController,
           tabs: [
-            Tab(
+            const Tab(
               text: 'Dashboard',
-              icon: const Icon(Icons.dashboard),
+              icon: Icon(Icons.dashboard),
             ),
             Tab(
               text: 'Reports',
@@ -395,7 +395,7 @@ class _ModerationDashboardScreenState extends ConsumerState<ModerationDashboardS
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Report Details'),
+        title: const Text('Report Details'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +404,7 @@ class _ModerationDashboardScreenState extends ConsumerState<ModerationDashboardS
             Text('Reason: ${_getReasonText(report.reason)}'),
             if (report.description != null) ...[
               const SizedBox(height: 8),
-              Text('Description:'),
+              const Text('Description:'),
               Text(report.description!),
             ],
             const SizedBox(height: 8),

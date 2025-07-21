@@ -223,8 +223,8 @@ class _AnalyticsFilterWidgetState extends ConsumerState<AnalyticsFilterWidget> {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             hintText: 'All Events',
           ),
-          items: [
-            const DropdownMenuItem<String?>(
+          items: const [
+            DropdownMenuItem<String?>(
               value: null,
               child: Text('All Events'),
             ),

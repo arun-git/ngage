@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/analytics.dart';
-import '../models/enums.dart';
 
 class AnalyticsRepository {
   final FirebaseFirestore _firestore;
@@ -307,8 +306,8 @@ class AnalyticsRepository {
         // Calculate average score for this submission
         if (scores.isNotEmpty) {
           final numericScores = scores.values
-              .where((v) => v is num)
-              .map((v) => (v as num).toDouble())
+              .whereType<num>()
+              .map((v) => (v).toDouble())
               .toList();
           
           if (numericScores.isNotEmpty) {

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/team.dart';
 import '../models/group_member.dart';
-import '../models/enums.dart';
 
 /// Service for managing teams within groups
 /// 

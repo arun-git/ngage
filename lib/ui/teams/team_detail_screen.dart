@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
-import '../../providers/group_providers.dart';
 import '../../models/team.dart';
-import '../../models/group_member.dart';
 import 'manage_team_members_screen.dart';
-import 'team_settings_screen.dart';
 
 class TeamDetailScreen extends ConsumerWidget {
   final String teamId;

@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/models/models.dart';
-import '../../lib/services/judging_service.dart';
-import '../../lib/repositories/judge_comment_repository.dart';
-import '../../lib/repositories/judge_assignment_repository.dart';
-import '../../lib/repositories/score_repository.dart';
-import '../../lib/repositories/scoring_rubric_repository.dart';
-import '../../lib/repositories/submission_repository.dart';
-import '../../lib/repositories/team_repository.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/services/judging_service.dart';
+import 'package:ngage/repositories/judge_comment_repository.dart';
+import 'package:ngage/repositories/judge_assignment_repository.dart';
+import 'package:ngage/repositories/score_repository.dart';
+import 'package:ngage/repositories/scoring_rubric_repository.dart';
+import 'package:ngage/repositories/submission_repository.dart';
+import 'package:ngage/repositories/team_repository.dart';
 
 import 'judge_collaboration_test.mocks.dart';
 

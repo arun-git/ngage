@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/models/models.dart';
-import '../../lib/services/integration_service.dart';
-import '../../lib/services/microsoft_teams_service.dart';
-import '../../lib/services/email_service.dart';
-import '../../lib/services/calendar_service.dart';
-import '../../lib/services/slack_service.dart';
-import '../../lib/repositories/integration_repository.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/services/integration_service.dart';
+import 'package:ngage/services/microsoft_teams_service.dart';
+import 'package:ngage/services/email_service.dart';
+import 'package:ngage/services/calendar_service.dart';
+import 'package:ngage/services/slack_service.dart';
+import 'package:ngage/repositories/integration_repository.dart';
 
 import 'integration_service_test.mocks.dart';
 

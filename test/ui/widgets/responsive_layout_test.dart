@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ngage/ui/widgets/responsive_layout.dart';
-import 'package:ngage/utils/responsive_utils.dart';
 
 void main() {
   group('ResponsiveLayout Tests', () {
     testWidgets('should display mobile layout on small screens', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(size: Size(400, 800)),
+            data: MediaQueryData(size: Size(400, 800)),
             child: ResponsiveLayout(
-              mobile: const Text('Mobile'),
-              tablet: const Text('Tablet'),
-              desktop: const Text('Desktop'),
-              child: const Text('Default'),
+              mobile: Text('Mobile'),
+              tablet: Text('Tablet'),
+              desktop: Text('Desktop'),
+              child: Text('Default'),
             ),
           ),
         ),
@@ -27,14 +26,14 @@ void main() {
 
     testWidgets('should display tablet layout on medium screens', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(size: Size(700, 1000)),
+            data: MediaQueryData(size: Size(700, 1000)),
             child: ResponsiveLayout(
-              mobile: const Text('Mobile'),
-              tablet: const Text('Tablet'),
-              desktop: const Text('Desktop'),
-              child: const Text('Default'),
+              mobile: Text('Mobile'),
+              tablet: Text('Tablet'),
+              desktop: Text('Desktop'),
+              child: Text('Default'),
             ),
           ),
         ),
@@ -47,14 +46,14 @@ void main() {
 
     testWidgets('should display desktop layout on large screens', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(size: Size(1200, 800)),
+            data: MediaQueryData(size: Size(1200, 800)),
             child: ResponsiveLayout(
-              mobile: const Text('Mobile'),
-              tablet: const Text('Tablet'),
-              desktop: const Text('Desktop'),
-              child: const Text('Default'),
+              mobile: Text('Mobile'),
+              tablet: Text('Tablet'),
+              desktop: Text('Desktop'),
+              child: Text('Default'),
             ),
           ),
         ),
@@ -67,13 +66,13 @@ void main() {
 
     testWidgets('should fallback to mobile when tablet not provided', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(size: Size(700, 1000)),
+            data: MediaQueryData(size: Size(700, 1000)),
             child: ResponsiveLayout(
-              mobile: const Text('Mobile'),
-              desktop: const Text('Desktop'),
-              child: const Text('Default'),
+              mobile: Text('Mobile'),
+              desktop: Text('Desktop'),
+              child: Text('Default'),
             ),
           ),
         ),
@@ -212,10 +211,10 @@ void main() {
   group('ResponsiveCard Tests', () {
     testWidgets('should render card with content', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(size: Size(400, 800)),
-            child: const ResponsiveCard(
+            data: MediaQueryData(size: Size(400, 800)),
+            child: ResponsiveCard(
               child: Text('Card Content'),
             ),
           ),
@@ -316,10 +315,10 @@ void main() {
   group('ResponsiveForm Tests', () {
     testWidgets('should layout form fields with proper spacing', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(size: Size(400, 800)),
-            child: const Scaffold(
+            data: MediaQueryData(size: Size(400, 800)),
+            child: Scaffold(
               body: ResponsiveForm(
                 children: [
                   TextField(decoration: InputDecoration(labelText: 'Field 1')),

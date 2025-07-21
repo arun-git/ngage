@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-import '../../lib/services/consent_service.dart';
-import '../../lib/repositories/consent_repository.dart';
-import '../../lib/models/consent.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/services/consent_service.dart';
+import 'package:ngage/repositories/consent_repository.dart';
+import 'package:ngage/models/consent.dart';
+import 'package:ngage/models/enums.dart';
 
 import 'consent_service_test.mocks.dart';
 

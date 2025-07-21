@@ -2,7 +2,6 @@ import 'dart:convert';
 import '../models/privacy_request.dart';
 import '../models/enums.dart';
 import '../repositories/privacy_request_repository.dart';
-import '../repositories/consent_repository.dart';
 import '../services/consent_service.dart';
 
 /// Service for handling GDPR compliance and privacy requests

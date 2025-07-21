@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import '../../lib/models/content_report.dart';
-import '../../lib/repositories/content_report_repository.dart';
+import 'package:ngage/models/content_report.dart';
+import 'package:ngage/repositories/content_report_repository.dart';
 
 void main() {
   group('ContentReportRepository', () {

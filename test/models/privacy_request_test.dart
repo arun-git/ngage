@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/privacy_request.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/models/privacy_request.dart';
+import 'package:ngage/models/enums.dart';
 
 void main() {
   group('PrivacyRequest Model', () {
@@ -329,7 +329,7 @@ void main() {
   group('CreatePrivacyRequestData', () {
     test('should create data object with all fields', () {
       // Act
-      final data = CreatePrivacyRequestData(
+      const data = CreatePrivacyRequestData(
         memberId: 'member_1',
         requestType: PrivacyRequestType.dataExport,
         description: 'Export request',
@@ -347,7 +347,7 @@ void main() {
 
     test('should create data object with minimal fields', () {
       // Act
-      final data = CreatePrivacyRequestData(
+      const data = CreatePrivacyRequestData(
         memberId: 'member_1',
         requestType: PrivacyRequestType.dataDeletion,
       );

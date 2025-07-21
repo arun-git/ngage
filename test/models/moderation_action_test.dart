@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import '../../lib/models/moderation_action.dart';
+import 'package:ngage/models/moderation_action.dart';
 
 void main() {
   group('ModerationAction', () {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/models.dart';
+import 'package:ngage/models/models.dart';
 
 void main() {
   group('Score Model Tests', () {
@@ -28,21 +28,21 @@ void main() {
         name: 'Test Rubric',
         description: 'Test scoring rubric',
         criteria: [
-          ScoringCriterion(
+          const ScoringCriterion(
             key: 'creativity',
             name: 'Creativity',
             description: 'Creative aspects',
             maxScore: 100.0,
             weight: 0.3,
           ),
-          ScoringCriterion(
+          const ScoringCriterion(
             key: 'technical',
             name: 'Technical',
             description: 'Technical implementation',
             maxScore: 100.0,
             weight: 0.4,
           ),
-          ScoringCriterion(
+          const ScoringCriterion(
             key: 'presentation',
             name: 'Presentation',
             description: 'Presentation quality',

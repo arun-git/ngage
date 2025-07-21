@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/models.dart';
-import '../../../providers/post_providers.dart';
 import 'post_media_widget.dart';
 import 'post_actions_widget.dart';
 import 'post_comments_widget.dart';

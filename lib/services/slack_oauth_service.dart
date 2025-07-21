@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ngage/services/auth_config_service.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/models.dart';
 
 /// Slack OAuth service for handling Slack authentication
 class SlackOAuthService {

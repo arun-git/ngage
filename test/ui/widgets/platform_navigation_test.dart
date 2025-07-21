@@ -102,7 +102,7 @@ void main() {
 
     testWidgets('should show drawer when more than 5 items on mobile', (tester) async {
       final manyItems = List.generate(7, (index) => NavigationItem(
-        icon: Icon(Icons.star),
+        icon: const Icon(Icons.star),
         label: 'Item $index',
       ));
 
@@ -225,9 +225,9 @@ void main() {
   group('PlatformAppBar Tests', () {
     testWidgets('should display app bar with title', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
-            appBar: const PlatformAppBar(
+            appBar: PlatformAppBar(
               title: 'Test Title',
             ),
           ),
@@ -260,9 +260,9 @@ void main() {
 
     testWidgets('should handle custom leading widget', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
-            appBar: const PlatformAppBar(
+            appBar: PlatformAppBar(
               title: 'Test Title',
               leading: Icon(Icons.menu),
               automaticallyImplyLeading: false,

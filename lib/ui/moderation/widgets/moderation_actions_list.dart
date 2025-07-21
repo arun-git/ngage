@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/moderation_action.dart';
-import '../../../providers/moderation_providers.dart';
 
 class ModerationActionsList extends ConsumerStatefulWidget {
   const ModerationActionsList({super.key});

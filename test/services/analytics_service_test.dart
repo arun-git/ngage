@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/models/analytics.dart';
-import '../../lib/repositories/analytics_repository.dart';
-import '../../lib/services/analytics_service.dart';
+import 'package:ngage/models/analytics.dart';
+import 'package:ngage/repositories/analytics_repository.dart';
+import 'package:ngage/services/analytics_service.dart';
 
 import 'analytics_service_test.mocks.dart';
 

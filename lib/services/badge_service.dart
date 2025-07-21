@@ -349,7 +349,7 @@ class BadgeService {
   }
 
   String _generateMemberMilestoneId(String memberId, String milestoneId) {
-    return '${memberId}_${milestoneId}';
+    return '${memberId}_$milestoneId';
   }
 
   // Get points leaderboard

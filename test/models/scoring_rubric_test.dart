@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/models.dart';
+import 'package:ngage/models/models.dart';
 
 void main() {
   group('ScoringRubric Model Tests', () {
@@ -8,7 +8,7 @@ void main() {
 
     setUp(() {
       testCriteria = [
-        ScoringCriterion(
+        const ScoringCriterion(
           key: 'creativity',
           name: 'Creativity',
           description: 'Creative and innovative aspects',
@@ -17,7 +17,7 @@ void main() {
           weight: 0.3,
           required: true,
         ),
-        ScoringCriterion(
+        const ScoringCriterion(
           key: 'technical',
           name: 'Technical Implementation',
           description: 'Technical quality and execution',
@@ -26,7 +26,7 @@ void main() {
           weight: 0.4,
           required: true,
         ),
-        ScoringCriterion(
+        const ScoringCriterion(
           key: 'presentation',
           name: 'Presentation',
           description: 'Quality of presentation',
@@ -172,7 +172,7 @@ void main() {
       });
 
       test('should add criterion', () {
-        final newCriterion = ScoringCriterion(
+        const newCriterion = ScoringCriterion(
           key: 'innovation',
           name: 'Innovation',
           description: 'Innovative approach',
@@ -259,7 +259,7 @@ void main() {
 
       test('should validate rubric with invalid criterion', () {
         final invalidCriteria = [
-          ScoringCriterion(
+          const ScoringCriterion(
             key: '', // Empty key
             name: 'Invalid',
             description: 'Invalid criterion',
@@ -373,7 +373,7 @@ void main() {
     late ScoringCriterion testCriterion;
 
     setUp(() {
-      testCriterion = ScoringCriterion(
+      testCriterion = const ScoringCriterion(
         key: 'creativity',
         name: 'Creativity',
         description: 'Creative and innovative aspects',
@@ -398,7 +398,7 @@ void main() {
       });
 
       test('should create ScoringCriterion with default values', () {
-        final defaultCriterion = ScoringCriterion(
+        const defaultCriterion = ScoringCriterion(
           key: 'test',
           name: 'Test',
           description: 'Test criterion',
@@ -509,7 +509,7 @@ void main() {
 
     group('Equality and Hashing', () {
       test('should be equal to identical criterion', () {
-        final identicalCriterion = ScoringCriterion(
+        const identicalCriterion = ScoringCriterion(
           key: 'creativity',
           name: 'Creativity',
           description: 'Creative and innovative aspects',

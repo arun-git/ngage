@@ -2,12 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-import '../../lib/services/privacy_service.dart';
-import '../../lib/services/consent_service.dart';
-import '../../lib/repositories/privacy_request_repository.dart';
-import '../../lib/models/privacy_request.dart';
-import '../../lib/models/consent.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/services/privacy_service.dart';
+import 'package:ngage/services/consent_service.dart';
+import 'package:ngage/repositories/privacy_request_repository.dart';
+import 'package:ngage/models/privacy_request.dart';
+import 'package:ngage/models/consent.dart';
+import 'package:ngage/models/enums.dart';
 
 import 'privacy_service_test.mocks.dart';
 

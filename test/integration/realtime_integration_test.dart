@@ -4,9 +4,9 @@ import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
-import '../../lib/services/realtime_service.dart';
-import '../../lib/services/offline_service.dart';
-import '../../lib/models/models.dart';
+import 'package:ngage/services/realtime_service.dart';
+import 'package:ngage/services/offline_service.dart';
+import 'package:ngage/models/models.dart';
 
 // Generate mocks
 @GenerateMocks([
@@ -340,7 +340,9 @@ void main() {
         // Mock successful sync
         when(mockFirestore.collection('posts')).thenReturn(mockCollection);
         when(mockCollection.doc(any)).thenReturn(MockDocumentReference());
-        when(MockDocumentReference().set(any)).thenAnswer((_) async {});
+        when(MockDocumentReference().set(any)).thenAnswer((_) async {
+          return null;
+        });
 
         // Act - Simulate connection restored
         final connectionController = StreamController<ConnectionStatus>();
@@ -459,13 +461,13 @@ Leaderboard _createTestLeaderboard(String eventId) {
     id: 'leaderboard1',
     eventId: eventId,
     entries: [
-      LeaderboardEntry(
+      const LeaderboardEntry(
         teamId: 'team1',
         teamName: 'Team Alpha',
         totalScore: 95.5,
         rank: 1,
       ),
-      LeaderboardEntry(
+      const LeaderboardEntry(
         teamId: 'team2',
         teamName: 'Team Beta',
         totalScore: 87.2,

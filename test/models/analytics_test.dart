@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/analytics.dart';
+import 'package:ngage/models/analytics.dart';
 
 void main() {
   group('Analytics Models', () {
@@ -322,7 +322,7 @@ void main() {
       test('should create AnalyticsReport correctly', () {
         // Arrange
         final generatedAt = DateTime.now();
-        final filter = AnalyticsFilter(
+        const filter = AnalyticsFilter(
           period: AnalyticsPeriod.monthly,
           metricTypes: [AnalyticsMetricType.participation],
         );
@@ -352,7 +352,7 @@ void main() {
           id: 'report-1',
           title: 'Test Report',
           description: 'Test description',
-          filter: AnalyticsFilter(
+          filter: const AnalyticsFilter(
             period: AnalyticsPeriod.monthly,
             metricTypes: [AnalyticsMetricType.participation],
           ),

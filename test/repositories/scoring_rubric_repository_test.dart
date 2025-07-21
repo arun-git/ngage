@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../lib/models/models.dart';
-import '../../lib/repositories/scoring_rubric_repository.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/repositories/scoring_rubric_repository.dart';
 
 import 'scoring_rubric_repository_test.mocks.dart';
 
@@ -48,14 +48,14 @@ void main() {
         name: 'Test Rubric',
         description: 'Test scoring rubric',
         criteria: [
-          ScoringCriterion(
+          const ScoringCriterion(
             key: 'creativity',
             name: 'Creativity',
             description: 'Creative aspects',
             maxScore: 100.0,
             weight: 0.4,
           ),
-          ScoringCriterion(
+          const ScoringCriterion(
             key: 'technical',
             name: 'Technical',
             description: 'Technical implementation',

@@ -3,9 +3,9 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../lib/services/offline_service.dart';
-import '../../lib/services/realtime_service.dart';
-import '../../lib/models/models.dart';
+import 'package:ngage/services/offline_service.dart';
+import 'package:ngage/services/realtime_service.dart';
+import 'package:ngage/models/models.dart';
 
 // Generate mocks
 @GenerateMocks([
@@ -205,7 +205,9 @@ void main() {
     group('Offline Operations', () {
       test('should create post with optimistic UI update', () async {
         // Arrange
-        when(mockDocument.set(any)).thenAnswer((_) async {});
+        when(mockDocument.set(any)).thenAnswer((_) async {
+          return null;
+        });
 
         // Act
         final result = await offlineService.createPost(
@@ -247,8 +249,12 @@ void main() {
         final testPost = _createTestPost('post1', 'group1', 'Test post');
         offlineService.cacheData('group_posts_group1', [testPost]);
 
-        when(mockDocument.set(any)).thenAnswer((_) async {});
-        when(mockDocument.update(any)).thenAnswer((_) async {});
+        when(mockDocument.set(any)).thenAnswer((_) async {
+          return null;
+        });
+        when(mockDocument.update(any)).thenAnswer((_) async {
+          return null;
+        });
 
         // Act
         await offlineService.likePost(postId: 'post1', memberId: 'member1');
@@ -276,8 +282,12 @@ void main() {
 
       test('should add comment with optimistic UI update', () async {
         // Arrange
-        when(mockDocument.set(any)).thenAnswer((_) async {});
-        when(mockDocument.update(any)).thenAnswer((_) async {});
+        when(mockDocument.set(any)).thenAnswer((_) async {
+          return null;
+        });
+        when(mockDocument.update(any)).thenAnswer((_) async {
+          return null;
+        });
 
         // Act
         final result = await offlineService.addComment(
@@ -302,7 +312,9 @@ void main() {
         final testNotification = _createTestNotification('notif1', 'member1', 'Test');
         offlineService.cacheData('notifications_member1', [testNotification]);
 
-        when(mockDocument.update(any)).thenAnswer((_) async {});
+        when(mockDocument.update(any)).thenAnswer((_) async {
+          return null;
+        });
 
         // Act
         await offlineService.markNotificationAsRead('notif1');
@@ -364,8 +376,12 @@ void main() {
         offlineService.cacheData('group_posts_group2', [testPost]);
 
         // Act - This is tested indirectly through likePost
-        when(mockDocument.set(any)).thenAnswer((_) async {});
-        when(mockDocument.update(any)).thenAnswer((_) async {});
+        when(mockDocument.set(any)).thenAnswer((_) async {
+          return null;
+        });
+        when(mockDocument.update(any)).thenAnswer((_) async {
+          return null;
+        });
         
         offlineService.likePost(postId: 'post1', memberId: 'member1');
 
@@ -383,7 +399,9 @@ void main() {
         offlineService.cacheData('notifications_member1', [testNotification]);
 
         // Act - This is tested indirectly through markNotificationAsRead
-        when(mockDocument.update(any)).thenAnswer((_) async {});
+        when(mockDocument.update(any)).thenAnswer((_) async {
+          return null;
+        });
         
         offlineService.markNotificationAsRead('notif1');
 
@@ -429,7 +447,7 @@ Leaderboard _createTestLeaderboard(String eventId) {
     id: 'leaderboard1',
     eventId: eventId,
     entries: [
-      LeaderboardEntry(
+      const LeaderboardEntry(
         teamId: 'team1',
         teamName: 'Team Alpha',
         totalScore: 95.5,

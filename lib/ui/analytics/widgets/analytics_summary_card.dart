@@ -209,7 +209,7 @@ class AnalyticsSummaryCard extends StatelessWidget {
     } else if (duration <= 90) {
       periodText = 'Last 90 days';
     } else {
-      periodText = '${duration} days';
+      periodText = '$duration days';
     }
     
     return Container(

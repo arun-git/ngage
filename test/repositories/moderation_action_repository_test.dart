@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import '../../lib/models/moderation_action.dart';
-import '../../lib/repositories/moderation_action_repository.dart';
+import 'package:ngage/models/moderation_action.dart';
+import 'package:ngage/repositories/moderation_action_repository.dart';
 
 void main() {
   group('ModerationActionRepository', () {

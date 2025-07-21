@@ -4,8 +4,8 @@ import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
-import '../../lib/services/realtime_service.dart';
-import '../../lib/models/models.dart';
+import 'package:ngage/services/realtime_service.dart';
+import 'package:ngage/models/models.dart';
 
 // Generate mocks
 @GenerateMocks([
@@ -590,7 +590,7 @@ Leaderboard _createTestLeaderboard(String eventId) {
     id: 'leaderboard1',
     eventId: eventId,
     entries: [
-      LeaderboardEntry(
+      const LeaderboardEntry(
         teamId: 'team1',
         teamName: 'Team Alpha',
         totalScore: 95.5,

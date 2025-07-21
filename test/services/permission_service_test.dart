@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-import '../../lib/services/permission_service.dart';
-import '../../lib/repositories/permission_repository.dart';
-import '../../lib/models/permission.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/services/permission_service.dart';
+import 'package:ngage/repositories/permission_repository.dart';
+import 'package:ngage/models/permission.dart';
+import 'package:ngage/models/enums.dart';
 
 import 'permission_service_test.mocks.dart';
 

@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/models/analytics.dart';
-import '../../lib/repositories/analytics_repository.dart';
+import 'package:ngage/models/analytics.dart';
+import 'package:ngage/repositories/analytics_repository.dart';
 
 import 'analytics_repository_test.mocks.dart';
 

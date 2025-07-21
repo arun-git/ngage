@@ -36,8 +36,8 @@ class TeamsListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateTeam(context),
-        child: const Icon(Icons.add),
         tooltip: 'Create Team',
+        child: const Icon(Icons.add),
       ),
     );
   }

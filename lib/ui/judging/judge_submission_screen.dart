@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/judging_providers.dart';
-import '../../providers/submission_providers.dart';
 import 'widgets/scoring_form_widget.dart';
 
 /// Screen for judges to evaluate submissions

@@ -173,7 +173,7 @@ class LeaderboardWidget extends ConsumerWidget {
   }
 
   Widget _buildPodium(BuildContext context, List<LeaderboardEntry> topThree) {
-    return Container(
+    return SizedBox(
       height: 200,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,

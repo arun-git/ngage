@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/post_providers.dart';
-import '../../providers/auth_providers.dart';
-import 'widgets/post_card.dart';
 import 'widgets/create_post_widget.dart';
 
 /// Main social feed screen showing posts from user's groups
@@ -30,7 +28,7 @@ class _SocialFeedScreenState extends ConsumerState<SocialFeedScreen>
   int _currentOffset = 0;
   final int _pageSize = 20;
   bool _isLoadingMore = false;
-  List<Post> _allPosts = [];
+  final List<Post> _allPosts = [];
 
   @override
   void initState() {
@@ -89,8 +87,8 @@ class _SocialFeedScreenState extends ConsumerState<SocialFeedScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreatePostDialog(),
-        child: const Icon(Icons.add),
         tooltip: 'Create Post',
+        child: const Icon(Icons.add),
       ),
     );
   }

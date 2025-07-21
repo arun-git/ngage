@@ -184,20 +184,20 @@ class _IntegrationConfigDialogState extends State<IntegrationConfigDialog> {
     switch (type) {
       case IntegrationType.slack:
         return [
-          ConfigField(
+          const ConfigField(
             key: 'botToken',
             label: 'Bot Token',
             hint: 'xoxb-your-bot-token',
             isSecret: true,
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'defaultChannel',
             label: 'Default Channel',
             hint: '#general',
             defaultValue: '#general',
           ),
-          ConfigField(
+          const ConfigField(
             key: 'webhookUrl',
             label: 'Webhook URL (Optional)',
             hint: 'https://hooks.slack.com/services/...',
@@ -206,26 +206,26 @@ class _IntegrationConfigDialogState extends State<IntegrationConfigDialog> {
       
       case IntegrationType.microsoftTeams:
         return [
-          ConfigField(
+          const ConfigField(
             key: 'tenantId',
             label: 'Tenant ID',
             hint: 'your-tenant-id',
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'clientId',
             label: 'Client ID',
             hint: 'your-client-id',
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'clientSecret',
             label: 'Client Secret',
             hint: 'your-client-secret',
             isSecret: true,
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'defaultTeam',
             label: 'Default Team',
             hint: 'Team Name',
@@ -234,20 +234,20 @@ class _IntegrationConfigDialogState extends State<IntegrationConfigDialog> {
       
       case IntegrationType.googleCalendar:
         return [
-          ConfigField(
+          const ConfigField(
             key: 'clientId',
             label: 'Client ID',
             hint: 'your-google-client-id',
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'clientSecret',
             label: 'Client Secret',
             hint: 'your-google-client-secret',
             isSecret: true,
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'calendarId',
             label: 'Calendar ID',
             hint: 'primary',
@@ -257,19 +257,19 @@ class _IntegrationConfigDialogState extends State<IntegrationConfigDialog> {
       
       case IntegrationType.microsoftCalendar:
         return [
-          ConfigField(
+          const ConfigField(
             key: 'tenantId',
             label: 'Tenant ID',
             hint: 'your-tenant-id',
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'clientId',
             label: 'Client ID',
             hint: 'your-client-id',
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'clientSecret',
             label: 'Client Secret',
             hint: 'your-client-secret',
@@ -280,34 +280,34 @@ class _IntegrationConfigDialogState extends State<IntegrationConfigDialog> {
       
       case IntegrationType.email:
         return [
-          ConfigField(
+          const ConfigField(
             key: 'smtpHost',
             label: 'SMTP Host',
             hint: 'smtp.gmail.com',
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'smtpPort',
             label: 'SMTP Port',
             hint: '587',
             defaultValue: '587',
             keyboardType: TextInputType.number,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'username',
             label: 'Username',
             hint: 'your-email@example.com',
             isRequired: true,
             keyboardType: TextInputType.emailAddress,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'password',
             label: 'Password',
             hint: 'your-password',
             isSecret: true,
             isRequired: true,
           ),
-          ConfigField(
+          const ConfigField(
             key: 'fromName',
             label: 'From Name',
             hint: 'Ngage Platform',

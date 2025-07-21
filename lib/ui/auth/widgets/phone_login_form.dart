@@ -52,14 +52,14 @@ class _PhoneLoginFormState extends ConsumerState<PhoneLoginForm> {
                   LengthLimitingTextInputFormatter(20),
                   _PhoneNumberFormatter(),
                 ],
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Phone Number',
                   hintText: '+1 (234) 567-8900',
-                  prefixIcon: const Icon(Icons.phone_outlined),
-                  border: const OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  border: OutlineInputBorder(),
                   helperText: 'Include country code (e.g., +1 for US)',
                   helperMaxLines: 2,
-                  contentPadding: const EdgeInsets.symmetric(
+                  contentPadding: EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
@@ -271,7 +271,7 @@ class _PhoneNumberFormatter extends TextInputFormatter {
     // If user is trying to add + at the beginning, allow it
     if (text.startsWith('+')) {
       // Remove any extra + signs beyond the first one
-      final cleanText = '+' + text.substring(1).replaceAll('+', '');
+      final cleanText = '+${text.substring(1).replaceAll('+', '')}';
       
       // Format the number based on length and pattern
       final formatted = _formatPhoneNumber(cleanText);

@@ -106,7 +106,7 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     
     try {
       await _teamService.addMemberToTeam(teamId: teamId, memberId: memberId);
-      state = AsyncValue.data('Member added successfully');
+      state = const AsyncValue.data('Member added successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -117,7 +117,7 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     
     try {
       await _teamService.removeMemberFromTeam(teamId: teamId, memberId: memberId);
-      state = AsyncValue.data('Member removed successfully');
+      state = const AsyncValue.data('Member removed successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -128,7 +128,7 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     
     try {
       await _teamService.changeTeamLead(teamId: teamId, newTeamLeadId: newTeamLeadId);
-      state = AsyncValue.data('Team lead changed successfully');
+      state = const AsyncValue.data('Team lead changed successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -155,7 +155,7 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
         teamType: teamType,
         isActive: isActive,
       );
-      state = AsyncValue.data('Team updated successfully');
+      state = const AsyncValue.data('Team updated successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -166,7 +166,7 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     
     try {
       await _teamService.deleteTeam(teamId);
-      state = AsyncValue.data('Team deleted successfully');
+      state = const AsyncValue.data('Team deleted successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }

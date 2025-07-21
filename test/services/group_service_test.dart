@@ -51,7 +51,7 @@ void main() {
         expect(memberships.docs.length, equals(1));
         
         final membership = GroupMember.fromJson(
-          memberships.docs.first.data() as Map<String, dynamic>,
+          memberships.docs.first.data(),
         );
         expect(membership.role, equals(GroupRole.admin));
       });

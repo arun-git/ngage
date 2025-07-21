@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/judge_comment.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/models/judge_comment.dart';
+import 'package:ngage/models/enums.dart';
 
 void main() {
   group('JudgeComment Model', () {

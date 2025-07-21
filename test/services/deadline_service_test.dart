@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/services/deadline_service.dart';
-import '../../lib/services/notification_service.dart';
-import '../../lib/repositories/event_repository.dart';
-import '../../lib/repositories/submission_repository.dart';
-import '../../lib/models/event.dart';
-import '../../lib/models/submission.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/services/deadline_service.dart';
+import 'package:ngage/services/notification_service.dart';
+import 'package:ngage/repositories/event_repository.dart';
+import 'package:ngage/repositories/submission_repository.dart';
+import 'package:ngage/models/event.dart';
+import 'package:ngage/models/submission.dart';
+import 'package:ngage/models/enums.dart';
 
 // Generate mocks
 @GenerateMocks([EventRepository, SubmissionRepository, NotificationService])
@@ -162,7 +162,7 @@ void main() {
     group('Format Time Remaining', () {
       test('should format days and hours correctly', () {
         // Arrange
-        final duration = const Duration(days: 2, hours: 3);
+        const duration = Duration(days: 2, hours: 3);
 
         // Act
         final formatted = deadlineService.formatTimeRemaining(duration);
@@ -173,7 +173,7 @@ void main() {
 
       test('should format hours and minutes correctly', () {
         // Arrange
-        final duration = const Duration(hours: 1, minutes: 30);
+        const duration = Duration(hours: 1, minutes: 30);
 
         // Act
         final formatted = deadlineService.formatTimeRemaining(duration);
@@ -184,7 +184,7 @@ void main() {
 
       test('should format minutes only correctly', () {
         // Arrange
-        final duration = const Duration(minutes: 45);
+        const duration = Duration(minutes: 45);
 
         // Act
         final formatted = deadlineService.formatTimeRemaining(duration);
@@ -203,7 +203,7 @@ void main() {
 
       test('should handle negative duration', () {
         // Arrange
-        final duration = const Duration(minutes: -30);
+        const duration = Duration(minutes: -30);
 
         // Act
         final formatted = deadlineService.formatTimeRemaining(duration);
@@ -237,7 +237,9 @@ void main() {
         when(mockNotificationService.sendDeadlineAutoSubmissionNotification(
           submission: anyNamed('submission'),
           event: anyNamed('event'),
-        )).thenAnswer((_) async {});
+        )).thenAnswer((_) async {
+          return null;
+        });
         when(mockNotificationService.sendDeadlinePassedNotification(any))
             .thenAnswer((_) async {});
 

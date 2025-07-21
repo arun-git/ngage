@@ -306,7 +306,7 @@ class ErrorHandlingUtils {
   /// Validate email format
   static void validateEmail(String? email) {
     if (email == null || email.trim().isEmpty) {
-      throw ValidationException(
+      throw const ValidationException(
         'Email is required',
         field: 'email',
         userMessage: 'Please provide an email address',
@@ -315,7 +315,7 @@ class ErrorHandlingUtils {
 
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
     if (!emailRegex.hasMatch(email.trim())) {
-      throw ValidationException(
+      throw const ValidationException(
         'Invalid email format',
         field: 'email',
         userMessage: 'Please provide a valid email address',
@@ -331,7 +331,7 @@ class ErrorHandlingUtils {
 
     final phoneRegex = RegExp(r'^\+?[\d\s\-\(\)]+$');
     if (!phoneRegex.hasMatch(phone.trim())) {
-      throw ValidationException(
+      throw const ValidationException(
         'Invalid phone number format',
         field: 'phone',
         userMessage: 'Please provide a valid phone number',

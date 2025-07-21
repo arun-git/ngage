@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../utils/error_types.dart';
-import '../../services/error_reporting_service.dart';
 import 'error_report_dialog.dart';
 
 /// Generic error widget for displaying errors to users

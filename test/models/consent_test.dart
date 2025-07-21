@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/consent.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/models/consent.dart';
+import 'package:ngage/models/enums.dart';
 
 void main() {
   group('Consent Model', () {
@@ -367,7 +367,7 @@ void main() {
 
     test('should create data object with minimal fields', () {
       // Act
-      final data = CreateConsentData(
+      const data = CreateConsentData(
         memberId: 'member_1',
         consentType: ConsentType.dataProcessing,
         granted: true,
@@ -385,7 +385,7 @@ void main() {
 
     test('should create revocation data object', () {
       // Act
-      final data = CreateConsentData(
+      const data = CreateConsentData(
         memberId: 'member_1',
         consentType: ConsentType.marketing,
         granted: false,

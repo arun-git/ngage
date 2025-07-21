@@ -27,7 +27,7 @@ class PendingReportsList extends ConsumerWidget {
               padding: const EdgeInsets.all(32),
               child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle,
                     size: 48,
                     color: Colors.green,

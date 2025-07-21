@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 
 /// Service for handling secure data operations and encryption
@@ -12,7 +11,7 @@ class SecurityService {
     salt ??= _generateSalt();
     final bytes = utf8.encode(data + salt);
     final digest = sha256.convert(bytes);
-    return '${salt}:${digest.toString()}';
+    return '$salt:${digest.toString()}';
   }
 
   /// Verify hashed data
@@ -90,8 +89,9 @@ class SecurityService {
     int score = 0;
     
     // Length bonus
-    if (password.length >= 12) score += 2;
-    else if (password.length >= 10) score += 1;
+    if (password.length >= 12) {
+      score += 2;
+    } else if (password.length >= 10) score += 1;
     
     // Character variety
     if (RegExp(r'[a-z]').hasMatch(password)) score += 1;

@@ -3,9 +3,9 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../lib/repositories/permission_repository.dart';
-import '../../lib/models/permission.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/repositories/permission_repository.dart';
+import 'package:ngage/models/permission.dart';
+import 'package:ngage/models/enums.dart';
 
 // Mock classes for Firestore
 class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}

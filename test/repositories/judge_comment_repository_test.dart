@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../lib/models/models.dart';
-import '../../lib/repositories/judge_comment_repository.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/repositories/judge_comment_repository.dart';
 
 import 'judge_comment_repository_test.mocks.dart';
 

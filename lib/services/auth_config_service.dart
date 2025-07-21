@@ -54,7 +54,7 @@ class AuthConfigService {
       return null; // Configuration not complete
     }
 
-    return SlackOAuthConfig(
+    return const SlackOAuthConfig(
       clientId: clientId,
       clientSecret: clientSecret,
       redirectUri: redirectUri,

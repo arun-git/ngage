@@ -40,10 +40,10 @@ class FirebaseErrorHandler {
   /// Shows a snackbar with a selectable error message for Firebase errors
   static void showFirebaseErrorSnackbar(BuildContext context, Object error) {
     final snackBar = SnackBar(
-      content: Row(
+      content: const Row(
         children: [
-          const Icon(Icons.error_outline, color: Colors.white),
-          const SizedBox(width: 8),
+          Icon(Icons.error_outline, color: Colors.white),
+          SizedBox(width: 8),
           Expanded(child: Text('Firebase Error: Tap to view details')),
         ],
       ),

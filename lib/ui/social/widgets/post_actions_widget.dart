@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/models.dart';
-import '../../../providers/post_providers.dart';
 
 /// Widget for post actions (like, comment, share)
 class PostActionsWidget extends ConsumerWidget {
@@ -110,7 +109,7 @@ class PostActionsWidget extends ConsumerWidget {
       children: [
         // Like count
         if (post.likeCount > 0) ...[
-          Icon(
+          const Icon(
             Icons.favorite,
             size: 16,
             color: Colors.red,

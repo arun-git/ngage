@@ -49,7 +49,9 @@ class _AddIntegrationDialogState extends ConsumerState<AddIntegrationDialog> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     _pageController.dispose();
     super.dispose();
   }
@@ -60,7 +62,7 @@ class _AddIntegrationDialogState extends ConsumerState<AddIntegrationDialog> {
     final notificationMappings = ref.watch(notificationTypeMappingsProvider);
 
     return Dialog(
-      child: Container(
+      child: SizedBox(
         width: 600,
         height: 700,
         child: Column(

@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../utils/logger.dart';
 import '../utils/error_types.dart';
-import '../models/enums.dart';
 
 /// User error report model
 class ErrorReport {

@@ -99,7 +99,7 @@ class PointsSection extends ConsumerWidget {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.stars,
                     size: 48,
                     color: Colors.amber,

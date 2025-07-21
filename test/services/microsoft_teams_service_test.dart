@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:http/http.dart' as http;
-import '../../lib/models/models.dart';
-import '../../lib/services/microsoft_teams_service.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/services/microsoft_teams_service.dart';
 
 import 'microsoft_teams_service_test.mocks.dart';
 

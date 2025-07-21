@@ -1,6 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/analytics.dart';
-import '../models/enums.dart';
 import '../repositories/analytics_repository.dart';
 
 class AnalyticsService {

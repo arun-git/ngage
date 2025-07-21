@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/submission.dart';
 import '../../models/event.dart';
-import '../../models/enums.dart';
 import '../../providers/submission_providers.dart';
 import '../../providers/event_providers.dart';
 import 'widgets/file_upload_widget.dart';

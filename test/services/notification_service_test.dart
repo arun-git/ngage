@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/models/models.dart';
-import '../../lib/repositories/notification_repository.dart';
-import '../../lib/services/notification_service.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/repositories/notification_repository.dart';
+import 'package:ngage/services/notification_service.dart';
 
 // Generate mocks
 @GenerateMocks([NotificationRepository, NotificationChannelHandler])
@@ -147,7 +147,7 @@ void main() {
         );
 
         final memberIds = ['member-1', 'member-2'];
-        final timeUntilEvent = const Duration(hours: 2);
+        const timeUntilEvent = Duration(hours: 2);
 
         when(mockRepository.createNotificationsBatch(any)).thenAnswer((_) async {});
         when(mockRepository.getNotificationPreferences(any))
@@ -191,7 +191,7 @@ void main() {
         );
 
         final memberIds = ['member-1'];
-        final timeUntilDeadline = const Duration(minutes: 30);
+        const timeUntilDeadline = Duration(minutes: 30);
 
         when(mockRepository.createNotificationsBatch(any)).thenAnswer((_) async {});
         when(mockRepository.getNotificationPreferences(any))
@@ -236,7 +236,7 @@ void main() {
         );
 
         final memberIds = ['member-1'];
-        final timeUntilDeadline = const Duration(hours: 6);
+        const timeUntilDeadline = Duration(hours: 6);
 
         when(mockRepository.createNotificationsBatch(any)).thenAnswer((_) async {});
         when(mockRepository.getNotificationPreferences(any))

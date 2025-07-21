@@ -268,7 +268,7 @@ void main() {
       test('should get specific member streak by type', () async {
         // Arrange
         const memberId = 'member_1';
-        final participationStreak = MemberStreak(
+        final participationStreak = const MemberStreak(
           id: 'participation_streak',
           memberId: memberId,
           type: StreakType.participation,
@@ -276,7 +276,7 @@ void main() {
           longestStreak: 5,
         );
 
-        final submissionStreak = MemberStreak(
+        final submissionStreak = const MemberStreak(
           id: 'submission_streak',
           memberId: memberId,
           type: StreakType.submission,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/judging_providers.dart';
-import '../../providers/member_providers.dart';
 
 /// Screen for managing judge assignments for an event
 class JudgeAssignmentScreen extends ConsumerStatefulWidget {

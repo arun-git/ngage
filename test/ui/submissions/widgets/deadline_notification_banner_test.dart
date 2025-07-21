@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../../../lib/ui/submissions/widgets/deadline_notification_banner.dart';
-import '../../../../lib/services/deadline_service.dart';
-import '../../../../lib/models/event.dart';
-import '../../../../lib/models/enums.dart';
+import 'package:ngage/ui/submissions/widgets/deadline_notification_banner.dart';
+import 'package:ngage/services/deadline_service.dart';
+import 'package:ngage/models/event.dart';
+import 'package:ngage/models/enums.dart';
 
 // Generate mocks
 @GenerateMocks([DeadlineService])

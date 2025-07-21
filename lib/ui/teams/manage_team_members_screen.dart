@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
-import '../../providers/group_providers.dart';
 import '../../models/team.dart';
 import '../../models/group_member.dart';
 
@@ -559,7 +558,7 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Change Team Lead'),
-        content: Text('Are you sure you want to make this member the new team lead?'),
+        content: const Text('Are you sure you want to make this member the new team lead?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

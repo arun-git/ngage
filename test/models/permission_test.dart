@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/permission.dart';
-import '../../lib/models/enums.dart';
+import 'package:ngage/models/permission.dart';
+import 'package:ngage/models/enums.dart';
 
 void main() {
   group('Permission Model', () {

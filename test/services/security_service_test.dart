@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/services/security_service.dart';
+import 'package:ngage/services/security_service.dart';
 
 void main() {
   group('SecurityService', () {

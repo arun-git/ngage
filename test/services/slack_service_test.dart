@@ -168,7 +168,7 @@ void main() {
     group('Message Sending', () {
       test('sendMessage sends message successfully', () async {
         const accessToken = 'xoxb-test-token';
-        final message = SlackMessage(
+        const message = SlackMessage(
           channel: 'C123456',
           text: 'Test message',
           messageType: SlackMessageType.general,
@@ -198,7 +198,7 @@ void main() {
 
       test('sendMessage handles failure', () async {
         const accessToken = 'xoxb-test-token';
-        final message = SlackMessage(
+        const message = SlackMessage(
           channel: 'C123456',
           text: 'Test message',
           messageType: SlackMessageType.general,

@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-import '../../lib/models/models.dart';
-import '../../lib/services/event_service.dart';
-import '../../lib/repositories/event_repository.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/services/event_service.dart';
+import 'package:ngage/repositories/event_repository.dart';
 
 import 'event_service_test.mocks.dart';
 

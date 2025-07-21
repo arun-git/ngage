@@ -68,11 +68,15 @@ void main() {
         when(mockUserRepository.getUser(firebaseUser.id))
             .thenAnswer((_) async => null);
         when(mockUserRepository.createUser(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockMemberClaimService.claimMemberProfiles(any))
             .thenAnswer((_) async => claimedMembers);
         when(mockUserRepository.updateUser(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
 
         // Act
         final result = await enhancedAuthService.signInWithEmail('test@example.com', 'password123');
@@ -96,13 +100,17 @@ void main() {
         when(mockUserRepository.getUser(firebaseUser.id))
             .thenAnswer((_) async => null);
         when(mockUserRepository.createUser(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockMemberClaimService.claimMemberProfiles(any))
             .thenAnswer((_) async => []);
         when(mockMemberClaimService.createBasicMemberProfile(any))
             .thenAnswer((_) async => basicMember);
         when(mockUserRepository.updateUser(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
 
         // Act
         final result = await enhancedAuthService.signInWithEmail('test@example.com', 'password123');
@@ -125,7 +133,9 @@ void main() {
         when(mockMemberClaimService.claimMemberProfiles(any))
             .thenAnswer((_) async => claimedMembers);
         when(mockUserRepository.updateUser(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
 
         // Act
         final result = await enhancedAuthService.signInWithEmail('test@example.com', 'password123');
@@ -166,11 +176,15 @@ void main() {
         when(mockUserRepository.getUser(firebaseUser.id))
             .thenAnswer((_) async => null);
         when(mockUserRepository.createUser(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockMemberClaimService.claimMemberProfiles(any))
             .thenAnswer((_) async => claimedMembers);
         when(mockUserRepository.updateUser(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
 
         // Act
         final result = await enhancedAuthService.createUserWithEmailAndPassword('test@example.com', 'password123');

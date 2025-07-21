@@ -249,7 +249,7 @@ class StreaksSection extends ConsumerWidget {
                       Row(
                         children: [
                           if (streak.isActive) ...[
-                            Icon(
+                            const Icon(
                               Icons.local_fire_department,
                               color: Colors.orange,
                               size: 16,
@@ -263,7 +263,7 @@ class StreaksSection extends ConsumerWidget {
                               ),
                             ),
                           ] else ...[
-                            Icon(
+                            const Icon(
                               Icons.pause_circle_outline,
                               color: Colors.grey,
                               size: 16,
@@ -395,7 +395,7 @@ class StreaksSection extends ConsumerWidget {
         LinearProgressIndicator(
           value: progress.clamp(0.0, 1.0),
           backgroundColor: Colors.grey.withOpacity(0.3),
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+          valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
         ),
       ],
     );
@@ -410,7 +410,7 @@ class StreaksSection extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.lightbulb_outline,
                   color: Colors.amber,
                 ),

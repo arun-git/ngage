@@ -148,7 +148,9 @@ void main() {
         when(mockBadgeRepository.getMemberAchievement(memberId))
             .thenThrow(Exception('Member achievement not found'));
         when(mockBadgeRepository.saveMemberAchievement(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
 
         // Act
         final result = await badgeService.getMemberAchievement(memberId);
@@ -197,11 +199,15 @@ void main() {
         when(mockBadgeRepository.getBadge(badgeId))
             .thenAnswer((_) async => badge);
         when(mockBadgeRepository.saveMemberBadge(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockBadgeRepository.getMemberAchievement(memberId))
             .thenAnswer((_) async => achievement);
         when(mockBadgeRepository.saveMemberAchievement(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockNotificationService.sendNotification(
           recipientId: anyNamed('recipientId'),
           type: anyNamed('type'),
@@ -260,7 +266,9 @@ void main() {
         when(mockBadgeRepository.getMemberStreak(memberId, streakType))
             .thenAnswer((_) async => null);
         when(mockBadgeRepository.saveMemberStreak(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockBadgeRepository.getStreakBadges(streakType))
             .thenAnswer((_) async => []);
 
@@ -291,7 +299,9 @@ void main() {
         when(mockBadgeRepository.getMemberStreak(memberId, streakType))
             .thenAnswer((_) async => existingStreak);
         when(mockBadgeRepository.saveMemberStreak(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockBadgeRepository.getStreakBadges(streakType))
             .thenAnswer((_) async => []);
 
@@ -324,7 +334,9 @@ void main() {
         when(mockBadgeRepository.getMemberStreak(memberId, streakType))
             .thenAnswer((_) async => existingStreak);
         when(mockBadgeRepository.saveMemberStreak(any))
-            .thenAnswer((_) async {});
+            .thenAnswer((_) async {
+              return null;
+            });
         when(mockBadgeRepository.getStreakBadges(streakType))
             .thenAnswer((_) async => []);
 
@@ -375,9 +387,13 @@ void main() {
         when(mockBadgeRepository.getMemberBadges(memberId)).thenAnswer((_) async => []);
         when(mockEventRepository.getMemberEvents(memberId)).thenAnswer((_) async => events);
         when(mockBadgeRepository.getBadge('badge_1')).thenAnswer((_) async => badges.first);
-        when(mockBadgeRepository.saveMemberBadge(any)).thenAnswer((_) async {});
+        when(mockBadgeRepository.saveMemberBadge(any)).thenAnswer((_) async {
+          return null;
+        });
         when(mockBadgeRepository.getMemberAchievement(memberId)).thenThrow(Exception('Not found'));
-        when(mockBadgeRepository.saveMemberAchievement(any)).thenAnswer((_) async {});
+        when(mockBadgeRepository.saveMemberAchievement(any)).thenAnswer((_) async {
+          return null;
+        });
         when(mockNotificationService.sendNotification(
           recipientId: anyNamed('recipientId'),
           type: anyNamed('type'),
@@ -432,7 +448,9 @@ void main() {
       test('should create predefined badges if they do not exist', () async {
         // Arrange
         when(mockBadgeRepository.getBadge(any)).thenAnswer((_) async => null);
-        when(mockBadgeRepository.saveBadge(any)).thenAnswer((_) async {});
+        when(mockBadgeRepository.saveBadge(any)).thenAnswer((_) async {
+          return null;
+        });
 
         // Act
         await badgeService.createPredefinedBadges();
@@ -460,7 +478,9 @@ void main() {
             .thenAnswer((_) async => existingBadge);
         when(mockBadgeRepository.getBadge(argThat(isNot('first_event'))))
             .thenAnswer((_) async => null);
-        when(mockBadgeRepository.saveBadge(any)).thenAnswer((_) async {});
+        when(mockBadgeRepository.saveBadge(any)).thenAnswer((_) async {
+          return null;
+        });
 
         // Act
         await badgeService.createPredefinedBadges();

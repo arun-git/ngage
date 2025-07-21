@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/models/models.dart';
+import 'package:ngage/models/models.dart';
 
 void main() {
   group('Notification', () {

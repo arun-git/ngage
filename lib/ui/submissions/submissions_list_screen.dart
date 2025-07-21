@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/submission.dart';
-import '../../models/event.dart';
 import '../../models/enums.dart';
 import '../../providers/submission_providers.dart';
-import '../../providers/event_providers.dart';
 import 'submission_screen.dart';
 import 'widgets/submission_status_indicator.dart';
 import 'widgets/submission_card.dart';
-import 'widgets/deadline_status_widget.dart';
 
 /// Screen that displays a list of submissions for an event
 class SubmissionsListScreen extends ConsumerStatefulWidget {

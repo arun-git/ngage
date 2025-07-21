@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-import '../../../lib/ui/widgets/realtime_post_feed.dart';
-import '../../../lib/ui/widgets/connection_status_widget.dart';
-import '../../../lib/providers/realtime_providers.dart';
-import '../../../lib/services/realtime_service.dart';
-import '../../../lib/models/models.dart';
+import 'package:ngage/ui/widgets/realtime_post_feed.dart';
+import 'package:ngage/ui/widgets/connection_status_widget.dart';
+import 'package:ngage/providers/realtime_providers.dart';
+import 'package:ngage/services/realtime_service.dart';
+import 'package:ngage/models/models.dart';
 
 // Generate mocks
 @GenerateMocks([])
@@ -836,13 +835,13 @@ Leaderboard _createTestLeaderboard(String eventId) {
     id: 'leaderboard1',
     eventId: eventId,
     entries: [
-      LeaderboardEntry(
+      const LeaderboardEntry(
         teamId: 'team1',
         teamName: 'Team Alpha',
         totalScore: 95.5,
         rank: 1,
       ),
-      LeaderboardEntry(
+      const LeaderboardEntry(
         teamId: 'team2',
         teamName: 'Team Beta',
         totalScore: 87.2,

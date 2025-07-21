@@ -4,10 +4,8 @@ import '../services/notification_service.dart';
 import '../repositories/event_repository.dart';
 import '../repositories/submission_repository.dart';
 import '../repositories/member_repository.dart';
-import '../repositories/notification_repository.dart';
 import '../repositories/repository_providers.dart';
 import '../models/event.dart';
-import 'notification_providers.dart';
 
 /// Provider for the notification service
 final notificationServiceProvider = Provider<NotificationService>((ref) {

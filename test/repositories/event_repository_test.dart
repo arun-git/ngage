@@ -1,9 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../lib/models/models.dart';
-import '../../lib/repositories/event_repository.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/repositories/event_repository.dart';
 
 void main() {
   group('EventRepository', () {
@@ -41,7 +40,7 @@ void main() {
         final event = _createTestEvent();
         
         // Create a repository with a null firestore to simulate error
-        final errorRepository = EventRepository(firestore: null as FirebaseFirestore?);
+        final errorRepository = EventRepository(firestore: null);
 
         // Act & Assert
         expect(

@@ -78,10 +78,10 @@ class StreakCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if (streak.lastActivityDate != null) ...[
-                const SizedBox(height: 12),
-                _buildLastActivityInfo(theme, colorScheme),
-              ],
+              ...[
+              const SizedBox(height: 12),
+              _buildLastActivityInfo(theme, colorScheme),
+            ],
             ],
           ),
         ),
@@ -261,7 +261,7 @@ class StreakCard extends StatelessWidget {
     if (streak.lastActivityDate == null) return false;
     
     final now = DateTime.now();
-    final lastActivity = streak.lastActivityDate!;
+    final lastActivity = streak.lastActivityDate;
     final daysSinceLastActivity = now.difference(lastActivity).inDays;
     
     // Consider streak active if last activity was today or yesterday
@@ -272,7 +272,7 @@ class StreakCard extends StatelessWidget {
     if (streak.lastActivityDate == null) return 'Never';
     
     final now = DateTime.now();
-    final lastActivity = streak.lastActivityDate!;
+    final lastActivity = streak.lastActivityDate;
     final difference = now.difference(lastActivity);
     
     if (difference.inDays == 0) {

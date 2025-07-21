@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/models/content_report.dart';
-import '../../lib/models/moderation_action.dart';
-import '../../lib/repositories/content_report_repository.dart';
-import '../../lib/repositories/moderation_action_repository.dart';
-import '../../lib/services/moderation_service.dart';
-import '../../lib/services/notification_service.dart';
-import '../../lib/services/permission_service.dart';
+import 'package:ngage/models/content_report.dart';
+import 'package:ngage/models/moderation_action.dart';
+import 'package:ngage/repositories/content_report_repository.dart';
+import 'package:ngage/repositories/moderation_action_repository.dart';
+import 'package:ngage/services/moderation_service.dart';
+import 'package:ngage/services/notification_service.dart';
+import 'package:ngage/services/permission_service.dart';
 
 @GenerateMocks([
   ContentReportRepository,

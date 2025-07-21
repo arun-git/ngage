@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
-import '../../lib/models/models.dart';
-import '../../lib/services/email_service.dart';
+import 'package:ngage/models/models.dart';
+import 'package:ngage/services/email_service.dart';
 
 void main() {
   group('EmailService', () {
@@ -15,7 +13,7 @@ void main() {
     group('Email Template Processing', () {
       test('should process email template with template data', () {
         // Arrange
-        final settings = EmailIntegrationSettings(
+        const settings = EmailIntegrationSettings(
           smtpHost: 'smtp.example.com',
           smtpPort: 587,
           username: 'user@example.com',
@@ -58,7 +56,7 @@ void main() {
 
       test('should use fallback content when template is not available', () {
         // Arrange
-        final settings = EmailIntegrationSettings(
+        const settings = EmailIntegrationSettings(
           smtpHost: 'smtp.example.com',
           smtpPort: 587,
           username: 'user@example.com',
@@ -90,7 +88,7 @@ void main() {
 
       test('should handle malformed template gracefully', () {
         // Arrange
-        final settings = EmailIntegrationSettings(
+        const settings = EmailIntegrationSettings(
           smtpHost: 'smtp.example.com',
           smtpPort: 587,
           username: 'user@example.com',
@@ -253,7 +251,7 @@ void main() {
 
       test('should convert EmailIntegrationSettings to JSON', () {
         // Arrange
-        final settings = EmailIntegrationSettings(
+        const settings = EmailIntegrationSettings(
           smtpHost: 'smtp.gmail.com',
           smtpPort: 587,
           username: 'user@gmail.com',

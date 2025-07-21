@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/event.dart';
-import '../models/submission.dart';
 import '../models/enums.dart';
 import '../repositories/event_repository.dart';
 import '../repositories/submission_repository.dart';
