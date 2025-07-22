@@ -63,74 +63,80 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Events'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: Column(
-            children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search events...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+      body: Column(
+        children: [
+          // Search bar and create button
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search events...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
                     ),
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
                 ),
-              ),
-              // Tabs
-              TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabs: const [
-                  Tab(text: 'All'),
-                  Tab(text: 'Active'),
-                  Tab(text: 'Scheduled'),
-                  Tab(text: 'Completed'),
-                  Tab(text: 'Draft'),
-                ],
-              ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: _navigateToCreateEvent,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create'),
+                ),
+              ],
+            ),
+          ),
+          // Tabs
+          TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabs: const [
+              Tab(text: 'All'),
+              Tab(text: 'Active'),
+              Tab(text: 'Scheduled'),
+              Tab(text: 'Completed'),
+              Tab(text: 'Draft'),
             ],
           ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildAllEventsTab(),
-          _buildStatusEventsTab(EventStatus.active),
-          _buildStatusEventsTab(EventStatus.scheduled),
-          _buildStatusEventsTab(EventStatus.completed),
-          _buildStatusEventsTab(EventStatus.draft),
+          // Tab content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAllEventsTab(),
+                _buildStatusEventsTab(EventStatus.active),
+                _buildStatusEventsTab(EventStatus.scheduled),
+                _buildStatusEventsTab(EventStatus.completed),
+                _buildStatusEventsTab(EventStatus.draft),
+              ],
+            ),
+          ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToCreateEvent(),
-        child: const Icon(Icons.add),
-      ),
+
     );
   }
 
