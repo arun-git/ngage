@@ -28,6 +28,19 @@ class ScoreRepository {
     return Score.fromJson(data);
   }
 
+  /// Get score by submission and judge
+  Future<Score?> getBySubmissionAndJudge(String submissionId, String judgeId) async {
+    final query = await _collection
+        .where('submissionId', isEqualTo: submissionId)
+        .where('judgeId', isEqualTo: judgeId)
+        .limit(1)
+        .get();
+
+    if (query.docs.isEmpty) return null;
+    
+    return Score.fromJson(query.docs.first.data());
+  }
+
   /// Get scores by submission ID
   Future<List<Score>> getBySubmissionId(String submissionId) async {
     final query = await _collection
@@ -151,10 +164,15 @@ class ScoreRepository {
     
     final totalScore = scores.fold<double>(
       0.0,
-      // ignore: avoid_types_as_parameter_names
-      (sum, score) => sum + score.totalScore,
+      (total, score) => total + (score.totalScore ?? 0.0),
     );
     
     return totalScore / scores.length;
+  }
+
+  /// Check if a judge has scored a submission
+  Future<bool> hasJudgeScored(String submissionId, String judgeId) async {
+    final score = await getBySubmissionAndJudge(submissionId, judgeId);
+    return score != null;
   }
 }

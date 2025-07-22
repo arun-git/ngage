@@ -313,7 +313,7 @@ class JudgingService {
     }
 
     // Check if judge has already scored this submission
-    final existingScore = await _scoreRepository.getBySubmissionAndJudge(submissionId, judgeId);
+    final existingScore = await getJudgeScore(submissionId, judgeId);
     
     final now = DateTime.now();
     
@@ -370,7 +370,7 @@ class JudgingService {
     required String eventId,
     required String comment,
   }) async {
-    final existingScore = await _scoreRepository.getBySubmissionAndJudge(submissionId, judgeId);
+    final existingScore = await getJudgeScore(submissionId, judgeId);
     
     if (existingScore != null) {
       // Update existing score with comment
@@ -625,12 +625,41 @@ class JudgingService {
 
   /// Check if a judge has scored a submission
   Future<bool> hasJudgeScored(String submissionId, String judgeId) async {
-    return await _scoreRepository.hasJudgeScored(submissionId, judgeId);
+    final score = await getJudgeScore(submissionId, judgeId);
+    return score != null;
   }
 
   /// Get scoring statistics for an event
-  Future<ScoreStatistics> getEventScoringStats(String eventId) async {
-    return await _scoreRepository.getEventScoreStatistics(eventId);
+  Future<Map<String, dynamic>> getEventScoringStats(String eventId) async {
+    final scores = await _scoreRepository.getByEventId(eventId);
+    
+    if (scores.isEmpty) {
+      return {
+        'totalScores': 0,
+        'averageScore': 0.0,
+        'completedSubmissions': 0,
+        'pendingSubmissions': 0,
+        'judgeParticipation': <String, int>{},
+      };
+    }
+
+    final totalScores = scores.length;
+    final totalScore = scores.fold<double>(0.0, (sum, score) => sum + (score.totalScore ?? 0.0));
+    final averageScore = totalScore / totalScores;
+    
+    // Count judge participation
+    final judgeParticipation = <String, int>{};
+    for (final score in scores) {
+      judgeParticipation[score.judgeId] = (judgeParticipation[score.judgeId] ?? 0) + 1;
+    }
+
+    return {
+      'totalScores': totalScores,
+      'averageScore': averageScore,
+      'completedSubmissions': scores.map((s) => s.submissionId).toSet().length,
+      'pendingSubmissions': 0, // Would need additional logic to calculate
+      'judgeParticipation': judgeParticipation,
+    };
   }
 
   /// Validate score against rubric

@@ -72,7 +72,7 @@ final hasJudgeScoredProvider = FutureProvider.family<bool, (String, String)>((re
 });
 
 /// Provider for getting event scoring statistics
-final eventScoringStatsProvider = FutureProvider.family<ScoreStatistics, String>((ref, eventId) async {
+final eventScoringStatsProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, eventId) async {
   final judgingService = ref.read(judgingServiceProvider);
   return await judgingService.getEventScoringStats(eventId);
 });
