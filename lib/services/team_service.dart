@@ -177,6 +177,49 @@ class TeamService {
     }
   }
 
+  /// Add multiple members to a team (bulk operation)
+  Future<Team> addMembersToTeam({
+    required String teamId,
+    required List<String> memberIds,
+  }) async {
+    try {
+      final team = await getTeam(teamId);
+      if (team == null) {
+        throw ArgumentError('Team not found: $teamId');
+      }
+
+      // Validate all members are part of the group
+      for (final memberId in memberIds) {
+        await _validateGroupMembership(team.groupId, memberId);
+      }
+
+      // Filter out members already in team
+      final newMemberIds = memberIds.where((id) => !team.hasMember(id)).toList();
+      
+      if (newMemberIds.isEmpty) {
+        throw ArgumentError('All specified members are already in this team');
+      }
+
+      // Check team capacity
+      final totalNewMembers = team.memberCount + newMemberIds.length;
+      if (team.maxMembers != null && totalNewMembers > team.maxMembers!) {
+        throw StateError('Adding ${newMemberIds.length} members would exceed team capacity (${team.maxMembers} max)');
+      }
+
+      // Add all new members
+      var updatedTeam = team;
+      for (final memberId in newMemberIds) {
+        updatedTeam = updatedTeam.addMember(memberId);
+      }
+      updatedTeam = updatedTeam.copyWith(updatedAt: DateTime.now());
+      
+      await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
+      return updatedTeam;
+    } catch (e) {
+      throw Exception('Failed to add members to team: $e');
+    }
+  }
+
   /// Remove a member from a team
   Future<Team> removeMemberFromTeam({
     required String teamId,
@@ -204,6 +247,46 @@ class TeamService {
       return updatedTeam;
     } catch (e) {
       throw Exception('Failed to remove member from team: $e');
+    }
+  }
+
+  /// Remove multiple members from a team (bulk operation)
+  Future<Team> removeMembersFromTeam({
+    required String teamId,
+    required List<String> memberIds,
+  }) async {
+    try {
+      final team = await getTeam(teamId);
+      if (team == null) {
+        throw ArgumentError('Team not found: $teamId');
+      }
+
+      // Filter out members not in team and team lead
+      final membersToRemove = memberIds
+          .where((id) => team.hasMember(id) && !team.isTeamLead(id))
+          .toList();
+      
+      if (membersToRemove.isEmpty) {
+        throw ArgumentError('No valid members to remove (members must be in team and not team lead)');
+      }
+
+      // Check if trying to remove team lead
+      final teamLeadInList = memberIds.contains(team.teamLeadId);
+      if (teamLeadInList) {
+        throw StateError('Cannot remove team lead. Assign new team lead first.');
+      }
+
+      // Remove all specified members
+      var updatedTeam = team;
+      for (final memberId in membersToRemove) {
+        updatedTeam = updatedTeam.removeMember(memberId);
+      }
+      updatedTeam = updatedTeam.copyWith(updatedAt: DateTime.now());
+      
+      await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
+      return updatedTeam;
+    } catch (e) {
+      throw Exception('Failed to remove members from team: $e');
     }
   }
 
@@ -356,6 +439,90 @@ class TeamService {
       };
     } catch (e) {
       throw Exception('Failed to get team stats: $e');
+    }
+  }
+
+  /// Get detailed team member information with their group roles
+  Future<List<Map<String, dynamic>>> getTeamMemberDetails(String teamId) async {
+    try {
+      final team = await getTeam(teamId);
+      if (team == null) {
+        throw ArgumentError('Team not found: $teamId');
+      }
+
+      final memberDetails = <Map<String, dynamic>>[];
+      
+      for (final memberId in team.memberIds) {
+        // Get group membership details
+        final groupMembership = await _groupMembersCollection
+            .where('groupId', isEqualTo: team.groupId)
+            .where('memberId', isEqualTo: memberId)
+            .limit(1)
+            .get();
+
+        if (groupMembership.docs.isNotEmpty) {
+          final memberData = groupMembership.docs.first.data() as Map<String, dynamic>;
+          memberDetails.add({
+            'memberId': memberId,
+            'isTeamLead': team.isTeamLead(memberId),
+            'groupRole': memberData['role'],
+            'joinedAt': memberData['joinedAt'],
+            'memberData': memberData,
+          });
+        }
+      }
+
+      // Sort by team lead first, then by join date
+      memberDetails.sort((a, b) {
+        if (a['isTeamLead'] && !b['isTeamLead']) return -1;
+        if (!a['isTeamLead'] && b['isTeamLead']) return 1;
+        
+        final aJoined = DateTime.parse(a['joinedAt'] as String);
+        final bJoined = DateTime.parse(b['joinedAt'] as String);
+        return aJoined.compareTo(bJoined);
+      });
+
+      return memberDetails;
+    } catch (e) {
+      throw Exception('Failed to get team member details: $e');
+    }
+  }
+
+  /// Transfer team leadership with validation
+  Future<Team> transferTeamLeadership({
+    required String teamId,
+    required String newTeamLeadId,
+    String? reason,
+  }) async {
+    try {
+      final team = await getTeam(teamId);
+      if (team == null) {
+        throw ArgumentError('Team not found: $teamId');
+      }
+
+      // Validate new team lead is a group member
+      await _validateGroupMembership(team.groupId, newTeamLeadId);
+
+      // Validate new team lead is a team member
+      if (!team.hasMember(newTeamLeadId)) {
+        throw ArgumentError('New team lead must be a member of the team');
+      }
+
+      // Cannot transfer to current team lead
+      if (team.isTeamLead(newTeamLeadId)) {
+        throw ArgumentError('Member is already the team lead');
+      }
+
+      final updatedTeam = team.changeTeamLead(newTeamLeadId).copyWith(updatedAt: DateTime.now());
+      
+      await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
+      
+      // TODO: Add audit log for leadership transfer
+      // await _logLeadershipTransfer(teamId, team.teamLeadId, newTeamLeadId, reason);
+      
+      return updatedTeam;
+    } catch (e) {
+      throw Exception('Failed to transfer team leadership: $e');
     }
   }
 

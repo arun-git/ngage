@@ -39,7 +39,7 @@ Ngage is a versatile engagement platform designed to facilitate team-based compe
 1. WHEN creating a group THEN the system SHALL allow specification of group type (corporate, educational, community, social) and basic information
 2. WHEN managing group membership THEN the system SHALL support roles including admin, judge, team_lead, and member
 3. WHEN creating teams within groups THEN the system SHALL store member_ids directly in the team record and support team leads
-4. WHEN a member joins multiple groups THEN the system SHALL allow different member profiles and roles across groups
+4. WHEN a member joins multiple groups THEN the system SHALL allow same member profile to have different roles across groups
 5. WHEN managing teams THEN the system SHALL support optional maximum member limits and team categorization
 6. WHEN viewing group details THEN the system SHALL display group-specific leaderboard and events tabs instead of overview and members tabs
 

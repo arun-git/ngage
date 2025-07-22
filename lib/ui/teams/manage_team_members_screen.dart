@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
 import '../../models/team.dart';
 import '../../models/group_member.dart';
+import 'bulk_member_assignment_screen.dart';
+import 'team_lead_management_screen.dart';
 
 class ManageTeamMembersScreen extends ConsumerStatefulWidget {
   final String teamId;
@@ -66,10 +68,34 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
               icon: const Icon(Icons.close),
             ),
           ] else ...[
-            IconButton(
-              onPressed: _enterSelectionMode,
-              icon: const Icon(Icons.edit),
-              tooltip: 'Edit Members',
+            PopupMenuButton<String>(
+              onSelected: (value) => _handleMenuAction(value),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'bulk_add',
+                  child: ListTile(
+                    leading: Icon(Icons.group_add),
+                    title: Text('Bulk Add Members'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'manage_lead',
+                  child: ListTile(
+                    leading: Icon(Icons.star),
+                    title: Text('Manage Team Lead'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'edit_members',
+                  child: ListTile(
+                    leading: Icon(Icons.edit),
+                    title: Text('Edit Members'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
           ],
         ],
@@ -547,10 +573,68 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
   }
 
   void _removeSelectedMembers() {
-    for (final memberId in _selectedMembers) {
-      ref.read(teamManagementProvider.notifier).removeMemberFromTeam(widget.teamId, memberId);
+    if (_selectedMembers.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Members'),
+        content: Text(
+          'Are you sure you want to remove ${_selectedMembers.length} member${_selectedMembers.length == 1 ? '' : 's'} from this team?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ref.read(teamManagementProvider.notifier).removeMembersFromTeam(
+                widget.teamId,
+                _selectedMembers.toList(),
+              );
+              _exitSelectionMode();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleMenuAction(String action) {
+    switch (action) {
+      case 'bulk_add':
+        _navigateToBulkAdd();
+        break;
+      case 'manage_lead':
+        _navigateToManageLead();
+        break;
+      case 'edit_members':
+        _enterSelectionMode();
+        break;
     }
-    _exitSelectionMode();
+  }
+
+  void _navigateToBulkAdd() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BulkMemberAssignmentScreen(teamId: widget.teamId),
+      ),
+    );
+  }
+
+  void _navigateToManageLead() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TeamLeadManagementScreen(teamId: widget.teamId),
+      ),
+    );
   }
 
   void _changeTeamLead(String newTeamLeadId) {

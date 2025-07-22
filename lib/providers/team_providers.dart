@@ -112,6 +112,18 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     }
   }
 
+  Future<void> addMembersToTeam(String teamId, List<String> memberIds) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      await _teamService.addMembersToTeam(teamId: teamId, memberIds: memberIds);
+      final count = memberIds.length;
+      state = AsyncValue.data('$count member${count == 1 ? '' : 's'} added successfully');
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
   Future<void> removeMemberFromTeam(String teamId, String memberId) async {
     state = const AsyncValue.loading();
     
@@ -123,12 +135,39 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     }
   }
 
+  Future<void> removeMembersFromTeam(String teamId, List<String> memberIds) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      await _teamService.removeMembersFromTeam(teamId: teamId, memberIds: memberIds);
+      final count = memberIds.length;
+      state = AsyncValue.data('$count member${count == 1 ? '' : 's'} removed successfully');
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
   Future<void> changeTeamLead(String teamId, String newTeamLeadId) async {
     state = const AsyncValue.loading();
     
     try {
       await _teamService.changeTeamLead(teamId: teamId, newTeamLeadId: newTeamLeadId);
       state = const AsyncValue.data('Team lead changed successfully');
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<void> transferTeamLeadership(String teamId, String newTeamLeadId, {String? reason}) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      await _teamService.transferTeamLeadership(
+        teamId: teamId, 
+        newTeamLeadId: newTeamLeadId,
+        reason: reason,
+      );
+      state = const AsyncValue.data('Team leadership transferred successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -187,4 +226,10 @@ final teamManagementProvider = StateNotifierProvider<TeamManagementNotifier, Asy
 final canAddMemberProvider = FutureProvider.family<bool, ({String teamId, String memberId})>((ref, params) {
   final teamService = ref.watch(teamServiceProvider);
   return teamService.canAddMemberToTeam(params.teamId, params.memberId);
+});
+
+/// Provider for detailed team member information
+final teamMemberDetailsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, teamId) {
+  final teamService = ref.watch(teamServiceProvider);
+  return teamService.getTeamMemberDetails(teamId);
 });

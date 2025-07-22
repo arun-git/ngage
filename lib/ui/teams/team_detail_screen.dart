@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
 import '../../models/team.dart';
 import 'manage_team_members_screen.dart';
+import 'team_settings_screen.dart';
+import 'team_analytics_widget.dart';
 
 class TeamDetailScreen extends ConsumerWidget {
   final String teamId;
@@ -130,7 +132,7 @@ class TeamDetailScreen extends ConsumerWidget {
           children: [
             _buildTeamHeader(context, team),
             const SizedBox(height: 16),
-            _buildTeamStats(context, teamStatsAsync),
+            TeamAnalyticsWidget(teamId: team.id),
             const SizedBox(height: 16),
             _buildTeamMembers(context, ref, team),
             const SizedBox(height: 16),
@@ -235,94 +237,7 @@ class TeamDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTeamStats(BuildContext context, AsyncValue<Map<String, dynamic>> teamStatsAsync) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Team Statistics',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            teamStatsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Text('Error loading stats: $error'),
-              data: (stats) => Row(
-                children: [
-                  Expanded(
-                    child: _buildStatItem(
-                      context,
-                      'Members',
-                      '${stats['memberCount']}',
-                      Icons.people,
-                    ),
-                  ),
-                  if (stats['maxMembers'] != null) ...[
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatItem(
-                        context,
-                        'Max Members',
-                        '${stats['maxMembers']}',
-                        Icons.group,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatItem(
-                      context,
-                      'Status',
-                      stats['isActive'] ? 'Active' : 'Inactive',
-                      stats['isActive'] ? Icons.check_circle : Icons.cancel,
-                      color: stats['isActive'] ? Colors.green : Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon, {Color? color}) {
-    final itemColor = color ?? Theme.of(context).primaryColor;
-    
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: itemColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: itemColor.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: itemColor, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: itemColor,
-            ),
-          ),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: itemColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTeamMembers(BuildContext context, WidgetRef ref, Team team) {
     return Card(

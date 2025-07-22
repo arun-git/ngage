@@ -4,9 +4,11 @@ import '../../models/models.dart';
 import '../../providers/group_providers.dart';
 import '../../providers/event_providers.dart';
 import '../../ui/widgets/selectable_error_message.dart';
-import '../../ui/widgets/realtime_post_feed.dart';
+
 import '../../ui/leaderboard/leaderboard_screen.dart';
+
 import '../../ui/events/events_list_screen.dart';
+import '../../ui/teams/teams_list_screen.dart';
 import '../../utils/firebase_error_handler.dart';
 import 'group_settings_screen.dart';
 import 'manage_members_screen.dart';
@@ -33,7 +35,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -90,6 +92,15 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                                 ),
                               );
                               break;
+                            case 'manage_teams':
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => TeamsListScreen(
+                                    groupId: widget.groupId,
+                                  ),
+                                ),
+                              );
+                              break;
                           }
                         },
                         itemBuilder: (context) => [
@@ -109,6 +120,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                               contentPadding: EdgeInsets.zero,
                             ),
                           ),
+                          const PopupMenuItem(
+                            value: 'manage_teams',
+                            child: ListTile(
+                              leading: Icon(Icons.groups),
+                              title: Text('Manage Teams'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
                         ],
                       )
                     : const SizedBox.shrink(),
@@ -121,6 +140,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               tabs: const [
                 Tab(text: 'Leaderboard'),
                 Tab(text: 'Events'),
+                Tab(text: 'Teams'),
               ],
             ),
           ),
@@ -132,6 +152,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 memberId: widget.memberId,
               ),
               _GroupEventsTab(
+                groupId: widget.groupId,
+                memberId: widget.memberId,
+              ),
+              _GroupTeamsTab(
                 groupId: widget.groupId,
                 memberId: widget.memberId,
               ),
@@ -319,11 +343,38 @@ class _GroupLeaderboardTab extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            SizedBox(
+            Container(
               height: 200,
-              child: RealtimeLeaderboard(
-                eventId: event.id,
-                showConnectionStatus: false,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.leaderboard,
+                      size: 48,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Leaderboard for ${event.title}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tap "View Full" to see complete results',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -346,6 +397,22 @@ class _GroupEventsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return EventsListScreen(groupId: groupId);
+  }
+}
+
+/// Tab showing group teams
+class _GroupTeamsTab extends ConsumerWidget {
+  final String groupId;
+  final String memberId;
+
+  const _GroupTeamsTab({
+    required this.groupId,
+    required this.memberId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TeamsListScreen(groupId: groupId);
   }
 }
 
