@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
-import '../../providers/member_providers.dart';
+import '../../providers/auth_providers.dart';
 
 /// Screen for creating a new event
 class CreateEventScreen extends ConsumerStatefulWidget {
@@ -446,11 +446,20 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
       return;
     }
 
-    final currentMemberAsync = ref.read(activeMemberProvider);
-    final currentMember = currentMemberAsync.value;
+    // Check if user is authenticated first
+    final authState = ref.read(authStateProvider);
+    if (!authState.isAuthenticated || authState.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to create events')),
+      );
+      return;
+    }
+
+    // Get current member from auth state
+    final currentMember = authState.currentMember;
     if (currentMember == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No current member found')),
+        const SnackBar(content: Text('No member profile found. Please create a member profile first.')),
       );
       return;
     }

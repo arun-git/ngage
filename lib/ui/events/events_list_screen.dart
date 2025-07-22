@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
+import '../../utils/firebase_error_handler.dart';
+import '../widgets/selectable_error_message.dart';
 import 'event_card.dart';
 import 'create_event_screen.dart';
 import 'event_detail_screen.dart';
@@ -242,7 +244,17 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          SelectableErrorMessage(
+            message: error.toString(),
+            title: 'Error loading events',
+            backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString())
+                ? Colors.orange
+                : Colors.red,
+            onRetry: () {
+              ref.invalidate(groupEventsStreamProvider(widget.groupId));
+            },
+          ),
+          /* Icon(
             Icons.error_outline,
             size: 64,
             color: Theme.of(context).colorScheme.error,
@@ -267,7 +279,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
             },
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),
-          ),
+          ),*/
         ],
       ),
     );
