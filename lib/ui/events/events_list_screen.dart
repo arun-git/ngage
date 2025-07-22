@@ -159,11 +159,14 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
       return _buildSearchResults();
     }
 
-    final params = EventsByStatusParams(groupId: widget.groupId, status: status);
-    final eventsAsync = ref.watch(eventsByStatusProvider(params));
+    final eventsAsync = ref.watch(groupEventsStreamProvider(widget.groupId));
     
     return eventsAsync.when(
-      data: (events) => _buildEventsList(events),
+      data: (allEvents) {
+        // Filter events by status
+        final filteredEvents = allEvents.where((event) => event.status == status).toList();
+        return _buildEventsList(filteredEvents);
+      },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => _buildErrorWidget(error),
     );
@@ -187,7 +190,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(groupEventsStreamProvider(widget.groupId));
+        _refreshAllProviders();
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -291,12 +294,17 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
     );
   }
 
-  void _navigateToCreateEvent() {
-    Navigator.of(context).push(
+  void _navigateToCreateEvent() async {
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CreateEventScreen(groupId: widget.groupId),
       ),
     );
+    
+    // If an event was created, refresh all providers
+    if (result == true) {
+      _refreshAllProviders();
+    }
   }
 
   void _navigateToEventDetail(Event event) {
@@ -305,5 +313,18 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
         builder: (context) => EventDetailScreen(eventId: event.id),
       ),
     );
+  }
+
+  void _refreshAllProviders() {
+    // Invalidate the main group events stream (this will refresh all tabs)
+    ref.invalidate(groupEventsStreamProvider(widget.groupId));
+    
+    // If there's a search query, also refresh search results
+    if (_searchQuery.isNotEmpty) {
+      ref.invalidate(searchEventsProvider(SearchEventsParams(
+        groupId: widget.groupId, 
+        searchTerm: _searchQuery,
+      )));
+    }
   }
 }
