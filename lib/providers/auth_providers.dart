@@ -1,71 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart' as app_user;
 import '../models/member.dart';
+import '../models/auth_state.dart';
 import '../services/enhanced_auth_service.dart';
+import '../services/remember_me_service.dart';
 import '../repositories/user_repository.dart';
 import '../repositories/member_repository.dart';
 import '../repositories/repository_providers.dart';
 
-/// Authentication state enum
-enum AuthState {
-  initial,
-  loading,
-  authenticated,
-  unauthenticated,
-  error,
-}
-
-/// Authentication state data
-class AuthStateData {
-  final AuthState state;
-  final app_user.User? user;
-  final List<Member>? memberProfiles;
-  final Member? currentMember;
-  final String? errorMessage;
-
-  const AuthStateData({
-    required this.state,
-    this.user,
-    this.memberProfiles,
-    this.currentMember,
-    this.errorMessage,
-  });
-
-  AuthStateData copyWith({
-    AuthState? state,
-    app_user.User? user,
-    List<Member>? memberProfiles,
-    Member? currentMember,
-    String? errorMessage,
-  }) {
-    return AuthStateData(
-      state: state ?? this.state,
-      user: user ?? this.user,
-      memberProfiles: memberProfiles ?? this.memberProfiles,
-      currentMember: currentMember ?? this.currentMember,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
-
-  bool get isAuthenticated => state == AuthState.authenticated && user != null;
-  bool get isLoading => state == AuthState.loading;
-  bool get hasError => state == AuthState.error;
-}
+// Using AuthenticationState from models/auth_state.dart
 
 /// Authentication state notifier
-class AuthStateNotifier extends StateNotifier<AuthStateData> {
+class AuthStateNotifier extends StateNotifier<AuthenticationState> {
   final EnhancedAuthService _enhancedAuthService;
   final UserRepository _userRepository;
   final MemberRepository _memberRepository;
+  final RememberMeService _rememberMeService;
 
   AuthStateNotifier({
     required EnhancedAuthService enhancedAuthService,
     required UserRepository userRepository,
     required MemberRepository memberRepository,
+    required RememberMeService rememberMeService,
   })  : _enhancedAuthService = enhancedAuthService,
         _userRepository = userRepository,
         _memberRepository = memberRepository,
-        super(const AuthStateData(state: AuthState.initial)) {
+        _rememberMeService = rememberMeService,
+        super(const AuthenticationState(status: AuthStatus.initial)) {
     _initializeAuthState();
   }
 
@@ -75,15 +36,32 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
       if (user != null) {
         await _handleUserSignedIn(user);
       } else {
-        _handleUserSignedOut();
+        await _handleUserSignedOut();
       }
     });
+    
+    // Check for remember me token on startup
+    _checkRememberMeToken();
+  }
+
+  /// Check for remember me token and auto-authenticate if valid
+  Future<void> _checkRememberMeToken() async {
+    try {
+      final token = await _rememberMeService.getPersistentToken();
+      if (token != null && token.isValid) {
+        // Token exists and is valid, but we still need Firebase to authenticate
+        // The actual authentication will happen through Firebase Auth state changes
+        await _rememberMeService.refreshToken();
+      }
+    } catch (e) {
+      // If there's an error with remember me token, just continue normally
+    }
   }
 
   /// Handle user signed in
   Future<void> _handleUserSignedIn(app_user.User user) async {
     try {
-      state = state.copyWith(state: AuthState.loading);
+      state = state.copyWith(status: AuthStatus.loading, isLoading: true);
 
       // Get user's member profiles
       final memberProfiles = await _memberRepository.getUserMembers(user.id);
@@ -96,67 +74,83 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
         currentMember = memberProfiles.first;
       }
 
-      state = AuthStateData(
-        state: AuthState.authenticated,
+      state = AuthenticationState(
+        status: AuthStatus.authenticated,
         user: user,
         memberProfiles: memberProfiles,
         currentMember: currentMember,
+        isLoading: false,
       );
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: 'Failed to load user data: $e',
+        isLoading: false,
       );
     }
   }
 
   /// Handle user signed out
-  void _handleUserSignedOut() {
-    state = const AuthStateData(state: AuthState.unauthenticated);
+  Future<void> _handleUserSignedOut() async {
+    // Clear remember me token on sign out
+    await _rememberMeService.clearPersistentToken();
+    state = const AuthenticationState(status: AuthStatus.unauthenticated);
   }
 
   /// Sign in with email and password
-  Future<void> signInWithEmail(String email, String password) async {
+  Future<void> signInWithEmail(String email, String password, {bool rememberMe = false}) async {
     try {
-      state = state.copyWith(state: AuthState.loading);
+      state = state.copyWith(status: AuthStatus.loading, isLoading: true);
       
       final result = await _enhancedAuthService.signInWithEmail(email, password);
       
-      // State will be updated by the auth state changes listener
-      // But we can update member profiles immediately if they were claimed
-      if (result.claimedMembers.isNotEmpty) {
-        state = state.copyWith(
-          memberProfiles: result.claimedMembers,
-          currentMember: result.claimedMembers.first,
-        );
+      // Store remember me token if requested
+      if (rememberMe) {
+        await _rememberMeService.storePersistentToken(result.user.id);
       }
+      
+      // Update state immediately with authentication success
+      state = AuthenticationState(
+        status: AuthStatus.authenticated,
+        user: result.user,
+        memberProfiles: result.claimedMembers,
+        currentMember: result.claimedMembers.isNotEmpty ? result.claimedMembers.first : null,
+        isLoading: false,
+      );
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: e.toString(),
+        isLoading: false,
       );
     }
   }
 
   /// Create account with email and password
-  Future<void> createUserWithEmailAndPassword(String email, String password) async {
+  Future<void> createUserWithEmailAndPassword(String email, String password, {bool rememberMe = false}) async {
     try {
-      state = state.copyWith(state: AuthState.loading);
+      state = state.copyWith(status: AuthStatus.loading, isLoading: true);
       
       final result = await _enhancedAuthService.createUserWithEmailAndPassword(email, password);
       
-      // State will be updated by the auth state changes listener
-      // But we can update member profiles immediately if they were claimed
-      if (result.claimedMembers.isNotEmpty) {
-        state = state.copyWith(
-          memberProfiles: result.claimedMembers,
-          currentMember: result.claimedMembers.first,
-        );
+      // Store remember me token if requested
+      if (rememberMe) {
+        await _rememberMeService.storePersistentToken(result.user.id);
       }
+      
+      // Update state immediately with authentication success
+      state = AuthenticationState(
+        status: AuthStatus.authenticated,
+        user: result.user,
+        memberProfiles: result.claimedMembers,
+        currentMember: result.claimedMembers.isNotEmpty ? result.claimedMembers.first : null,
+        isLoading: false,
+      );
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: e.toString(),
+        isLoading: false,
       );
     }
   }
@@ -164,7 +158,7 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
   /// Sign in with phone number
   Future<void> signInWithPhone(String phone, String verificationCode) async {
     try {
-      state = state.copyWith(state: AuthState.loading);
+      state = state.copyWith(status: AuthStatus.loading, isLoading: true);
       
       final result = await _enhancedAuthService.signInWithPhone(phone, verificationCode);
       
@@ -172,12 +166,14 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
         state = state.copyWith(
           memberProfiles: result.claimedMembers,
           currentMember: result.claimedMembers.first,
+          isLoading: false,
         );
       }
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: e.toString(),
+        isLoading: false,
       );
     }
   }
@@ -185,7 +181,7 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
   /// Sign in with Google
   Future<void> signInWithGoogle() async {
     try {
-      state = state.copyWith(state: AuthState.loading);
+      state = state.copyWith(status: AuthStatus.loading, isLoading: true);
       
       final result = await _enhancedAuthService.signInWithGoogle();
       
@@ -193,12 +189,14 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
         state = state.copyWith(
           memberProfiles: result.claimedMembers,
           currentMember: result.claimedMembers.first,
+          isLoading: false,
         );
       }
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: e.toString(),
+        isLoading: false,
       );
     }
   }
@@ -206,7 +204,7 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
   /// Sign in with Slack
   Future<void> signInWithSlack(String code) async {
     try {
-      state = state.copyWith(state: AuthState.loading);
+      state = state.copyWith(status: AuthStatus.loading, isLoading: true);
       
       final result = await _enhancedAuthService.signInWithSlack(code);
       
@@ -214,12 +212,14 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
         state = state.copyWith(
           memberProfiles: result.claimedMembers,
           currentMember: result.claimedMembers.first,
+          isLoading: false,
         );
       }
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: e.toString(),
+        isLoading: false,
       );
     }
   }
@@ -230,9 +230,10 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
       await _enhancedAuthService.signOut();
       // State will be updated by the auth state changes listener
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: 'Sign out failed: $e',
+        isLoading: false,
       );
     }
   }
@@ -240,11 +241,17 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
   /// Send password reset email
   Future<void> sendPasswordResetEmail(String email) async {
     try {
+      state = state.copyWith(status: AuthStatus.loading, isLoading: true);
       await _enhancedAuthService.sendPasswordResetEmail(email);
+      state = state.copyWith(
+        status: AuthStatus.passwordResetSent,
+        isLoading: false,
+      );
     } catch (e) {
-      state = AuthStateData(
-        state: AuthState.error,
+      state = AuthenticationState(
+        status: AuthStatus.error,
         errorMessage: 'Password reset failed: $e',
+        isLoading: false,
       );
     }
   }
@@ -272,7 +279,7 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
       );
     } catch (e) {
       state = state.copyWith(
-        state: AuthState.error,
+        status: AuthStatus.error,
         errorMessage: 'Failed to switch member profile: $e',
       );
     }
@@ -299,7 +306,7 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
   void clearError() {
     if (state.hasError) {
       state = state.copyWith(
-        state: state.user != null ? AuthState.authenticated : AuthState.unauthenticated,
+        status: state.user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
         errorMessage: null,
       );
     }
@@ -307,15 +314,17 @@ class AuthStateNotifier extends StateNotifier<AuthStateData> {
 }
 
 /// Provider for authentication state
-final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthStateData>((ref) {
+final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthenticationState>((ref) {
   final enhancedAuthService = ref.watch(enhancedAuthServiceProvider);
   final userRepository = ref.watch(userRepositoryProvider);
   final memberRepository = ref.watch(memberRepositoryProvider);
+  final rememberMeService = ref.watch(rememberMeServiceProvider);
 
   return AuthStateNotifier(
     enhancedAuthService: enhancedAuthService,
     userRepository: userRepository,
     memberRepository: memberRepository,
+    rememberMeService: rememberMeService,
   );
 });
 

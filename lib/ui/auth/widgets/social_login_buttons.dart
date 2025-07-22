@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_providers.dart';
 import '../../../services/auth_config_service.dart';
 import '../../../services/slack_oauth_service.dart';
+import '../../../services/teams_oauth_service.dart';
 
 class SocialLoginButtons extends ConsumerWidget {
   final bool isEnabled;
@@ -17,6 +18,17 @@ class SocialLoginButtons extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Phone Sign-In button
+        _SocialLoginButton(
+          onPressed: isEnabled ? () => _handlePhoneSignIn(context, ref) : null,
+          icon: Icons.phone,
+          label: 'Continue with phone',
+          backgroundColor: Colors.white,
+          textColor: Colors.black87,
+          borderColor: Colors.grey[300],
+        ),
+        const SizedBox(height: 12),
+
         // Google Sign-In button
         _SocialLoginButton(
           onPressed: isEnabled ? () => _handleGoogleSignIn(ref) : null,
@@ -36,12 +48,36 @@ class SocialLoginButtons extends ConsumerWidget {
           backgroundColor: const Color(0xFF4A154B),
           textColor: Colors.white,
         ),
+        const SizedBox(height: 12),
+
+        // Microsoft Teams Sign-In button
+        _SocialLoginButton(
+          onPressed: isEnabled ? () => _handleTeamsSignIn(context, ref) : null,
+          icon: Icons.groups,
+          label: 'Continue with Teams',
+          backgroundColor: const Color(0xFF6264A7),
+          textColor: Colors.white,
+        ),
       ],
     );
   }
 
+  void _handlePhoneSignIn(BuildContext context, WidgetRef ref) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Phone sign-in not implemented yet'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
   void _handleGoogleSignIn(WidgetRef ref) {
-    ref.read(authStateProvider.notifier).signInWithGoogle();
+    try {
+      ref.read(authStateProvider.notifier).signInWithGoogle();
+    } catch (e) {
+      // Handle Google Sign-In configuration error gracefully
+      // This will be caught by the auth provider and shown as an error
+    }
   }
 
   void _handleSlackSignIn(BuildContext context, WidgetRef ref) {
@@ -54,6 +90,35 @@ class SocialLoginButtons extends ConsumerWidget {
 
     final slackOAuthService = SlackOAuthService(slackConfig);
     _launchSlackOAuth(context, ref, slackOAuthService);
+  }
+
+  void _handleTeamsSignIn(BuildContext context, WidgetRef ref) {
+    // For demo purposes, show configuration dialog
+    // In production, you would get this from environment variables
+    _showTeamsConfigurationDialog(context);
+  }
+
+  void _showTeamsConfigurationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Microsoft Teams OAuth Configuration'),
+        content: const Text(
+          'Microsoft Teams OAuth is not properly configured. Please set up your Teams app '
+          'credentials in the environment variables:\n\n'
+          '• TEAMS_CLIENT_ID\n'
+          '• TEAMS_TENANT_ID\n'
+          '• TEAMS_REDIRECT_URI\n\n'
+          'Contact your administrator for assistance.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSlackConfigurationDialog(BuildContext context) {
@@ -148,29 +213,31 @@ class _SocialLoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 48,
-      child: ElevatedButton(
+      child: OutlinedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
+        style: OutlinedButton.styleFrom(
           backgroundColor: backgroundColor,
           foregroundColor: textColor,
-          elevation: 1,
+          side: BorderSide(
+            color: borderColor ?? Colors.grey[300]!,
+            width: 1,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: borderColor != null
-                ? BorderSide(color: borderColor!)
-                : BorderSide.none,
           ),
+          elevation: 0,
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            const SizedBox(width: 8),
             Icon(icon, size: 20),
             const SizedBox(width: 12),
             Text(
               label,
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],

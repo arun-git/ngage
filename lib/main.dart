@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'providers/auth_providers.dart';
+import 'models/auth_state.dart';
 import 'ui/auth/login_screen.dart';
 import 'ui/widgets/platform_navigation.dart';
 import 'ui/widgets/selectable_error_message.dart';
@@ -71,16 +72,20 @@ class AuthWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     
-    switch (authState.state) {
-      case AuthState.initial:
-      case AuthState.loading:
+    switch (authState.status) {
+      case AuthStatus.initial:
+      case AuthStatus.loading:
         return const LoadingScreen();
-      case AuthState.authenticated:
+      case AuthStatus.authenticated:
         return const HomePage();
-      case AuthState.unauthenticated:
+      case AuthStatus.unauthenticated:
         return const LoginScreen();
-      case AuthState.error:
+      case AuthStatus.error:
         return ErrorScreen(message: authState.errorMessage ?? 'Unknown error');
+      case AuthStatus.emailEntered:
+      case AuthStatus.phoneVerificationSent:
+      case AuthStatus.passwordResetSent:
+        return const LoginScreen(); // These will be handled by the login flow
     }
   }
 }

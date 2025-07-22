@@ -66,7 +66,7 @@ abstract class AuthService {
 /// Firebase authentication service implementation
 class FirebaseAuthService implements AuthService {
   final firebase_auth.FirebaseAuth _firebaseAuth;
-  final GoogleSignIn _googleSignIn;
+  final GoogleSignIn? _googleSignIn;
   
   // Store verification ID for phone authentication
   String? _verificationId;
@@ -75,7 +75,7 @@ class FirebaseAuthService implements AuthService {
     firebase_auth.FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
   })  : _firebaseAuth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignIn = googleSignIn; // Don't initialize by default to avoid config errors
 
   @override
   Future<app_user.User> signInWithEmail(String email, String password) async {
@@ -211,8 +211,15 @@ class FirebaseAuthService implements AuthService {
   @override
   Future<app_user.User> signInWithGoogle() async {
     try {
+      if (_googleSignIn == null) {
+        throw const AuthenticationException(
+          'Google Sign-In is not configured. Please configure Google Sign-In client ID.',
+          AuthErrorType.operationNotAllowed,
+        );
+      }
+
       // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn!.signIn();
       
       if (googleUser == null) {
         throw const AuthenticationException(

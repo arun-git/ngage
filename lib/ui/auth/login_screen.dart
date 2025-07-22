@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_providers.dart';
-import 'widgets/email_login_form.dart';
-import 'widgets/phone_login_form.dart';
 import 'widgets/social_login_buttons.dart';
+import 'password_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -12,20 +11,13 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _emailController = TextEditingController();
   bool _isSignUp = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -35,113 +27,110 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+      backgroundColor: Colors.grey[50],
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40),
-              // Logo and title
-              const Icon(
-                Icons.groups,
-                size: 80,
-                color: Colors.blue,
+              // Welcome message
+              Text(
+                _isSignUp ? 'Welcome to Ngage' : 'Welcome back',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+
+              // Email input
+              TextField(
+                controller: _emailController,
+                enabled: !isLoading,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'Email address',
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.blue),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Ngage',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Team-based competitions and engagement',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
 
-              // Sign In/Sign Up toggle
+              // Continue button
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _handleContinue,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Sign up link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TextButton(
-                    onPressed: isLoading
-                        ? null
-                        : () => setState(() => _isSignUp = false),
-                    child: Text(
-                      'Sign In',
-                      style: TextStyle(
-                        fontWeight: _isSignUp ? FontWeight.normal : FontWeight.bold,
-                        color: _isSignUp ? Colors.grey : Colors.blue,
-                      ),
-                    ),
+                  Text(
+                    _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
-                  const Text(' | '),
-                  TextButton(
-                    onPressed: isLoading
-                        ? null
-                        : () => setState(() => _isSignUp = true),
+                  GestureDetector(
+                    onTap: isLoading ? null : () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
-                      'Sign Up',
-                      style: TextStyle(
-                        fontWeight: _isSignUp ? FontWeight.bold : FontWeight.normal,
-                        color: _isSignUp ? Colors.blue : Colors.grey,
+                      _isSignUp ? 'Sign in' : 'Sign up',
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // Error message
-              if (authState.hasError) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    border: Border.all(color: Colors.red[300]!),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error_outline, color: Colors.red[700]),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          authState.errorMessage ?? 'An error occurred',
-                          style: TextStyle(color: Colors.red[700]),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => ref.read(authStateProvider.notifier).clearError(),
-                        color: Colors.red[700],
-                        iconSize: 20,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Loading indicator
-              if (isLoading) ...[
-                const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Social login buttons
-              SocialLoginButtons(isEnabled: !isLoading),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // Divider
               Row(
@@ -151,7 +140,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'OR',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   const Expanded(child: Divider()),
@@ -159,32 +151,115 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               ),
               const SizedBox(height: 24),
 
-              // Tab bar for email/phone
-              TabBar(
-                controller: _tabController,
-                labelColor: Colors.blue,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: Colors.blue,
-                tabs: const [
-                  Tab(text: 'Email'),
-                  Tab(text: 'Phone'),
-                ],
-              ),
-              const SizedBox(height: 16),
+              // Social login buttons
+              SocialLoginButtons(isEnabled: !isLoading),
 
-              // Tab content
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    EmailLoginForm(isSignUp: _isSignUp, isEnabled: !isLoading),
-                    PhoneLoginForm(isEnabled: !isLoading),
-                  ],
-                ),
+              const SizedBox(height: 32),
+
+              // Terms and Privacy
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () => _showTermsDialog(),
+                    child: Text(
+                      'Terms of Use',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '  |  ',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                  GestureDetector(
+                    onTap: () => _showPrivacyDialog(),
+                    child: Text(
+                      'Privacy Policy',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _handleContinue() {
+    final email = _emailController.text.trim();
+    
+    if (email.isEmpty) {
+      _showError('Please enter your email address');
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      _showError('Please enter a valid email address');
+      return;
+    }
+
+    // Navigate to password screen
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PasswordScreen(
+          email: email,
+          isSignUp: _isSignUp,
+        ),
+      ),
+    );
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _showTermsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Terms of Use'),
+        content: const Text('Terms of Use content would go here.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Privacy Policy'),
+        content: const Text('Privacy Policy content would go here.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
