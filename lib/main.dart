@@ -152,7 +152,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final memberProfiles = ref.watch(memberProfilesProvider);
 
     return PlatformNavigation(
-      title: 'Ngage Platform',
+      title: 'Ngage',
       items: _navigationItems,
       selectedIndex: _selectedIndex,
       onItemSelected: (index) {
@@ -240,7 +240,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome to Ngage Platform',
+            'Welcome to Ngage',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           SizedBox(height: context.mediumSpacing),
