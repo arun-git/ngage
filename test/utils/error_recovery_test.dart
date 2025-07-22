@@ -168,7 +168,7 @@ void main() {
         const error = IntegrationException(
           'Rate limited',
           service: 'slack',
-          integrationType: IntegrationErrorType.rateLimited,
+          integrationType: IntegrationErrorType.apiLimitExceeded,
         );
 
         final startTime = DateTime.now();
