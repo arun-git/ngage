@@ -8,6 +8,7 @@ import '../models/models.dart';
 /// including posts, notifications, events, and submissions.
 class RealtimeService {
   final FirebaseFirestore _firestore;
+  ConnectionStatus _currentStatus = ConnectionStatus.connected;
   
   RealtimeService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -246,15 +247,17 @@ class RealtimeService {
     final controller = StreamController<ConnectionStatus>();
     
     // Initial status
-    controller.add(ConnectionStatus.connected);
+    controller.add(_currentStatus);
     
     // Listen for Firestore connection changes
     final unsubscribe = _firestore.snapshotsInSync().listen(
       (_) {
-        controller.add(ConnectionStatus.connected);
+        _currentStatus = ConnectionStatus.connected;
+        controller.add(_currentStatus);
       },
       onError: (_) {
-        controller.add(ConnectionStatus.disconnected);
+        _currentStatus = ConnectionStatus.disconnected;
+        controller.add(_currentStatus);
       },
     );
     
@@ -263,6 +266,27 @@ class RealtimeService {
     };
     
     return controller.stream;
+  }
+
+  /// Get current connection status
+  ConnectionStatus get currentConnectionStatus => _currentStatus;
+
+  /// Get connection status stream as a property
+  Stream<ConnectionStatus> get connectionStatus => streamConnectionStatus();
+
+  /// Force sync when online - triggers a reconnection attempt
+  Future<void> forceSyncWhenOnline() async {
+    if (_currentStatus == ConnectionStatus.disconnected) {
+      _currentStatus = ConnectionStatus.reconnecting;
+      
+      try {
+        // Try to perform a simple Firestore operation to test connectivity
+        await _firestore.collection('_connection_test').limit(1).get();
+        _currentStatus = ConnectionStatus.connected;
+      } catch (e) {
+        _currentStatus = ConnectionStatus.disconnected;
+      }
+    }
   }
 }
 

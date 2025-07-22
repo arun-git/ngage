@@ -27,7 +27,7 @@ class OfflineService {
   /// Initialize offline support
   void _initializeOfflineSupport() {
     // Listen to connection status changes
-    _realtimeService.connectionStatus.listen((status) {
+    _realtimeService.streamConnectionStatus().listen((status) {
       if (status == ConnectionStatus.connected && !_isSyncing) {
         _syncPendingOperations();
       }
@@ -430,7 +430,8 @@ class OfflineService {
           _pendingOperations.remove(operation);
         } catch (e) {
           // Keep operation in queue if it fails
-          print('Failed to sync operation ${operation.id}: $e');
+          // TODO: Add proper logging instead of print
+          // print('Failed to sync operation ${operation.id}: $e');
         }
       }
     } finally {
