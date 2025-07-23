@@ -9,9 +9,9 @@ import '../../ui/leaderboard/leaderboard_screen.dart';
 import '../../ui/events/events_list_screen.dart';
 import '../../ui/teams/teams_list_screen.dart';
 import '../../utils/firebase_error_handler.dart';
-import 'group_settings_screen.dart';
-import 'manage_members_screen.dart';
-import 'manage_teams_screen.dart';
+import 'group_settings_inner_page.dart';
+import 'manage_members_inner_page.dart';
+import 'manage_teams_inner_page.dart';
 
 /// Inner page showing group details that replaces the groups list
 class GroupDetailInnerPage extends ConsumerStatefulWidget {
@@ -33,6 +33,7 @@ class GroupDetailInnerPage extends ConsumerStatefulWidget {
 class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String? _currentSubPage; // 'settings', 'members', 'teams'
 
   @override
   void initState() {
@@ -97,55 +98,16 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
                 children: [
                   Expanded(
                     child: BreadcrumbNavigation(
-                      items: [
-                        BreadcrumbItem(
-                          title: 'Groups',
-                          icon: Icons.group,
-                          onTap: widget.onBack,
-                        ),
-                        BreadcrumbItem(
-                          title: group.name,
-                          icon: Icons.group_work,
-                        ),
-                      ],
+                      items: _buildBreadcrumbItems(group),
                     ),
                   ),
                   isAdminAsync.when(
                     data: (isAdmin) => isAdmin
                         ? PopupMenuButton<String>(
                             onSelected: (value) {
-                              switch (value) {
-                                case 'settings':
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => GroupSettingsScreen(
-                                        group: group,
-                                      ),
-                                    ),
-                                  );
-                                  break;
-                                case 'manage_members':
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => ManageMembersScreen(
-                                        groupId: widget.groupId,
-                                        currentMemberId: widget.memberId,
-                                        groupName: group.name,
-                                      ),
-                                    ),
-                                  );
-                                  break;
-                                case 'manage_teams':
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => ManageTeamsScreen(
-                                        groupId: widget.groupId,
-                                        groupName: group.name,
-                                      ),
-                                    ),
-                                  );
-                                  break;
-                              }
+                              setState(() {
+                                _currentSubPage = value;
+                              });
                             },
                             itemBuilder: (context) => [
                               const PopupMenuItem(
@@ -182,38 +144,11 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
               ),
             ),
 
-            // Tab bar
-            Container(
-              color: Colors.white,
-              child: TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Leaderboard'),
-                  Tab(text: 'Events'),
-                  Tab(text: 'Teams'),
-                ],
-              ),
-            ),
-            
-            // Tab content
+            // Content based on current sub-page
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _GroupLeaderboardTab(
-                    groupId: widget.groupId,
-                    memberId: widget.memberId,
-                  ),
-                  _GroupEventsTab(
-                    groupId: widget.groupId,
-                    memberId: widget.memberId,
-                  ),
-                  _GroupTeamsTab(
-                    groupId: widget.groupId,
-                    memberId: widget.memberId,
-                  ),
-                ],
-              ),
+              child: _currentSubPage != null
+                  ? _buildSubPage(group)
+                  : _buildMainContent(group),
             ),
           ],
         );
@@ -255,6 +190,145 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSubPage(Group group) {
+    switch (_currentSubPage) {
+      case 'settings':
+        return GroupSettingsInnerPage(
+          group: group,
+          onBack: () {
+            setState(() {
+              _currentSubPage = null;
+            });
+          },
+        );
+      case 'manage_members':
+        return ManageMembersInnerPage(
+          groupId: widget.groupId,
+          currentMemberId: widget.memberId,
+          groupName: group.name,
+          onBack: () {
+            setState(() {
+              _currentSubPage = null;
+            });
+          },
+        );
+      case 'manage_teams':
+        return ManageTeamsInnerPage(
+          groupId: widget.groupId,
+          groupName: group.name,
+          onBack: () {
+            setState(() {
+              _currentSubPage = null;
+            });
+          },
+        );
+      default:
+        return _buildMainContent(group);
+    }
+  }
+
+  List<BreadcrumbItem> _buildBreadcrumbItems(Group group) {
+    final items = [
+      BreadcrumbItem(
+        title: 'Groups',
+        icon: Icons.group,
+        onTap: widget.onBack,
+      ),
+    ];
+
+    if (_currentSubPage != null) {
+      // Add group name as clickable item when in sub-page
+      items.add(
+        BreadcrumbItem(
+          title: group.name,
+          onTap: () {
+            setState(() {
+              _currentSubPage = null;
+            });
+          },
+        ),
+      );
+
+      // Add current sub-page
+      switch (_currentSubPage) {
+        case 'settings':
+          items.add(
+            const BreadcrumbItem(
+              title: 'Settings',
+              icon: Icons.settings,
+            ),
+          );
+          break;
+        case 'manage_members':
+          items.add(
+            const BreadcrumbItem(
+              title: 'Manage Members',
+              icon: Icons.people,
+            ),
+          );
+          break;
+        case 'manage_teams':
+          items.add(
+            const BreadcrumbItem(
+              title: 'Manage Teams',
+              icon: Icons.groups,
+            ),
+          );
+          break;
+      }
+    } else {
+      // Just show group name when in main view
+      items.add(
+        BreadcrumbItem(
+          title: group.name,
+          icon: Icons.group_work,
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  Widget _buildMainContent(Group group) {
+    return Column(
+      children: [
+        // Tab bar
+        Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Leaderboard'),
+              Tab(text: 'Events'),
+              Tab(text: 'Teams'),
+            ],
+          ),
+        ),
+        
+        // Tab content
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _GroupLeaderboardTab(
+                groupId: widget.groupId,
+                memberId: widget.memberId,
+              ),
+              _GroupEventsTab(
+                groupId: widget.groupId,
+                memberId: widget.memberId,
+              ),
+              _GroupTeamsTab(
+                groupId: widget.groupId,
+                memberId: widget.memberId,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
