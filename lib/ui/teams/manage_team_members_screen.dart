@@ -3,15 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
 import '../../models/team.dart';
 import '../../models/group_member.dart';
+import '../widgets/breadcrumb_navigation.dart';
 import 'bulk_member_assignment_screen.dart';
 import 'team_lead_management_screen.dart';
 
 class ManageTeamMembersScreen extends ConsumerStatefulWidget {
   final String teamId;
+  final String? teamName;
+  final String? groupName;
 
   const ManageTeamMembersScreen({
     super.key,
     required this.teamId,
+    this.teamName,
+    this.groupName,
   });
 
   @override
@@ -100,15 +105,62 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
           ],
         ],
       ),
-      body: teamAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _buildErrorState(context, error),
-        data: (team) {
-          if (team == null) {
-            return _buildNotFoundState(context);
-          }
-          return _buildContent(context, team, availableMembersAsync, teamManagementAsync);
-        },
+      body: Column(
+        children: [
+          // Breadcrumb navigation
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey.shade50,
+            child: BreadcrumbNavigation(
+              items: [
+                BreadcrumbItem(
+                  title: 'Groups',
+                  icon: Icons.group,
+                  onTap: () => Navigator.of(context).popUntil(
+                    (route) => route.settings.name == '/groups' || route.isFirst,
+                  ),
+                ),
+                if (widget.groupName != null)
+                  BreadcrumbItem(
+                    title: widget.groupName!,
+                    onTap: () => Navigator.of(context).popUntil(
+                      (route) => route.settings.name?.contains('group_detail') == true || route.isFirst,
+                    ),
+                  ),
+                BreadcrumbItem(
+                  title: 'Manage Teams',
+                  onTap: () => Navigator.of(context).popUntil(
+                    (route) => route.settings.name?.contains('manage_teams') == true,
+                  ),
+                ),
+                if (widget.teamName != null)
+                  BreadcrumbItem(
+                    title: widget.teamName!,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                const BreadcrumbItem(
+                  title: 'Manage Members',
+                  icon: Icons.people,
+                ),
+              ],
+            ),
+          ),
+          
+          // Content
+          Expanded(
+            child: teamAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => _buildErrorState(context, error),
+              data: (team) {
+                if (team == null) {
+                  return _buildNotFoundState(context);
+                }
+                return _buildContent(context, team, availableMembersAsync, teamManagementAsync);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

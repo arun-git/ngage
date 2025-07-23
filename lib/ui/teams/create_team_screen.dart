@@ -4,13 +4,16 @@ import '../../models/team.dart';
 import '../../providers/team_providers.dart';
 import '../../providers/group_providers.dart';
 import '../../models/group_member.dart';
+import '../widgets/breadcrumb_navigation.dart';
 
 class CreateTeamScreen extends ConsumerStatefulWidget {
   final String groupId;
+  final String? groupName;
 
   const CreateTeamScreen({
     super.key,
     required this.groupId,
+    this.groupName,
   });
 
   @override
@@ -71,7 +74,42 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
         title: const Text('Create Team'),
         elevation: 0,
       ),
-      body: groupMembersAsync.when(
+      body: Column(
+        children: [
+          // Breadcrumb navigation
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey.shade50,
+            child: BreadcrumbNavigation(
+              items: [
+                BreadcrumbItem(
+                  title: 'Groups',
+                  icon: Icons.group,
+                  onTap: () => Navigator.of(context).popUntil(
+                    (route) => route.settings.name == '/groups' || route.isFirst,
+                  ),
+                ),
+                if (widget.groupName != null)
+                  BreadcrumbItem(
+                    title: widget.groupName!,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                BreadcrumbItem(
+                  title: 'Manage Teams',
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+                const BreadcrumbItem(
+                  title: 'Create Team',
+                  icon: Icons.add,
+                ),
+              ],
+            ),
+          ),
+          
+          // Form content
+          Expanded(
+            child: groupMembersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Column(
@@ -89,6 +127,9 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
           ),
         ),
         data: (groupMembers) => _buildForm(context, groupMembers, teamCreationAsync),
+            ),
+          ),
+        ],
       ),
     );
   }

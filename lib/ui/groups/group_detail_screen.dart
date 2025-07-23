@@ -4,6 +4,7 @@ import '../../models/models.dart';
 import '../../providers/group_providers.dart';
 import '../../providers/event_providers.dart';
 import '../../ui/widgets/selectable_error_message.dart';
+import '../../ui/widgets/breadcrumb_navigation.dart';
 
 import '../../ui/leaderboard/leaderboard_screen.dart';
 
@@ -12,6 +13,7 @@ import '../../ui/teams/teams_list_screen.dart';
 import '../../utils/firebase_error_handler.dart';
 import 'group_settings_screen.dart';
 import 'manage_members_screen.dart';
+import 'manage_teams_screen.dart';
 
 /// Screen showing group details and member management
 class GroupDetailScreen extends ConsumerStatefulWidget {
@@ -88,6 +90,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                                   builder: (context) => ManageMembersScreen(
                                     groupId: widget.groupId,
                                     currentMemberId: widget.memberId,
+                                    groupName: group.name,
                                   ),
                                 ),
                               );
@@ -95,8 +98,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                             case 'manage_teams':
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => TeamsListScreen(
+                                  builder: (context) => ManageTeamsScreen(
                                     groupId: widget.groupId,
+                                    groupName: group.name,
                                   ),
                                 ),
                               );
@@ -144,7 +148,31 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               ],
             ),
           ),
-          body: TabBarView(
+          body: Column(
+            children: [
+              // Breadcrumb navigation
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                color: Colors.grey.shade50,
+                child: BreadcrumbNavigation(
+                  items: [
+                    BreadcrumbItem(
+                      title: 'Groups',
+                      icon: Icons.group,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                    BreadcrumbItem(
+                      title: group.name,
+                      icon: Icons.group_work,
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Tab content
+              Expanded(
+                child: TabBarView(
             controller: _tabController,
             children: [
               _GroupLeaderboardTab(
@@ -158,6 +186,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               _GroupTeamsTab(
                 groupId: widget.groupId,
                 memberId: widget.memberId,
+              ),
+            ],
+                ),
               ),
             ],
           ),

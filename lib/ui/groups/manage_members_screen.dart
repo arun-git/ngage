@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/group_member.dart';
 import '../../models/enums.dart';
 import '../../providers/group_providers.dart';
+import '../widgets/breadcrumb_navigation.dart';
 
 /// Screen for managing group members and their roles
 class ManageMembersScreen extends ConsumerStatefulWidget {
   final String groupId;
   final String currentMemberId;
+  final String? groupName;
 
   const ManageMembersScreen({
     super.key,
     required this.groupId,
     required this.currentMemberId,
+    this.groupName,
   });
 
   @override
@@ -180,6 +183,33 @@ class _ManageMembersScreenState extends ConsumerState<ManageMembersScreen> {
       ),
       body: Column(
         children: [
+          // Breadcrumb navigation
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey.shade50,
+            child: BreadcrumbNavigation(
+              items: [
+                BreadcrumbItem(
+                  title: 'Groups',
+                  icon: Icons.group,
+                  onTap: () => Navigator.of(context).popUntil(
+                    (route) => route.settings.name == '/groups' || route.isFirst,
+                  ),
+                ),
+                if (widget.groupName != null)
+                  BreadcrumbItem(
+                    title: widget.groupName!,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                const BreadcrumbItem(
+                  title: 'Manage Members',
+                  icon: Icons.people,
+                ),
+              ],
+            ),
+          ),
+          
           // Invite member section
           Card(
             margin: const EdgeInsets.all(16),

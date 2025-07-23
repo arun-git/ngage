@@ -7,13 +7,11 @@ import 'models/auth_state.dart';
 import 'ui/auth/login_screen.dart';
 import 'ui/widgets/platform_navigation.dart';
 import 'ui/widgets/selectable_error_message.dart';
-import 'ui/groups/create_group_screen.dart';
+import 'ui/groups/create_group_inner_page.dart';
 import 'ui/groups/groups_list_screen.dart';
 import 'ui/profile/profile_completion_screen.dart';
 import 'utils/error_handler.dart';
 import 'utils/logger.dart';
-import 'utils/responsive_theme.dart';
-import 'utils/responsive_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +45,7 @@ class NgageApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'Ngage Platform',
+      title: 'Ngage Team',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
@@ -122,6 +120,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   int _selectedIndex = 0;
+  bool _showCreateGroup = false;
   
   final List<NavigationItem> _navigationItems = [
     const NavigationItem(
@@ -201,14 +200,12 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       ],
       body: _buildBody(context, currentUser, currentMember, memberProfiles),
-      floatingActionButton: _selectedIndex == 0 // Groups tab (now first tab)
+      floatingActionButton: _selectedIndex == 0 && !_showCreateGroup // Groups tab and not showing create group
         ? PlatformFloatingActionButton(
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const CreateGroupScreen(),
-                ),
-              );
+              setState(() {
+                _showCreateGroup = true;
+              });
             },
             tooltip: 'Create Group',
             child: const Icon(Icons.add),
@@ -220,7 +217,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildBody(BuildContext context, currentUser, currentMember, memberProfiles) {
     switch (_selectedIndex) {
       case 0:
-        return _buildGroups(context);
+        return _showCreateGroup 
+          ? _buildCreateGroup(context)
+          : _buildGroups(context);
       case 1:
         return _buildEvents(context);
       case 2:
@@ -296,7 +295,35 @@ class _HomePageState extends ConsumerState<HomePage> {
       );
     }
     
-    return GroupsListScreen(memberId: currentMember.id);
+    return GroupsListScreen(
+      memberId: currentMember.id,
+      onCreateGroup: () {
+        setState(() {
+          _showCreateGroup = true;
+        });
+      },
+    );
+  }
+
+  Widget _buildCreateGroup(BuildContext context) {
+    return CreateGroupInnerPage(
+      onBack: () {
+        setState(() {
+          _showCreateGroup = false;
+        });
+      },
+      onGroupCreated: () {
+        setState(() {
+          _showCreateGroup = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Group created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      },
+    );
   }
   
   Widget _buildEvents(BuildContext context) {

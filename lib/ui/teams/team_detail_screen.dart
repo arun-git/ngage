@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
 import '../../models/team.dart';
+import '../widgets/breadcrumb_navigation.dart';
 import 'manage_team_members_screen.dart';
 import 'team_settings_screen.dart';
 import 'team_analytics_widget.dart';
 
 class TeamDetailScreen extends ConsumerWidget {
   final String teamId;
+  final String? groupName;
 
   const TeamDetailScreen({
     super.key,
     required this.teamId,
+    this.groupName,
   });
 
   @override
@@ -125,9 +128,46 @@ class TeamDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: Column(
+        children: [
+          // Breadcrumb navigation
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey.shade50,
+            child: BreadcrumbNavigation(
+              items: [
+                BreadcrumbItem(
+                  title: 'Groups',
+                  icon: Icons.group,
+                  onTap: () => Navigator.of(context).popUntil(
+                    (route) => route.settings.name == '/groups' || route.isFirst,
+                  ),
+                ),
+                if (groupName != null)
+                  BreadcrumbItem(
+                    title: groupName!,
+                    onTap: () => Navigator.of(context).popUntil(
+                      (route) => route.settings.name?.contains('group_detail') == true || route.isFirst,
+                    ),
+                  ),
+                BreadcrumbItem(
+                  title: 'Manage Teams',
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+                BreadcrumbItem(
+                  title: team.name,
+                  icon: Icons.groups,
+                ),
+              ],
+            ),
+          ),
+          
+          // Team content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildTeamHeader(context, team),
@@ -138,7 +178,10 @@ class TeamDetailScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             _buildTeamActions(context, ref, team),
           ],
-        ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -256,7 +299,7 @@ class TeamDetailScreen extends ConsumerWidget {
                 ),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () => _navigateToManageMembers(context, team.id),
+                  onPressed: () => _navigateToManageMembers(context, ref, team.id),
                   icon: const Icon(Icons.edit, size: 16),
                   label: const Text('Manage'),
                 ),
@@ -353,7 +396,7 @@ class TeamDetailScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _navigateToManageMembers(context, team.id),
+                    onPressed: () => _navigateToManageMembers(context, ref, team.id),
                     icon: const Icon(Icons.people),
                     label: const Text('Manage Members'),
                   ),
@@ -361,7 +404,7 @@ class TeamDetailScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _navigateToTeamSettings(context, team.id),
+                    onPressed: () => _navigateToTeamSettings(context, ref, team.id),
                     icon: const Icon(Icons.settings),
                     label: const Text('Settings'),
                   ),
@@ -394,26 +437,36 @@ class TeamDetailScreen extends ConsumerWidget {
   void _handleMenuAction(BuildContext context, WidgetRef ref, String action, Team team) {
     switch (action) {
       case 'settings':
-        _navigateToTeamSettings(context, team.id);
+        _navigateToTeamSettings(context, ref, team.id);
         break;
       case 'manage_members':
-        _navigateToManageMembers(context, team.id);
+        _navigateToManageMembers(context, ref, team.id);
         break;
     }
   }
 
-  void _navigateToManageMembers(BuildContext context, String teamId) {
+  void _navigateToManageMembers(BuildContext context, WidgetRef ref, String teamId) {
+    final team = ref.read(teamProvider(teamId)).value;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ManageTeamMembersScreen(teamId: teamId),
+        builder: (context) => ManageTeamMembersScreen(
+          teamId: teamId,
+          teamName: team?.name,
+          groupName: groupName,
+        ),
       ),
     );
   }
 
-  void _navigateToTeamSettings(BuildContext context, String teamId) {
+  void _navigateToTeamSettings(BuildContext context, WidgetRef ref, String teamId) {
+    final team = ref.read(teamProvider(teamId)).value;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => TeamSettingsScreen(teamId: teamId),
+        builder: (context) => TeamSettingsScreen(
+          teamId: teamId,
+          teamName: team?.name,
+          groupName: groupName,
+        ),
       ),
     );
   }

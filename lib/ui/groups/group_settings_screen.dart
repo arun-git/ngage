@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/group.dart';
 import '../../models/enums.dart';
 import '../../providers/group_providers.dart';
+import '../widgets/breadcrumb_navigation.dart';
 
 /// Screen for managing group settings
 class GroupSettingsScreen extends ConsumerStatefulWidget {
@@ -198,9 +199,39 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
+      body: Column(
+        children: [
+          // Breadcrumb navigation
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey.shade50,
+            child: BreadcrumbNavigation(
+              items: [
+                BreadcrumbItem(
+                  title: 'Groups',
+                  icon: Icons.group,
+                  onTap: () => Navigator.of(context).popUntil(
+                    (route) => route.settings.name == '/groups' || route.isFirst,
+                  ),
+                ),
+                BreadcrumbItem(
+                  title: widget.group.name,
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+                const BreadcrumbItem(
+                  title: 'Settings',
+                  icon: Icons.settings,
+                ),
+              ],
+            ),
+          ),
+          
+          // Settings content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -362,6 +393,9 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
             ],
           ),
         ),
+            ),
+          ),
+        ],
       ),
     );
   }

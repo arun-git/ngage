@@ -5,40 +5,48 @@ import '../../models/enums.dart';
 import '../../providers/group_providers.dart';
 import '../../ui/widgets/selectable_error_message.dart';
 import '../../utils/firebase_error_handler.dart';
-import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
 
 /// Screen displaying list of groups for a member
 class GroupsListScreen extends ConsumerWidget {
   final String memberId;
+  final VoidCallback? onCreateGroup;
 
   const GroupsListScreen({
     super.key,
     required this.memberId,
+    this.onCreateGroup,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final memberGroupsAsync = ref.watch(memberGroupsStreamProvider(memberId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Groups'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const CreateGroupScreen(),
+    return Column(
+      children: [
+        // Header with create button
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Text(
+                'Groups',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
-              );
-            },
+              ),
+              const Spacer(),
+              if (onCreateGroup != null)
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: onCreateGroup,
+                  tooltip: 'Create Group',
+                ),
+            ],
           ),
-        ],
-      ),
-      body: memberGroupsAsync.when(
+        ),
+        Expanded(
+          child: memberGroupsAsync.when(
         data: (groups) {
           if (groups.isEmpty) {
             return const Center(
@@ -119,7 +127,9 @@ class GroupsListScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
+          ),
+        ),
+      ],
     );
   }
 }

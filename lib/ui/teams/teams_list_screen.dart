@@ -272,7 +272,10 @@ class TeamsListScreen extends ConsumerWidget {
   void _navigateToCreateTeam(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => CreateTeamScreen(groupId: groupId),
+        builder: (context) => CreateTeamScreen(
+          groupId: groupId,
+          groupName: 'Group', // TODO: Pass actual group name
+        ),
       ),
     );
   }
@@ -280,7 +283,10 @@ class TeamsListScreen extends ConsumerWidget {
   void _navigateToTeamDetail(BuildContext context, String teamId) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => TeamDetailScreen(teamId: teamId),
+        builder: (context) => TeamDetailScreen(
+          teamId: teamId,
+          groupName: 'Group', // TODO: Pass actual group name
+        ),
       ),
     );
   }
