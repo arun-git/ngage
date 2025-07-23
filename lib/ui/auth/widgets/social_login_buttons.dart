@@ -7,10 +7,12 @@ import '../../../services/teams_oauth_service.dart';
 
 class SocialLoginButtons extends ConsumerWidget {
   final bool isEnabled;
+  final bool hidePhoneButton;
 
   const SocialLoginButtons({
     super.key,
     required this.isEnabled,
+    this.hidePhoneButton = false,
   });
 
   @override
@@ -18,16 +20,18 @@ class SocialLoginButtons extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Phone Sign-In button
-        _SocialLoginButton(
-          onPressed: isEnabled ? () => _handlePhoneSignIn(context, ref) : null,
-          icon: Icons.phone,
-          label: 'Continue with phone',
-          backgroundColor: Colors.white,
-          textColor: Colors.black87,
-          borderColor: Colors.grey[300],
-        ),
-        const SizedBox(height: 12),
+        // Phone Sign-In button (only show if not hidden)
+        if (!hidePhoneButton) ...[
+          _SocialLoginButton(
+            onPressed: isEnabled ? () => _handlePhoneSignIn(context, ref) : null,
+            icon: Icons.phone,
+            label: 'Continue with phone',
+            backgroundColor: Colors.white,
+            textColor: Colors.black87,
+            borderColor: Colors.grey[300],
+          ),
+          const SizedBox(height: 12),
+        ],
 
         // Google Sign-In button
         _SocialLoginButton(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:country_picker/country_picker.dart';
 import '../../providers/auth_providers.dart';
 import 'widgets/social_login_buttons.dart';
 import 'password_screen.dart';
+import 'phone_verification_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -13,11 +15,26 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   bool _isSignUp = false;
+  bool _isPhoneMode = false;
+  Country _selectedCountry = Country(
+    phoneCode: '91',
+    countryCode: 'IN',
+    e164Sc: 0,
+    geographic: true,
+    level: 1,
+    name: 'India',
+    example: '9123456789',
+    displayName: 'India',
+    displayNameNoCountryCode: 'IN',
+    e164Key: '',
+  );
 
   @override
   void dispose() {
     _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -47,34 +64,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Email input
-              TextField(
-                controller: _emailController,
-                enabled: !isLoading,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  hintText: 'Email address',
-                  hintStyle: TextStyle(color: Colors.grey[500]),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.blue),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                ),
-              ),
+              // Email or Phone input
+              _isPhoneMode ? _buildPhoneInput(isLoading) : _buildEmailInput(isLoading),
               const SizedBox(height: 16),
 
               // Continue button
@@ -151,8 +142,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 24),
 
+              // Toggle between email and phone
+              SizedBox(
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: isLoading ? null : () => setState(() => _isPhoneMode = !_isPhoneMode),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
+                    side: BorderSide(color: Colors.grey[300]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(width: 8),
+                      Icon(_isPhoneMode ? Icons.email : Icons.phone, size: 20),
+                      const SizedBox(width: 12),
+                      Text(
+                        _isPhoneMode ? 'Continue with email' : 'Continue with phone',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
               // Social login buttons
-              SocialLoginButtons(isEnabled: !isLoading),
+              SocialLoginButtons(isEnabled: !isLoading, hidePhoneButton: true),
 
               const SizedBox(height: 32),
 
@@ -195,7 +219,119 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  Widget _buildEmailInput(bool isLoading) {
+    return TextField(
+      controller: _emailController,
+      enabled: !isLoading,
+      keyboardType: TextInputType.emailAddress,
+      decoration: InputDecoration(
+        hintText: 'Email address',
+        hintStyle: TextStyle(color: Colors.grey[500]),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.blue),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhoneInput(bool isLoading) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Country selector
+        GestureDetector(
+          onTap: isLoading ? null : _showCountryPicker,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  '${_selectedCountry.flagEmoji} ${_selectedCountry.name} (+${_selectedCountry.phoneCode})',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const Spacer(),
+                Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Phone number input
+        TextField(
+          controller: _phoneController,
+          enabled: !isLoading,
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            hintText: 'Phone number',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.blue),
+            ),
+            prefixText: '+${_selectedCountry.phoneCode} ',
+            prefixStyle: const TextStyle(color: Colors.black87),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCountryPicker() {
+    showCountryPicker(
+      context: context,
+      showPhoneCode: true,
+      onSelect: (Country country) {
+        setState(() {
+          _selectedCountry = country;
+        });
+      },
+    );
+  }
+
   void _handleContinue() {
+    if (_isPhoneMode) {
+      _handlePhoneContinue();
+    } else {
+      _handleEmailContinue();
+    }
+  }
+
+  void _handleEmailContinue() {
     final email = _emailController.text.trim();
     
     if (email.isEmpty) {
@@ -217,6 +353,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  void _handlePhoneContinue() async {
+    final phone = _phoneController.text.trim();
+    
+    if (phone.isEmpty) {
+      _showError('Please enter your phone number');
+      return;
+    }
+
+    final fullPhoneNumber = '+${_selectedCountry.phoneCode}$phone';
+
+    try {
+      await ref.read(authStateProvider.notifier).verifyPhoneNumber(
+        fullPhoneNumber,
+        codeSent: (verificationId) {
+          if (mounted) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => PhoneVerificationScreen(
+                  phoneNumber: fullPhoneNumber,
+                  verificationId: verificationId,
+                ),
+              ),
+            );
+          }
+        },
+        verificationFailed: (error) {
+          if (mounted) {
+            _showError('Phone verification failed: ${error.toString()}');
+          }
+        },
+      );
+    } catch (e) {
+      _showError('Failed to send verification code: $e');
+    }
   }
 
   bool _isValidEmail(String email) {

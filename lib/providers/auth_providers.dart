@@ -363,7 +363,7 @@ class AuthStateNotifier extends StateNotifier<AuthenticationState> {
       await _enhancedAuthService.verifyPhoneNumber(
         phoneNumber,
         codeSent: codeSent,
-        verificationFailed: (e) => verificationFailed(e),
+        verificationFailed: (e) => verificationFailed(Exception(e.message)),
       );
     } catch (e) {
       verificationFailed(Exception('Phone verification failed: $e'));
