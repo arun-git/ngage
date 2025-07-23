@@ -125,11 +125,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   
   final List<NavigationItem> _navigationItems = [
     const NavigationItem(
-      icon: Icon(Icons.dashboard),
-      label: 'Dashboard',
-      tooltip: 'View dashboard',
-    ),
-    const NavigationItem(
       icon: Icon(Icons.group),
       label: 'Groups',
       tooltip: 'Manage groups',
@@ -206,7 +201,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       ],
       body: _buildBody(context, currentUser, currentMember, memberProfiles),
-      floatingActionButton: _selectedIndex == 1 // Groups tab
+      floatingActionButton: _selectedIndex == 0 // Groups tab (now first tab)
         ? PlatformFloatingActionButton(
             onPressed: () {
               Navigator.of(context).push(
@@ -225,98 +220,19 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildBody(BuildContext context, currentUser, currentMember, memberProfiles) {
     switch (_selectedIndex) {
       case 0:
-        return _buildDashboard(context, currentUser, currentMember, memberProfiles);
-      case 1:
         return _buildGroups(context);
-      case 2:
+      case 1:
         return _buildEvents(context);
-      case 3:
+      case 2:
         return _buildLeaderboard(context);
-      case 4:
+      case 3:
         return _buildProfile(context, currentUser, currentMember);
       default:
-        return _buildDashboard(context, currentUser, currentMember, memberProfiles);
+        return _buildGroups(context);
     }
   }
   
-  Widget _buildDashboard(BuildContext context, currentUser, currentMember, memberProfiles) {
-    return SingleChildScrollView(
-      padding: context.responsive.responsivePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome to Ngage',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          SizedBox(height: context.mediumSpacing),
-          if (currentUser != null) ...[
-            Card(
-              child: Padding(
-                padding: context.responsive.responsivePadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'User Information',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    SizedBox(height: context.smallSpacing),
-                    Text('Email: ${currentUser.email}'),
-                    if (currentUser.phone != null) 
-                      Text('Phone: ${currentUser.phone}'),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: context.mediumSpacing),
-          ],
-          if (currentMember != null) ...[
-            Card(
-              child: Padding(
-                padding: context.responsive.responsivePadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current Member Profile',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    SizedBox(height: context.smallSpacing),
-                    Text('Name: ${currentMember.firstName} ${currentMember.lastName}'),
-                    if (currentMember.title != null) 
-                      Text('Title: ${currentMember.title}'),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: context.mediumSpacing),
-          ],
-          Card(
-            child: Padding(
-              padding: context.responsive.responsivePadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Platform Overview',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(height: context.smallSpacing),
-                  Text('Member Profiles: ${memberProfiles.length}'),
-                  SizedBox(height: context.smallSpacing),
-                  const Text(
-                    'Multi-platform engagement platform for teams and competitions',
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
+
   Widget _buildGroups(BuildContext context) {
     final currentMember = ref.watch(currentMemberProvider);
     final currentUser = ref.watch(currentUserProvider);
