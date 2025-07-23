@@ -75,7 +75,9 @@ class FirebaseAuthService implements AuthService {
     firebase_auth.FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
   })  : _firebaseAuth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance,
-        _googleSignIn = googleSignIn; // Don't initialize by default to avoid config errors
+        _googleSignIn = googleSignIn ?? GoogleSignIn(
+          clientId: '205876580925-e6e9j1ib8as4dvan0g67e4v70kah8bcu.apps.googleusercontent.com',
+        );
 
   @override
   Future<app_user.User> signInWithEmail(String email, String password) async {

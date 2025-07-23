@@ -45,9 +45,9 @@ class DefaultFirebaseOptions {
     appId: '1:205876580925:web:7705e5cada56fe969ed054',
     messagingSenderId: '205876580925',
     projectId: 'ngage-team-app',
-    authDomain: 'your-project-id.firebaseapp.com',
+    authDomain: 'ngage-team-app.firebaseapp.com',
     storageBucket: 'ngage-team-app.firebasestorage.app',
-    measurementId: 'your-measurement-id',
+    measurementId: 'G-MEASUREMENT_ID',
   );
 
   static const FirebaseOptions android = FirebaseOptions(

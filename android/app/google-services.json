@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "205876580925",
+    "project_id": "ngage-team-app",
+    "storage_bucket": "ngage-team-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:205876580925:android:8678dc821cc926b49ed054",
+        "android_client_info": {
+          "package_name": "com.example.ngage"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "205876580925-e6e9j1ib8as4dvan0g67e4v70kah8bcu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ngage",
+            "certificate_hash": "EA:67:C4:BD:CB:78:BB:0E:35:8C:8E:50:0E:0E:97:30:83:13:0D:89"
+          }
+        },
+        {
+          "client_id": "205876580925-android-client-id.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkA-6Fau3Z7vHDZ2mzLQ1erk0y4i2Sl9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "205876580925-e6e9j1ib8as4dvan0g67e4v70kah8bcu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
