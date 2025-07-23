@@ -31,6 +31,14 @@ class MemberClaimServiceImpl implements MemberClaimService {
   @override
   Future<List<Member>> claimMemberProfiles(User user) async {
     try {
+      // First, get existing claimed members for this user
+      final existingMembers = await _memberRepository.getUserMembers(user.id);
+      
+      // If user already has members, return them
+      if (existingMembers.isNotEmpty) {
+        return existingMembers;
+      }
+
       // Find unclaimed members matching user's email or phone
       final unclaimedMembers = await _memberRepository.findUnclaimedMembers(
         user.email,

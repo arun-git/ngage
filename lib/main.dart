@@ -9,6 +9,7 @@ import 'ui/widgets/platform_navigation.dart';
 import 'ui/widgets/selectable_error_message.dart';
 import 'ui/groups/create_group_screen.dart';
 import 'ui/groups/groups_list_screen.dart';
+import 'ui/profile/profile_completion_screen.dart';
 import 'utils/error_handler.dart';
 import 'utils/logger.dart';
 import 'utils/responsive_theme.dart';
@@ -318,10 +319,64 @@ class _HomePageState extends ConsumerState<HomePage> {
   
   Widget _buildGroups(BuildContext context) {
     final currentMember = ref.watch(currentMemberProvider);
+    final currentUser = ref.watch(currentUserProvider);
     
     if (currentMember == null) {
-      return const Center(
-        child: Text('Please complete your profile to access groups'),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_outline,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Complete Your Profile',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'You need to complete your profile to access groups and teams.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileCompletionScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                ),
+                child: const Text('Complete Profile'),
+              ),
+              const SizedBox(height: 16),
+              if (currentUser != null) ...[
+                Text(
+                  'Signed in as: ${currentUser.email}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       );
     }
     
@@ -341,8 +396,123 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
   
   Widget _buildProfile(BuildContext context, currentUser, currentMember) {
-    return const Center(
-      child: Text('Profile - Coming Soon'),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Profile Information',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // User Information
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'User Account',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (currentUser != null) ...[
+                    Text('Email: ${currentUser.email}'),
+                    if (currentUser.phone != null) 
+                      Text('Phone: ${currentUser.phone}'),
+                    Text('User ID: ${currentUser.id}'),
+                    Text('Default Member: ${currentUser.defaultMember ?? 'None'}'),
+                  ] else ...[
+                    const Text('No user information available'),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Member Profile Information
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Member Profile',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (currentMember != null) ...[
+                    Text('Name: ${currentMember.firstName} ${currentMember.lastName}'),
+                    Text('Email: ${currentMember.email}'),
+                    if (currentMember.title != null) 
+                      Text('Title: ${currentMember.title}'),
+                    if (currentMember.bio != null) 
+                      Text('Bio: ${currentMember.bio}'),
+                    Text('Member ID: ${currentMember.id}'),
+                    Text('Claimed At: ${currentMember.claimedAt?.toString() ?? 'Not claimed'}'),
+                  ] else ...[
+                    const Text('No member profile available'),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileCompletionScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('Create Profile'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Actions
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Actions',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.read(authStateProvider.notifier).signOut();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Sign Out'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -143,6 +143,12 @@ class EnhancedAuthService {
           );
           await _userRepository.updateUser(user);
         }
+      } else {
+        // For existing users, get their existing member profiles
+        final existingMembers = await _memberClaimService.claimMemberProfiles(user);
+        if (existingMembers.isNotEmpty) {
+          claimedMembers = existingMembers;
+        }
       }
 
       return AuthResult(

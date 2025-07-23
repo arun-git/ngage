@@ -74,6 +74,52 @@ class AuthStateNotifier extends StateNotifier<AuthenticationState> {
         currentMember = memberProfiles.first;
       }
 
+      // If no member profile exists, create a basic one
+      if (currentMember == null && memberProfiles.isEmpty) {
+        try {
+          final basicMember = await _memberRepository.createMember(Member(
+            id: '',
+            userId: user.id,
+            email: user.email,
+            phone: user.phone,
+            externalId: null,
+            firstName: _extractFirstName(user.email),
+            lastName: _extractLastName(user.email),
+            category: null,
+            title: null,
+            profilePhoto: null,
+            bio: null,
+            isActive: true,
+            importedAt: null,
+            claimedAt: DateTime.now(),
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ));
+
+          // Update user with default member
+          final updatedUser = user.copyWith(
+            defaultMember: basicMember.id,
+            updatedAt: DateTime.now(),
+          );
+          await _userRepository.updateUser(updatedUser);
+
+          currentMember = basicMember;
+          memberProfiles.add(basicMember);
+          
+          state = AuthenticationState(
+            status: AuthStatus.authenticated,
+            user: updatedUser,
+            memberProfiles: [basicMember],
+            currentMember: basicMember,
+            isLoading: false,
+          );
+          return;
+        } catch (memberError) {
+          // If member creation fails, continue with authentication but log the error
+          print('Failed to create basic member profile: $memberError');
+        }
+      }
+
       state = AuthenticationState(
         status: AuthStatus.authenticated,
         user: user,
@@ -88,6 +134,28 @@ class AuthStateNotifier extends StateNotifier<AuthenticationState> {
         isLoading: false,
       );
     }
+  }
+
+  /// Extract first name from email
+  String _extractFirstName(String email) {
+    final emailParts = email.split('@').first.split('.');
+    return emailParts.isNotEmpty 
+        ? _capitalize(emailParts.first) 
+        : 'User';
+  }
+
+  /// Extract last name from email
+  String _extractLastName(String email) {
+    final emailParts = email.split('@').first.split('.');
+    return emailParts.length > 1 
+        ? _capitalize(emailParts.last) 
+        : '';
+  }
+
+  /// Capitalize first letter of a string
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
   /// Handle user signed out
