@@ -105,23 +105,47 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       ),
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: widget.selectedIndex,
-            onDestinationSelected: widget.onItemSelected,
-            extended: extended,
-            minWidth: extended ? 200 : 72,
-            destinations: widget.items.map((item) => NavigationRailDestination(
-              icon: Tooltip(
-                message: item.tooltip ?? item.label,
-                child: item.icon,
+          Container(
+            width: extended ? 200 : 72,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(
+                right: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
               ),
-              selectedIcon: item.selectedIcon ?? item.icon,
-              label: Text(item.label),
-            )).toList(),
-            leading: extended ? null : const SizedBox(height: 8),
-            trailing: extended ? _buildUserProfile() : null,
+            ),
+            child: Column(
+              children: [
+                if (!extended) const SizedBox(height: 8),
+                Expanded(
+                  child: NavigationRail(
+                    selectedIndex: widget.selectedIndex,
+                    onDestinationSelected: widget.onItemSelected,
+                    extended: extended,
+                    minWidth: extended ? 200 : 72,
+                    backgroundColor: Colors.transparent,
+                    destinations: widget.items.map((item) => NavigationRailDestination(
+                      icon: Tooltip(
+                        message: item.tooltip ?? item.label,
+                        child: item.icon,
+                      ),
+                      selectedIcon: item.selectedIcon ?? item.icon,
+                      label: Text(item.label),
+                    )).toList(),
+                  ),
+                ),
+                if (extended) ...[
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildUserProfile(),
+                  ),
+                ],
+              ],
+            ),
           ),
-          const VerticalDivider(thickness: 1, width: 1),
           Expanded(
             child: widget.body,
           ),
@@ -225,6 +249,8 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
   }
   
   Widget _buildUserProfile() {
+    final responsive = context.responsive;
+    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -232,26 +258,33 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
           radius: 16,
           child: Icon(Icons.person, size: 20),
         ),
-        const SizedBox(width: 8),
-        if (context.responsive.isLargeDesktop)
-          const Expanded(
+        if (responsive.isLargeDesktop) ...[
+          const SizedBox(width: 12),
+          Flexible(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'User Name',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   'user@example.com',
-                  style: TextStyle(fontSize: 10),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+        ],
       ],
     );
   }
