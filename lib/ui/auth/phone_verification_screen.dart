@@ -23,6 +23,17 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Auto-focus the first OTP field when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNodes[0].requestFocus();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     for (var controller in _controllers) {
       controller.dispose();
@@ -187,14 +198,28 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
       if (index < 5) {
         _focusNodes[index + 1].requestFocus();
       } else {
-        // Last field, remove focus
+        // Last field, remove focus and check if all fields are filled
         _focusNodes[index].unfocus();
+        _checkAndAutoSubmit();
       }
     } else {
       // Move to previous field
       if (index > 0) {
         _focusNodes[index - 1].requestFocus();
       }
+    }
+  }
+
+  void _checkAndAutoSubmit() {
+    // Check if all 6 digits are entered
+    final otp = _controllers.map((controller) => controller.text).join();
+    if (otp.length == 6 && !_isLoading) {
+      // Auto-submit after a brief delay to allow user to see the complete code
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && !_isLoading) {
+          _handleVerify();
+        }
+      });
     }
   }
 

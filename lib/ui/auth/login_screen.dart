@@ -16,25 +16,18 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
   bool _isSignUp = false;
   bool _isPhoneMode = false;
-  Country _selectedCountry = Country(
-    phoneCode: '91',
-    countryCode: 'IN',
-    e164Sc: 0,
-    geographic: true,
-    level: 1,
-    name: 'India',
-    example: '9123456789',
-    displayName: 'India',
-    displayNameNoCountryCode: 'IN',
-    e164Key: '',
-  );
+  Country _selectedCountry = CountryService().findByCode('IN')!;
 
   @override
   void dispose() {
     _emailController.dispose();
     _phoneController.dispose();
+    _emailFocusNode.dispose();
+    _phoneFocusNode.dispose();
     super.dispose();
   }
 
@@ -146,7 +139,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SizedBox(
                 height: 48,
                 child: OutlinedButton(
-                  onPressed: isLoading ? null : () => setState(() => _isPhoneMode = !_isPhoneMode),
+                  onPressed: isLoading ? null : () {
+                    setState(() => _isPhoneMode = !_isPhoneMode);
+                    // Auto-focus the appropriate field after mode change
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_isPhoneMode) {
+                        _phoneFocusNode.requestFocus();
+                      } else {
+                        _emailFocusNode.requestFocus();
+                      }
+                    });
+                  },
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black87,
@@ -220,8 +223,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildEmailInput(bool isLoading) {
+    // Auto-focus when email mode is active
+    if (!_isPhoneMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_emailFocusNode.hasFocus) {
+          _emailFocusNode.requestFocus();
+        }
+      });
+    }
+    
     return TextField(
       controller: _emailController,
+      focusNode: _emailFocusNode,
       enabled: !isLoading,
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
@@ -250,6 +263,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildPhoneInput(bool isLoading) {
+    // Auto-focus when phone mode is active
+    if (_isPhoneMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_phoneFocusNode.hasFocus) {
+          _phoneFocusNode.requestFocus();
+        }
+      });
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -266,7 +288,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Row(
               children: [
                 Text(
-                  '${_selectedCountry.flagEmoji} ${_selectedCountry.name} (+${_selectedCountry.phoneCode})',
+                  '${_selectedCountry.name} (+${_selectedCountry.phoneCode})',
                   style: const TextStyle(fontSize: 16),
                 ),
                 const Spacer(),
@@ -280,6 +302,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Phone number input
         TextField(
           controller: _phoneController,
+          focusNode: _phoneFocusNode,
           enabled: !isLoading,
           keyboardType: TextInputType.phone,
           decoration: InputDecoration(
@@ -315,6 +338,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     showCountryPicker(
       context: context,
       showPhoneCode: true,
+      showWorldWide: false,
+      showSearch: true,
+      countryListTheme: CountryListThemeData(
+        flagSize: 0, // Hide flag emojis to avoid rendering issues
+        backgroundColor: Colors.white,
+        textStyle: const TextStyle(fontSize: 16, color: Colors.black87),
+        bottomSheetHeight: 500,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+        inputDecoration: InputDecoration(
+          labelText: 'Search',
+          hintText: 'Start typing to search',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: const Color(0xFF8C98A8).withOpacity(0.2),
+            ),
+          ),
+        ),
+      ),
       onSelect: (Country country) {
         setState(() {
           _selectedCountry = country;
