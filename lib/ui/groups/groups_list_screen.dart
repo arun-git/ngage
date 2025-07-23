@@ -5,17 +5,18 @@ import '../../models/enums.dart';
 import '../../providers/group_providers.dart';
 import '../../ui/widgets/selectable_error_message.dart';
 import '../../utils/firebase_error_handler.dart';
-import 'group_detail_screen.dart';
 
 /// Screen displaying list of groups for a member
 class GroupsListScreen extends ConsumerWidget {
   final String memberId;
   final VoidCallback? onCreateGroup;
+  final Function(String)? onGroupSelected;
 
   const GroupsListScreen({
     super.key,
     required this.memberId,
     this.onCreateGroup,
+    this.onGroupSelected,
   });
 
   @override
@@ -90,6 +91,7 @@ class GroupsListScreen extends ConsumerWidget {
                   group: group,
                   memberId: memberId,
                   isCreator: group.createdBy == memberId,
+                  onGroupSelected: onGroupSelected,
                 );
               },
             ),
@@ -141,11 +143,13 @@ class _GroupCard extends ConsumerWidget {
   final Group group;
   final String memberId;
   final bool isCreator;
+  final Function(String)? onGroupSelected;
 
   const _GroupCard({
     required this.group,
     required this.memberId,
     this.isCreator = false,
+    this.onGroupSelected,
   });
 
   @override
@@ -154,14 +158,9 @@ class _GroupCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => GroupDetailScreen(
-                groupId: group.id,
-                memberId: memberId,
-              ),
-            ),
-          );
+          if (onGroupSelected != null) {
+            onGroupSelected!(group.id);
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

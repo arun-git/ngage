@@ -8,6 +8,7 @@ import 'ui/auth/login_screen.dart';
 import 'ui/widgets/platform_navigation.dart';
 import 'ui/widgets/selectable_error_message.dart';
 import 'ui/groups/create_group_inner_page.dart';
+import 'ui/groups/group_detail_inner_page.dart';
 import 'ui/groups/groups_list_screen.dart';
 import 'ui/profile/profile_completion_screen.dart';
 import 'utils/error_handler.dart';
@@ -121,6 +122,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   int _selectedIndex = 0;
   bool _showCreateGroup = false;
+  String? _selectedGroupId;
   
   final List<NavigationItem> _navigationItems = [
     const NavigationItem(
@@ -200,7 +202,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       ],
       body: _buildBody(context, currentUser, currentMember, memberProfiles),
-      floatingActionButton: _selectedIndex == 0 && !_showCreateGroup // Groups tab and not showing create group
+      floatingActionButton: _selectedIndex == 0 && !_showCreateGroup && _selectedGroupId == null // Groups tab and not showing create group or group detail
         ? PlatformFloatingActionButton(
             onPressed: () {
               setState(() {
@@ -217,9 +219,13 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildBody(BuildContext context, currentUser, currentMember, memberProfiles) {
     switch (_selectedIndex) {
       case 0:
-        return _showCreateGroup 
-          ? _buildCreateGroup(context)
-          : _buildGroups(context);
+        if (_showCreateGroup) {
+          return _buildCreateGroup(context);
+        } else if (_selectedGroupId != null && currentMember != null) {
+          return _buildGroupDetail(context, currentMember.id);
+        } else {
+          return _buildGroups(context);
+        }
       case 1:
         return _buildEvents(context);
       case 2:
@@ -302,6 +308,11 @@ class _HomePageState extends ConsumerState<HomePage> {
           _showCreateGroup = true;
         });
       },
+      onGroupSelected: (groupId) {
+        setState(() {
+          _selectedGroupId = groupId;
+        });
+      },
     );
   }
 
@@ -322,6 +333,18 @@ class _HomePageState extends ConsumerState<HomePage> {
             backgroundColor: Colors.green,
           ),
         );
+      },
+    );
+  }
+
+  Widget _buildGroupDetail(BuildContext context, String memberId) {
+    return GroupDetailInnerPage(
+      groupId: _selectedGroupId!,
+      memberId: memberId,
+      onBack: () {
+        setState(() {
+          _selectedGroupId = null;
+        });
       },
     );
   }
