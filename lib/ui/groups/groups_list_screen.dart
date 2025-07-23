@@ -9,7 +9,7 @@ import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
 
 /// Screen displaying list of groups for a member
-class GroupsListScreen extends ConsumerStatefulWidget {
+class GroupsListScreen extends ConsumerWidget {
   final String memberId;
 
   const GroupsListScreen({
@@ -18,38 +18,13 @@ class GroupsListScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<GroupsListScreen> createState() => _GroupsListScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final memberGroupsAsync = ref.watch(memberGroupsStreamProvider(memberId));
 
-class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Groups'),
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'My Groups'),
-            Tab(text: 'Created by Me'),
-          ],
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -63,104 +38,85 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _MemberGroupsTab(memberId: widget.memberId),
-          _CreatedGroupsTab(memberId: widget.memberId),
-        ],
-      ),
-    );
-  }
-}
+      body: memberGroupsAsync.when(
+        data: (groups) {
+          if (groups.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.group_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No groups yet',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Join a group or create your own to get started',
+                    style: TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
 
-/// Tab showing groups the member belongs to
-class _MemberGroupsTab extends ConsumerWidget {
-  final String memberId;
-
-  const _MemberGroupsTab({required this.memberId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final memberGroupsAsync = ref.watch(memberGroupsStreamProvider(memberId));
-
-    return memberGroupsAsync.when(
-      data: (groups) {
-        if (groups.isEmpty) {
-          return const Center(
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(memberGroupsStreamProvider(memberId));
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: groups.length,
+              itemBuilder: (context, index) {
+                final group = groups[index];
+                return _GroupCard(
+                  group: group,
+                  memberId: memberId,
+                  isCreator: group.createdBy == memberId,
+                );
+              },
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.group_outlined,
+                const Icon(
+                  Icons.error_outline,
                   size: 64,
-                  color: Colors.grey,
+                  color: Colors.red,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  'No groups yet',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
+                  'Error loading groups',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'Join a group or create your own to get started',
-                  style: TextStyle(color: Colors.grey),
-                  textAlign: TextAlign.center,
+                const SizedBox(height: 16),
+                SelectableErrorMessage(
+                  message: error.toString(),
+                  title: 'Error Details',
+                  backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString()) 
+                      ? Colors.orange 
+                      : Colors.red,
+                  onRetry: () {
+                    ref.invalidate(memberGroupsStreamProvider(memberId));
+                  },
                 ),
               ],
             ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(memberGroupsStreamProvider(memberId));
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: groups.length,
-            itemBuilder: (context, index) {
-              final group = groups[index];
-              return _GroupCard(
-                group: group,
-                memberId: memberId,
-              );
-            },
-          ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading groups',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              SelectableErrorMessage(
-                message: error.toString(),
-                title: 'Error Details',
-                backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString()) 
-                    ? Colors.orange 
-                    : Colors.red,
-                onRetry: () {
-                  ref.invalidate(memberGroupsStreamProvider(memberId));
-                },
-              ),
-            ],
           ),
         ),
       ),
@@ -168,100 +124,7 @@ class _MemberGroupsTab extends ConsumerWidget {
   }
 }
 
-/// Tab showing groups created by the member
-class _CreatedGroupsTab extends ConsumerWidget {
-  final String memberId;
 
-  const _CreatedGroupsTab({required this.memberId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final createdGroupsAsync = ref.watch(groupsCreatedByProvider(memberId));
-
-    return createdGroupsAsync.when(
-      data: (groups) {
-        if (groups.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add_circle_outline,
-                  size: 64,
-                  color: Colors.grey,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'No groups created',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Create your first group to get started',
-                  style: TextStyle(color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(groupsCreatedByProvider(memberId));
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: groups.length,
-            itemBuilder: (context, index) {
-              final group = groups[index];
-              return _GroupCard(
-                group: group,
-                memberId: memberId,
-                isCreator: true,
-              );
-            },
-          ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading created groups',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              SelectableErrorMessage(
-                message: error.toString(),
-                title: 'Error Details',
-                backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString()) 
-                    ? Colors.orange 
-                    : Colors.red,
-                onRetry: () {
-                  ref.invalidate(groupsCreatedByProvider(memberId));
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// Card widget for displaying group information
 class _GroupCard extends ConsumerWidget {
