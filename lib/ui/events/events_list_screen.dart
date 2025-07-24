@@ -12,11 +12,13 @@ import 'event_detail_screen.dart';
 class EventsListScreen extends ConsumerStatefulWidget {
   final String groupId;
   final String? initialFilter;
+  final Function(String)? onEventSelected;
 
   const EventsListScreen({
     super.key,
     required this.groupId,
     this.initialFilter,
+    this.onEventSelected,
   });
 
   @override
@@ -308,11 +310,15 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   }
 
   void _navigateToEventDetail(Event event) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => EventDetailScreen(eventId: event.id),
-      ),
-    );
+    if (widget.onEventSelected != null) {
+      widget.onEventSelected!(event.id);
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => EventDetailScreen(eventId: event.id),
+        ),
+      );
+    }
   }
 
   void _refreshAllProviders() {

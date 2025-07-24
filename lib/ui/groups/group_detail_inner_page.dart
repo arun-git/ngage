@@ -12,6 +12,7 @@ import '../../utils/firebase_error_handler.dart';
 import 'group_settings_inner_page.dart';
 import 'manage_members_inner_page.dart';
 import 'manage_teams_inner_page.dart';
+import '../events/event_detail_inner_page.dart';
 
 /// Inner page showing group details that replaces the groups list
 class GroupDetailInnerPage extends ConsumerStatefulWidget {
@@ -34,6 +35,7 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String? _currentSubPage; // 'settings', 'members', 'teams'
+  String? _selectedEventId;
 
   @override
   void initState() {
@@ -101,54 +103,58 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
                       items: _buildBreadcrumbItems(group),
                     ),
                   ),
-                  isAdminAsync.when(
-                    data: (isAdmin) => isAdmin
-                        ? PopupMenuButton<String>(
-                            onSelected: (value) {
-                              setState(() {
-                                _currentSubPage = value;
-                              });
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'settings',
-                                child: ListTile(
-                                  leading: Icon(Icons.settings),
-                                  title: Text('Group Settings'),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: 'manage_members',
-                                child: ListTile(
-                                  leading: Icon(Icons.people),
-                                  title: Text('Manage Members'),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: 'manage_teams',
-                                child: ListTile(
-                                  leading: Icon(Icons.groups),
-                                  title: Text('Manage Teams'),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
+                  _selectedEventId != null
+                      ? _buildEventPopupMenu(group)
+                      : isAdminAsync.when(
+                          data: (isAdmin) => isAdmin
+                              ? PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    setState(() {
+                                      _currentSubPage = value;
+                                    });
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'settings',
+                                      child: ListTile(
+                                        leading: Icon(Icons.settings),
+                                        title: Text('Group Settings'),
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'manage_members',
+                                      child: ListTile(
+                                        leading: Icon(Icons.people),
+                                        title: Text('Manage Members'),
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'manage_teams',
+                                      child: ListTile(
+                                        leading: Icon(Icons.groups),
+                                        title: Text('Manage Teams'),
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : const SizedBox.shrink(),
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
+                        ),
                 ],
               ),
             ),
 
-            // Content based on current sub-page
+            // Content based on current sub-page or selected event
             Expanded(
-              child: _currentSubPage != null
-                  ? _buildSubPage(group)
-                  : _buildMainContent(group),
+              child: _selectedEventId != null
+                  ? _buildEventDetail(group)
+                  : _currentSubPage != null
+                      ? _buildSubPage(group)
+                      : _buildMainContent(group),
             ),
           ],
         );
@@ -239,7 +245,36 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
       ),
     ];
 
-    if (_currentSubPage != null) {
+    if (_selectedEventId != null) {
+      // When viewing event detail, show: Groups > Group Name > Event Title
+      // Group name becomes clickable to return to group detail
+      items.add(
+        BreadcrumbItem(
+          title: group.name,
+          onTap: () {
+            setState(() {
+              _selectedEventId = null;
+              _currentSubPage = null;
+            });
+          },
+        ),
+      );
+      
+      // Add event title from the selected event
+      final eventAsync = ref.watch(eventStreamProvider(_selectedEventId!));
+      eventAsync.whenData((event) {
+        if (event != null) {
+          items.add(
+            BreadcrumbItem(
+              title: event.title,
+              icon: Icons.event,
+            ),
+          );
+        }
+      });
+      
+      return items;
+    } else if (_currentSubPage != null) {
       // Add group name as clickable item when in sub-page
       items.add(
         BreadcrumbItem(
@@ -292,6 +327,111 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     return items;
   }
 
+  Widget _buildEventDetail(Group group) {
+    return EventDetailInnerPage(
+      eventId: _selectedEventId!,
+      groupName: group.name,
+      onBack: () {
+        setState(() {
+          _selectedEventId = null;
+        });
+      },
+    );
+  }
+
+  Widget _buildEventPopupMenu(Group group) {
+    final eventAsync = ref.watch(eventStreamProvider(_selectedEventId!));
+    
+    return eventAsync.when(
+      data: (event) {
+        if (event == null) return const SizedBox.shrink();
+        
+        return PopupMenuButton<String>(
+          onSelected: (value) => _handleEventMenuAction(context, ref, event, value),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('Edit Event'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            if (event.status == EventStatus.draft)
+              const PopupMenuItem(
+                value: 'schedule',
+                child: ListTile(
+                  leading: Icon(Icons.schedule),
+                  title: Text('Schedule Event'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            if (event.status == EventStatus.scheduled)
+              const PopupMenuItem(
+                value: 'activate',
+                child: ListTile(
+                  leading: Icon(Icons.play_arrow),
+                  title: Text('Activate Event'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            if (event.status == EventStatus.active)
+              const PopupMenuItem(
+                value: 'complete',
+                child: ListTile(
+                  leading: Icon(Icons.check_circle),
+                  title: Text('Complete Event'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            const PopupMenuItem(
+              value: 'clone',
+              child: ListTile(
+                leading: Icon(Icons.copy),
+                title: Text('Clone Event'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'access',
+              child: ListTile(
+                leading: Icon(Icons.security),
+                title: Text('Manage Access'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'prerequisites',
+              child: ListTile(
+                leading: Icon(Icons.lock_outline),
+                title: Text('Prerequisites'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            if (event.status == EventStatus.draft)
+              const PopupMenuItem(
+                value: 'delete',
+                child: ListTile(
+                  leading: Icon(Icons.delete, color: Colors.red),
+                  title: Text('Delete Event', style: TextStyle(color: Colors.red)),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  void _handleEventMenuAction(BuildContext context, WidgetRef ref, Event event, String action) {
+    // For now, just show a snackbar. In a real implementation, you'd handle these actions
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$action action for event: ${event.title}')),
+    );
+  }
+
   Widget _buildMainContent(Group group) {
     return Column(
       children: [
@@ -320,6 +460,11 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
               _GroupEventsTab(
                 groupId: widget.groupId,
                 memberId: widget.memberId,
+                onEventSelected: (eventId) {
+                  setState(() {
+                    _selectedEventId = eventId;
+                  });
+                },
               ),
               _GroupTeamsTab(
                 groupId: widget.groupId,
@@ -516,15 +661,20 @@ class _GroupLeaderboardTab extends ConsumerWidget {
 class _GroupEventsTab extends ConsumerWidget {
   final String groupId;
   final String memberId;
+  final Function(String)? onEventSelected;
 
   const _GroupEventsTab({
     required this.groupId,
     required this.memberId,
+    this.onEventSelected,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return EventsListScreen(groupId: groupId);
+    return EventsListScreen(
+      groupId: groupId,
+      onEventSelected: onEventSelected,
+    );
   }
 }
 
