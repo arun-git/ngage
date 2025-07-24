@@ -40,6 +40,98 @@ class EventDetailInnerPage extends ConsumerWidget {
   Widget _buildEventDetailContent(BuildContext context, WidgetRef ref, Event event) {
     return Column(
       children: [
+        // Header with popup menu
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.grey.shade50,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  event.title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) => _handleMenuAction(context, ref, event, value),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: ListTile(
+                      leading: Icon(Icons.edit),
+                      title: Text('Edit Event'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  if (event.status == EventStatus.draft)
+                    const PopupMenuItem(
+                      value: 'schedule',
+                      child: ListTile(
+                        leading: Icon(Icons.schedule),
+                        title: Text('Schedule Event'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  if (event.status == EventStatus.scheduled)
+                    const PopupMenuItem(
+                      value: 'activate',
+                      child: ListTile(
+                        leading: Icon(Icons.play_arrow),
+                        title: Text('Activate Event'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  if (event.status == EventStatus.active)
+                    const PopupMenuItem(
+                      value: 'complete',
+                      child: ListTile(
+                        leading: Icon(Icons.check_circle),
+                        title: Text('Complete Event'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  const PopupMenuItem(
+                    value: 'clone',
+                    child: ListTile(
+                      leading: Icon(Icons.copy),
+                      title: Text('Clone Event'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'access',
+                    child: ListTile(
+                      leading: Icon(Icons.security),
+                      title: Text('Manage Access'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'prerequisites',
+                    child: ListTile(
+                      leading: Icon(Icons.lock_outline),
+                      title: Text('Prerequisites'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  if (event.status == EventStatus.draft)
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        leading: Icon(Icons.delete, color: Colors.red),
+                        title: Text('Delete Event', style: TextStyle(color: Colors.red)),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
         // Event content
         Expanded(
           child: SingleChildScrollView(
@@ -527,9 +619,15 @@ class EventDetailInnerPage extends ConsumerWidget {
   }
 
   void _scheduleEvent(BuildContext context, WidgetRef ref, Event event) {
-    // TODO: Implement schedule event dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Schedule event functionality coming soon')),
+    showDialog(
+      context: context,
+      builder: (context) => _ScheduleEventDialog(
+        event: event,
+        onScheduled: () {
+          // Refresh the event data after scheduling
+          ref.invalidate(eventProvider(event.id));
+        },
+      ),
     );
   }
 
@@ -591,10 +689,11 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
 
     if (result != null && context.mounted) {
-      // TODO: Navigate to the cloned event detail
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Event cloned successfully')),
       );
+      // Navigate back and let the parent handle showing the cloned event
+      onBack();
     }
   }
 
@@ -755,5 +854,458 @@ class EventDetailInnerPage extends ConsumerWidget {
     } else {
       return '${duration.inMinutes}m';
     }
+  }
+}
+
+/// Enhanced Schedule Event Dialog with better UX and validation
+class _ScheduleEventDialog extends ConsumerStatefulWidget {
+  final Event event;
+  final VoidCallback? onScheduled;
+
+  const _ScheduleEventDialog({
+    required this.event,
+    this.onScheduled,
+  });
+
+  @override
+  ConsumerState<_ScheduleEventDialog> createState() => _ScheduleEventDialogState();
+}
+
+class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
+  late DateTime startTime;
+  late DateTime endTime;
+  DateTime? submissionDeadline;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    
+    // Initialize with existing times or smart defaults
+    startTime = widget.event.startTime ?? now.add(const Duration(hours: 1));
+    endTime = widget.event.endTime ?? startTime.add(const Duration(hours: 2));
+    submissionDeadline = widget.event.submissionDeadline;
+    
+    // Ensure end time is after start time
+    if (endTime.isBefore(startTime)) {
+      endTime = startTime.add(const Duration(hours: 2));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.schedule, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          const Text('Schedule Event'),
+        ],
+      ),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Event info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.event.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getEventTypeLabel(widget.event.eventType).toUpperCase(),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Error message
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.colorScheme.error.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: theme.colorScheme.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              // Start time
+              _buildDateTimeField(
+                context,
+                label: 'Start Time',
+                value: startTime,
+                onChanged: (newTime) {
+                  setState(() {
+                    startTime = newTime;
+                    // Ensure end time is after start time
+                    if (endTime.isBefore(startTime)) {
+                      endTime = startTime.add(const Duration(hours: 2));
+                    }
+                    _errorMessage = null;
+                  });
+                },
+                icon: Icons.play_arrow,
+                color: Colors.green,
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // End time
+              _buildDateTimeField(
+                context,
+                label: 'End Time',
+                value: endTime,
+                onChanged: (newTime) {
+                  setState(() {
+                    endTime = newTime;
+                    _errorMessage = null;
+                  });
+                },
+                icon: Icons.stop,
+                color: Colors.red,
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Submission deadline (optional)
+              _buildOptionalDateTimeField(
+                context,
+                label: 'Submission Deadline (Optional)',
+                value: submissionDeadline,
+                onChanged: (newTime) {
+                  setState(() {
+                    submissionDeadline = newTime;
+                    _errorMessage = null;
+                  });
+                },
+                onCleared: () {
+                  setState(() {
+                    submissionDeadline = null;
+                    _errorMessage = null;
+                  });
+                },
+                icon: Icons.access_time,
+                color: Colors.orange,
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Validation info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: theme.colorScheme.primary,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Scheduling Rules',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '• End time must be after start time\n'
+                      '• Submission deadline (if set) should be before or at end time\n'
+                      '• All times are in your local timezone',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isLoading ? null : _scheduleEvent,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Schedule'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateTimeField(
+    BuildContext context, {
+    required String label,
+    required DateTime value,
+    required Function(DateTime) onChanged,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => _selectDateTime(context, value, onChanged),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              _formatDateTime(value),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOptionalDateTimeField(
+    BuildContext context, {
+    required String label,
+    required DateTime? value,
+    required Function(DateTime) onChanged,
+    required VoidCallback onCleared,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (value != null)
+              IconButton(
+                onPressed: onCleared,
+                icon: const Icon(Icons.clear, size: 16),
+                tooltip: 'Clear deadline',
+                constraints: const BoxConstraints(
+                  minWidth: 32,
+                  minHeight: 32,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () {
+            if (value != null) {
+              _selectDateTime(context, value!, onChanged);
+            } else {
+              // Set default to end time if not set
+              _selectDateTime(context, endTime, onChanged);
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              value != null ? _formatDateTime(value!) : 'Tap to set deadline',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: value != null ? null : Colors.grey.shade600,
+                fontStyle: value != null ? null : FontStyle.italic,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _selectDateTime(
+    BuildContext context,
+    DateTime initialValue,
+    Function(DateTime) onChanged,
+  ) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initialValue,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (date != null && context.mounted) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(initialValue),
+      );
+
+      if (time != null) {
+        final newDateTime = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        );
+        onChanged(newDateTime);
+      }
+    }
+  }
+
+  Future<void> _scheduleEvent() async {
+    // Validate times
+    if (endTime.isBefore(startTime)) {
+      setState(() {
+        _errorMessage = 'End time must be after start time';
+      });
+      return;
+    }
+
+    if (submissionDeadline != null && submissionDeadline!.isAfter(endTime)) {
+      setState(() {
+        _errorMessage = 'Submission deadline should be before or at end time';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref.read(eventServiceProvider).scheduleEvent(
+        widget.event.id,
+        startTime: startTime,
+        endTime: endTime,
+        submissionDeadline: submissionDeadline,
+      );
+
+      if (mounted) {
+        widget.onScheduled?.call();
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event scheduled successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to schedule event: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _getEventTypeLabel(EventType type) {
+    switch (type) {
+      case EventType.competition:
+        return 'Competition';
+      case EventType.challenge:
+        return 'Challenge';
+      case EventType.survey:
+        return 'Survey';
+    }
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${_formatTime(dateTime)}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    
+    return '$displayHour:$minute $period';
   }
 }
