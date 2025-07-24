@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
+import '../../providers/group_providers.dart';
 import '../../utils/firebase_error_handler.dart';
 import '../widgets/selectable_error_message.dart';
 import 'event_card.dart';
 import 'create_event_screen.dart';
-import 'event_detail_screen.dart';
+import 'event_detail_inner_page.dart';
 
 /// Screen displaying list of events for a group
 class EventsListScreen extends ConsumerStatefulWidget {
@@ -315,7 +316,10 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => EventDetailScreen(eventId: event.id),
+          builder: (context) => _EventDetailWrapper(
+            eventId: event.id,
+            groupId: widget.groupId,
+          ),
         ),
       );
     }
@@ -332,5 +336,63 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
         searchTerm: _searchQuery,
       )));
     }
+  }
+}
+
+/// Wrapper widget to handle group name fetching for EventDetailInnerPage
+class _EventDetailWrapper extends ConsumerWidget {
+  final String eventId;
+  final String groupId;
+
+  const _EventDetailWrapper({
+    required this.eventId,
+    required this.groupId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupAsync = ref.watch(groupProvider(groupId));
+    final eventAsync = ref.watch(eventStreamProvider(eventId));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: eventAsync.when(
+          data: (event) => Text(event?.title ?? 'Event Details'),
+          loading: () => const Text('Event Details'),
+          error: (_, __) => const Text('Event Details'),
+        ),
+      ),
+      body: groupAsync.when(
+        data: (group) => EventDetailInnerPage(
+          eventId: eventId,
+          groupName: group?.name ?? 'Unknown Group',
+          onBack: () => Navigator.of(context).pop(),
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading group',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

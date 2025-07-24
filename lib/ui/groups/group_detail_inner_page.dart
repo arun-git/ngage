@@ -13,6 +13,10 @@ import 'group_settings_inner_page.dart';
 import 'manage_members_inner_page.dart';
 import 'manage_teams_inner_page.dart';
 import '../events/event_detail_inner_page.dart';
+import '../events/create_event_screen.dart';
+import '../events/clone_event_screen.dart';
+import '../events/event_access_screen.dart';
+import '../events/event_prerequisites_screen.dart';
 
 /// Inner page showing group details that replaces the groups list
 class GroupDetailInnerPage extends ConsumerStatefulWidget {
@@ -426,10 +430,36 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
   }
 
   void _handleEventMenuAction(BuildContext context, WidgetRef ref, Event event, String action) {
-    // For now, just show a snackbar. In a real implementation, you'd handle these actions
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$action action for event: ${event.title}')),
-    );
+    switch (action) {
+      case 'edit':
+        _navigateToEditEvent(context, event);
+        break;
+      case 'schedule':
+        _scheduleEvent(context, ref, event);
+        break;
+      case 'activate':
+        _activateEvent(context, ref, event);
+        break;
+      case 'complete':
+        _completeEvent(context, ref, event);
+        break;
+      case 'clone':
+        _navigateToCloneEvent(context, event);
+        break;
+      case 'access':
+        _navigateToManageAccess(context, event);
+        break;
+      case 'prerequisites':
+        _navigateToManagePrerequisites(context, event);
+        break;
+      case 'delete':
+        _deleteEvent(context, ref, event);
+        break;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unknown action: $action')),
+        );
+    }
   }
 
   Widget _buildMainContent(Group group) {
@@ -475,6 +505,423 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
         ),
       ],
     );
+  }
+
+  // Navigation methods for event actions
+  void _navigateToEditEvent(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CreateEventScreen(
+          groupId: event.groupId,
+          eventToEdit: event,
+        ),
+      ),
+    ).then((_) {
+      // Refresh event data after editing
+      ref.invalidate(eventStreamProvider(event.id));
+    });
+  }
+
+  void _navigateToCloneEvent(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CloneEventScreen(originalEvent: event),
+      ),
+    ).then((clonedEvent) {
+      if (clonedEvent != null) {
+        // Refresh events list after cloning
+        ref.invalidate(groupEventsStreamProvider(widget.groupId));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event cloned successfully')),
+        );
+      }
+    });
+  }
+
+  void _navigateToManageAccess(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EventAccessScreen(event: event),
+      ),
+    ).then((_) {
+      // Refresh event data after access changes
+      ref.invalidate(eventStreamProvider(event.id));
+    });
+  }
+
+  void _navigateToManagePrerequisites(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EventPrerequisitesScreen(event: event),
+      ),
+    ).then((_) {
+      // Refresh event data after prerequisites changes
+      ref.invalidate(eventStreamProvider(event.id));
+    });
+  }
+
+  void _scheduleEvent(BuildContext context, WidgetRef ref, Event event) {
+    showDialog(
+      context: context,
+      builder: (context) => _ScheduleEventDialog(
+        event: event,
+        onScheduled: () {
+          // Refresh the event data after scheduling
+          ref.invalidate(eventStreamProvider(event.id));
+        },
+      ),
+    );
+  }
+
+  Future<void> _activateEvent(BuildContext context, WidgetRef ref, Event event) async {
+    final confirmed = await _showConfirmationDialog(
+      context,
+      'Activate Event',
+      'Are you sure you want to activate this event? This will make it available for submissions.',
+    );
+
+    if (confirmed && context.mounted) {
+      try {
+        await ref.read(eventServiceProvider).activateEvent(event.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event activated successfully')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to activate event: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _completeEvent(BuildContext context, WidgetRef ref, Event event) async {
+    final confirmed = await _showConfirmationDialog(
+      context,
+      'Complete Event',
+      'Are you sure you want to complete this event? This will close submissions and finalize results.',
+    );
+
+    if (confirmed && context.mounted) {
+      try {
+        await ref.read(eventServiceProvider).completeEvent(event.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event completed successfully')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to complete event: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _deleteEvent(BuildContext context, WidgetRef ref, Event event) async {
+    final confirmed = await _showConfirmationDialog(
+      context,
+      'Delete Event',
+      'Are you sure you want to delete this event? This action cannot be undone.',
+      destructive: true,
+    );
+
+    if (confirmed && context.mounted) {
+      try {
+        await ref.read(eventServiceProvider).deleteEvent(event.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event deleted successfully')),
+          );
+          // Navigate back to events list since the event is deleted
+          setState(() {
+            _selectedEventId = null;
+          });
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete event: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<bool> _showConfirmationDialog(
+    BuildContext context,
+    String title,
+    String content, {
+    bool destructive = false,
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: destructive
+                ? TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  )
+                : null,
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+}
+
+/// Dialog for scheduling an event
+class _ScheduleEventDialog extends ConsumerStatefulWidget {
+  final Event event;
+  final VoidCallback? onScheduled;
+
+  const _ScheduleEventDialog({
+    required this.event,
+    this.onScheduled,
+  });
+
+  @override
+  ConsumerState<_ScheduleEventDialog> createState() => _ScheduleEventDialogState();
+}
+
+class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
+  late DateTime startTime;
+  late DateTime endTime;
+  DateTime? submissionDeadline;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    
+    // Initialize with existing times or smart defaults
+    startTime = widget.event.startTime ?? now.add(const Duration(hours: 1));
+    endTime = widget.event.endTime ?? startTime.add(const Duration(hours: 2));
+    submissionDeadline = widget.event.submissionDeadline;
+    
+    // Ensure end time is after start time
+    if (endTime.isBefore(startTime)) {
+      endTime = startTime.add(const Duration(hours: 2));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Schedule Event'),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Event: ${widget.event.title}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Start time
+              ListTile(
+                leading: const Icon(Icons.play_arrow),
+                title: const Text('Start Time'),
+                subtitle: Text(_formatDateTime(startTime)),
+                onTap: () => _selectDateTime(context, true),
+              ),
+              
+              // End time
+              ListTile(
+                leading: const Icon(Icons.stop),
+                title: const Text('End Time'),
+                subtitle: Text(_formatDateTime(endTime)),
+                onTap: () => _selectDateTime(context, false),
+              ),
+              
+              // Submission deadline (optional)
+              ListTile(
+                leading: const Icon(Icons.access_time),
+                title: const Text('Submission Deadline (Optional)'),
+                subtitle: Text(submissionDeadline != null 
+                    ? _formatDateTime(submissionDeadline!) 
+                    : 'Not set'),
+                onTap: () => _selectSubmissionDeadline(context),
+                trailing: submissionDeadline != null
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            submissionDeadline = null;
+                          });
+                        },
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _isLoading ? null : _scheduleEvent,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Schedule'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _selectDateTime(BuildContext context, bool isStartTime) async {
+    final currentTime = isStartTime ? startTime : endTime;
+    
+    final date = await showDatePicker(
+      context: context,
+      initialDate: currentTime,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    
+    if (date != null && context.mounted) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(currentTime),
+      );
+      
+      if (time != null) {
+        final newDateTime = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        );
+        
+        setState(() {
+          if (isStartTime) {
+            startTime = newDateTime;
+            // Ensure end time is after start time
+            if (endTime.isBefore(startTime)) {
+              endTime = startTime.add(const Duration(hours: 2));
+            }
+          } else {
+            if (newDateTime.isAfter(startTime)) {
+              endTime = newDateTime;
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('End time must be after start time')),
+              );
+            }
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _selectSubmissionDeadline(BuildContext context) async {
+    final currentDeadline = submissionDeadline ?? endTime;
+    
+    final date = await showDatePicker(
+      context: context,
+      initialDate: currentDeadline,
+      firstDate: startTime,
+      lastDate: endTime.add(const Duration(days: 30)),
+    );
+    
+    if (date != null && context.mounted) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(currentDeadline),
+      );
+      
+      if (time != null) {
+        final newDateTime = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        );
+        
+        setState(() {
+          submissionDeadline = newDateTime;
+        });
+      }
+    }
+  }
+
+  Future<void> _scheduleEvent() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await ref.read(eventServiceProvider).scheduleEvent(
+        widget.event.id,
+        startTime: startTime,
+        endTime: endTime,
+        submissionDeadline: submissionDeadline,
+      );
+
+      if (mounted) {
+        widget.onScheduled?.call();
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event scheduled successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to schedule event: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${_formatTime(dateTime)}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    
+    return '$displayHour:$minute $period';
   }
 }
 
