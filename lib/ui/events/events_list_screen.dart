@@ -6,7 +6,7 @@ import '../../providers/group_providers.dart';
 import '../../utils/firebase_error_handler.dart';
 import '../widgets/selectable_error_message.dart';
 import 'event_card.dart';
-import 'create_event_screen.dart';
+//import 'create_event_screen.dart';
 import 'event_detail_inner_page.dart';
 
 /// Screen displaying list of events for a group
@@ -302,10 +302,10 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   }
 
   void _navigateToCreateEvent() async {
-    if (widget.onCreateEvent != null) {
-      // Use callback if provided (for inner page navigation)
-      widget.onCreateEvent!();
-    } else {
+    // if (widget.onCreateEvent != null) {
+    // Use callback if provided (for inner page navigation)
+    widget.onCreateEvent!();
+    /* } else {
       // Fall back to navigation (for standalone screen)
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
@@ -317,7 +317,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
       if (result == true) {
         _refreshAllProviders();
       }
-    }
+    } */
   }
 
   void _navigateToEventDetail(Event event) {

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 
-import 'create_event_screen.dart';
+import 'create_event_inner_page.dart';
 import 'clone_event_screen.dart';
 import 'event_access_screen.dart';
 import 'event_prerequisites_screen.dart';
@@ -37,7 +37,8 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEventDetailContent(BuildContext context, WidgetRef ref, Event event) {
+  Widget _buildEventDetailContent(
+      BuildContext context, WidgetRef ref, Event event) {
     return Column(
       children: [
         // Event content
@@ -49,30 +50,30 @@ class EventDetailInnerPage extends ConsumerWidget {
               children: [
                 // Status and Type Header
                 _buildHeaderSection(context, event),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Description
                 _buildDescriptionSection(context, event),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Scheduling Information
                 _buildSchedulingSection(context, event),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Access Control
                 _buildAccessSection(context, event),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Judging Criteria (if any)
                 if (event.judgingCriteria.isNotEmpty) ...[
                   _buildJudgingSection(context, event),
                   const SizedBox(height: 24),
                 ],
-                
+
                 // Action Buttons
                 _buildActionButtons(context, ref, event),
               ],
@@ -104,10 +105,11 @@ class EventDetailInnerPage extends ConsumerWidget {
                     children: [
                       Text(
                         _getEventTypeLabel(event.eventType),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                       const SizedBox(height: 4),
                       _buildStatusChip(context, event),
@@ -120,15 +122,15 @@ class EventDetailInnerPage extends ConsumerWidget {
             Text(
               'Created: ${_formatDateTime(event.createdAt)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
             ),
             if (event.updatedAt != event.createdAt)
               Text(
                 'Updated: ${_formatDateTime(event.updatedAt)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
               ),
           ],
         ),
@@ -146,8 +148,8 @@ class EventDetailInnerPage extends ConsumerWidget {
             Text(
               'Description',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -170,11 +172,10 @@ class EventDetailInnerPage extends ConsumerWidget {
             Text(
               'Scheduling',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
-            
             if (event.startTime != null) ...[
               _buildScheduleItem(
                 context,
@@ -185,7 +186,6 @@ class EventDetailInnerPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
             ],
-            
             if (event.endTime != null) ...[
               _buildScheduleItem(
                 context,
@@ -196,7 +196,6 @@ class EventDetailInnerPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
             ],
-            
             if (event.submissionDeadline != null) ...[
               _buildScheduleItem(
                 context,
@@ -207,7 +206,6 @@ class EventDetailInnerPage extends ConsumerWidget {
                 subtitle: _getDeadlineStatus(event),
               ),
             ],
-            
             if (event.startTime == null && event.endTime == null) ...[
               Row(
                 children: [
@@ -219,8 +217,8 @@ class EventDetailInnerPage extends ConsumerWidget {
                   Text(
                     'Event not scheduled yet',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                   ),
                 ],
               ),
@@ -250,22 +248,22 @@ class EventDetailInnerPage extends ConsumerWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
               ),
               Text(
                 value,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
               if (subtitle != null)
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
+                        color: color,
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
             ],
           ),
@@ -284,11 +282,10 @@ class EventDetailInnerPage extends ConsumerWidget {
             Text(
               'Access Control',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
-            
             Row(
               children: [
                 Icon(
@@ -303,16 +300,16 @@ class EventDetailInnerPage extends ConsumerWidget {
                       Text(
                         event.isOpenEvent ? 'Open Event' : 'Restricted Event',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                              fontWeight: FontWeight.w500,
+                            ),
                       ),
                       Text(
                         event.isOpenEvent
                             ? 'All teams in the group can participate'
                             : 'Only ${event.eligibleTeamIds?.length ?? 0} selected team(s) can participate',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
                       ),
                     ],
                   ),
@@ -335,11 +332,10 @@ class EventDetailInnerPage extends ConsumerWidget {
             Text(
               'Judging Criteria',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
-            
             ...event.judgingCriteria.entries.map((entry) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -381,7 +377,6 @@ class EventDetailInnerPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
         ],
-        
         if (event.status == EventStatus.scheduled) ...[
           SizedBox(
             width: double.infinity,
@@ -393,7 +388,6 @@ class EventDetailInnerPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
         ],
-        
         if (event.status == EventStatus.active) ...[
           SizedBox(
             width: double.infinity,
@@ -405,22 +399,21 @@ class EventDetailInnerPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
         ],
-        
-        SizedBox(
+        /*SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: () => _editEvent(context, event),
             icon: const Icon(Icons.edit),
             label: const Text('Edit Event'),
           ),
-        ),
+        ),*/
       ],
     );
   }
 
   Widget _buildStatusChip(BuildContext context, Event event) {
     final (color, backgroundColor) = _getStatusColors(context, event);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -430,9 +423,9 @@ class EventDetailInnerPage extends ConsumerWidget {
       child: Text(
         _getStatusLabel(event.status),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }
@@ -486,7 +479,8 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  void _handleMenuAction(BuildContext context, WidgetRef ref, Event event, String action) {
+  /*void _handleMenuAction(
+      BuildContext context, WidgetRef ref, Event event, String action) {
     switch (action) {
       case 'edit':
         _editEvent(context, event);
@@ -518,13 +512,15 @@ class EventDetailInnerPage extends ConsumerWidget {
   void _editEvent(BuildContext context, Event event) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => CreateEventScreen(
+        builder: (context) => CreateEventInnerPage(
           groupId: event.groupId,
+          groupName: groupName,
           eventToEdit: event,
+          onBack: () => Navigator.of(context).pop(),
         ),
       ),
     );
-  }
+  }*/
 
   void _scheduleEvent(BuildContext context, WidgetRef ref, Event event) {
     showDialog(
@@ -539,7 +535,8 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _activateEvent(BuildContext context, WidgetRef ref, Event event) async {
+  Future<void> _activateEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
     final confirmed = await _showConfirmationDialog(
       context,
       'Activate Event',
@@ -564,7 +561,8 @@ class EventDetailInnerPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _completeEvent(BuildContext context, WidgetRef ref, Event event) async {
+  Future<void> _completeEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
     final confirmed = await _showConfirmationDialog(
       context,
       'Complete Event',
@@ -589,7 +587,8 @@ class EventDetailInnerPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _cloneEvent(BuildContext context, WidgetRef ref, Event event) async {
+  Future<void> _cloneEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
     final result = await Navigator.of(context).push<Event>(
       MaterialPageRoute(
         builder: (context) => CloneEventScreen(originalEvent: event),
@@ -621,7 +620,8 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _deleteEvent(BuildContext context, WidgetRef ref, Event event) async {
+  Future<void> _deleteEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
     final confirmed = await _showConfirmationDialog(
       context,
       'Delete Event',
@@ -726,7 +726,7 @@ class EventDetailInnerPage extends ConsumerWidget {
 
   (Color, Color) _getStatusColors(BuildContext context, Event event) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     switch (event.status) {
       case EventStatus.draft:
         return (colorScheme.outline, colorScheme.outline.withOpacity(0.1));
@@ -750,7 +750,7 @@ class EventDetailInnerPage extends ConsumerWidget {
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final period = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    
+
     return '$displayHour:$minute $period';
   }
 
@@ -776,7 +776,8 @@ class _ScheduleEventDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_ScheduleEventDialog> createState() => _ScheduleEventDialogState();
+  ConsumerState<_ScheduleEventDialog> createState() =>
+      _ScheduleEventDialogState();
 }
 
 class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
@@ -790,12 +791,12 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    
+
     // Initialize with existing times or smart defaults
     startTime = widget.event.startTime ?? now.add(const Duration(hours: 1));
     endTime = widget.event.endTime ?? startTime.add(const Duration(hours: 2));
     submissionDeadline = widget.event.submissionDeadline;
-    
+
     // Ensure end time is after start time
     if (endTime.isBefore(startTime)) {
       endTime = startTime.add(const Duration(hours: 2));
@@ -805,7 +806,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return AlertDialog(
       title: Row(
         children: [
@@ -848,9 +849,9 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Error message
               if (_errorMessage != null) ...[
                 Container(
@@ -883,7 +884,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
                 ),
                 const SizedBox(height: 16),
               ],
-              
+
               // Start time
               _buildDateTimeField(
                 context,
@@ -902,9 +903,9 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
                 icon: Icons.play_arrow,
                 color: Colors.green,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // End time
               _buildDateTimeField(
                 context,
@@ -919,9 +920,9 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
                 icon: Icons.stop,
                 color: Colors.red,
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Submission deadline (optional)
               _buildOptionalDateTimeField(
                 context,
@@ -942,9 +943,9 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
                 icon: Icons.access_time,
                 color: Colors.orange,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Validation info
               Container(
                 padding: const EdgeInsets.all(12),
@@ -1025,8 +1026,8 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
             Text(
               label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ],
         ),
@@ -1070,8 +1071,8 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ),
             if (value != null)
@@ -1106,9 +1107,9 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
             child: Text(
               value != null ? _formatDateTime(value!) : 'Tap to set deadline',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: value != null ? null : Colors.grey.shade600,
-                fontStyle: value != null ? null : FontStyle.italic,
-              ),
+                    color: value != null ? null : Colors.grey.shade600,
+                    fontStyle: value != null ? null : FontStyle.italic,
+                  ),
             ),
           ),
         ),
@@ -1170,11 +1171,11 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
 
     try {
       await ref.read(eventServiceProvider).scheduleEvent(
-        widget.event.id,
-        startTime: startTime,
-        endTime: endTime,
-        submissionDeadline: submissionDeadline,
-      );
+            widget.event.id,
+            startTime: startTime,
+            endTime: endTime,
+            submissionDeadline: submissionDeadline,
+          );
 
       if (mounted) {
         widget.onScheduled?.call();
@@ -1213,7 +1214,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final period = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    
+
     return '$displayHour:$minute $period';
   }
 }
