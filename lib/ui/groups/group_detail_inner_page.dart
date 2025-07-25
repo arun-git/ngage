@@ -13,7 +13,7 @@ import 'group_settings_inner_page.dart';
 import 'manage_members_inner_page.dart';
 import 'manage_teams_inner_page.dart';
 import '../events/event_detail_inner_page.dart';
-import '../events/create_event_screen.dart';
+import '../events/create_event_inner_page.dart';
 import '../events/clone_event_screen.dart';
 import '../events/event_access_screen.dart';
 import '../events/event_prerequisites_screen.dart';
@@ -32,7 +32,8 @@ class GroupDetailInnerPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<GroupDetailInnerPage> createState() => _GroupDetailInnerPageState();
+  ConsumerState<GroupDetailInnerPage> createState() =>
+      _GroupDetailInnerPageState();
 }
 
 class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
@@ -40,6 +41,8 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
   late TabController _tabController;
   String? _currentSubPage; // 'settings', 'members', 'teams'
   String? _selectedEventId;
+  bool _isCreatingEvent = false;
+  Event? _eventToEdit;
 
   @override
   void initState() {
@@ -152,13 +155,15 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
               ),
             ),
 
-            // Content based on current sub-page or selected event
+            // Content based on current sub-page, selected event, or creating event
             Expanded(
-              child: _selectedEventId != null
-                  ? _buildEventDetail(group)
-                  : _currentSubPage != null
-                      ? _buildSubPage(group)
-                      : _buildMainContent(group),
+              child: _isCreatingEvent
+                  ? _buildCreateEvent(group)
+                  : _selectedEventId != null
+                      ? _buildEventDetail(group)
+                      : _currentSubPage != null
+                          ? _buildSubPage(group)
+                          : _buildMainContent(group),
             ),
           ],
         );
@@ -184,9 +189,10 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
               SelectableErrorMessage(
                 message: error.toString(),
                 title: 'Error Details',
-                backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString()) 
-                    ? Colors.orange 
-                    : Colors.red,
+                backgroundColor:
+                    FirebaseErrorHandler.isFirebaseIndexError(error.toString())
+                        ? Colors.orange
+                        : Colors.red,
                 onRetry: () {
                   ref.invalidate(groupProvider(widget.groupId));
                 },
@@ -249,7 +255,28 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
       ),
     ];
 
-    if (_selectedEventId != null) {
+    if (_isCreatingEvent) {
+      // When creating event, show: Groups > Group Name > Create Event
+      // Make group name clickable to return to group detail
+      items.add(
+        BreadcrumbItem(
+          title: group.name,
+          onTap: () {
+            setState(() {
+              _isCreatingEvent = false;
+              _eventToEdit = null;
+              _currentSubPage = null;
+            });
+          },
+        ),
+      );
+      items.add(
+        BreadcrumbItem(
+          title: _eventToEdit != null ? 'Edit Event' : 'Create Event',
+          icon: _eventToEdit != null ? Icons.edit : Icons.add,
+        ),
+      );
+    } else if (_selectedEventId != null) {
       // When viewing event detail, show: Groups > Group Name > Event Title
       // Group name becomes clickable to return to group detail
       items.add(
@@ -263,7 +290,7 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
           },
         ),
       );
-      
+
       // Add event title from the selected event
       final eventAsync = ref.watch(eventStreamProvider(_selectedEventId!));
       eventAsync.whenData((event) {
@@ -276,7 +303,7 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
           );
         }
       });
-      
+
       return items;
     } else if (_currentSubPage != null) {
       // Add group name as clickable item when in sub-page
@@ -343,15 +370,34 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     );
   }
 
+  Widget _buildCreateEvent(Group group) {
+    return CreateEventInnerPage(
+      groupId: widget.groupId,
+      groupName: group.name,
+      eventToEdit: _eventToEdit,
+      onBack: () {
+        setState(() {
+          _isCreatingEvent = false;
+          _eventToEdit = null;
+        });
+      },
+      onEventCreated: (event) {
+        // Refresh events list after creation
+        ref.invalidate(groupEventsStreamProvider(widget.groupId));
+      },
+    );
+  }
+
   Widget _buildEventPopupMenu(Group group) {
     final eventAsync = ref.watch(eventStreamProvider(_selectedEventId!));
-    
+
     return eventAsync.when(
       data: (event) {
         if (event == null) return const SizedBox.shrink();
-        
+
         return PopupMenuButton<String>(
-          onSelected: (value) => _handleEventMenuAction(context, ref, event, value),
+          onSelected: (value) =>
+              _handleEventMenuAction(context, ref, event, value),
           itemBuilder: (context) => [
             const PopupMenuItem(
               value: 'edit',
@@ -417,7 +463,8 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
                 value: 'delete',
                 child: ListTile(
                   leading: Icon(Icons.delete, color: Colors.red),
-                  title: Text('Delete Event', style: TextStyle(color: Colors.red)),
+                  title:
+                      Text('Delete Event', style: TextStyle(color: Colors.red)),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -429,7 +476,8 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     );
   }
 
-  void _handleEventMenuAction(BuildContext context, WidgetRef ref, Event event, String action) {
+  void _handleEventMenuAction(
+      BuildContext context, WidgetRef ref, Event event, String action) {
     switch (action) {
       case 'edit':
         _navigateToEditEvent(context, event);
@@ -477,7 +525,7 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
             ],
           ),
         ),
-        
+
         // Tab content
         Expanded(
           child: TabBarView(
@@ -495,6 +543,12 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
                     _selectedEventId = eventId;
                   });
                 },
+                onCreateEvent: () {
+                  setState(() {
+                    _isCreatingEvent = true;
+                    _eventToEdit = null;
+                  });
+                },
               ),
               _GroupTeamsTab(
                 groupId: widget.groupId,
@@ -509,25 +563,21 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
 
   // Navigation methods for event actions
   void _navigateToEditEvent(BuildContext context, Event event) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreateEventScreen(
-          groupId: event.groupId,
-          eventToEdit: event,
-        ),
-      ),
-    ).then((_) {
-      // Refresh event data after editing
-      ref.invalidate(eventStreamProvider(event.id));
+    setState(() {
+      _isCreatingEvent = true;
+      _eventToEdit = event;
+      _selectedEventId = null;
     });
   }
 
   void _navigateToCloneEvent(BuildContext context, Event event) {
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (context) => CloneEventScreen(originalEvent: event),
       ),
-    ).then((clonedEvent) {
+    )
+        .then((clonedEvent) {
       if (clonedEvent != null) {
         // Refresh events list after cloning
         ref.invalidate(groupEventsStreamProvider(widget.groupId));
@@ -539,22 +589,26 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
   }
 
   void _navigateToManageAccess(BuildContext context, Event event) {
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (context) => EventAccessScreen(event: event),
       ),
-    ).then((_) {
+    )
+        .then((_) {
       // Refresh event data after access changes
       ref.invalidate(eventStreamProvider(event.id));
     });
   }
 
   void _navigateToManagePrerequisites(BuildContext context, Event event) {
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (context) => EventPrerequisitesScreen(event: event),
       ),
-    ).then((_) {
+    )
+        .then((_) {
       // Refresh event data after prerequisites changes
       ref.invalidate(eventStreamProvider(event.id));
     });
@@ -573,7 +627,8 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     );
   }
 
-  Future<void> _activateEvent(BuildContext context, WidgetRef ref, Event event) async {
+  Future<void> _activateEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
     final confirmed = await _showConfirmationDialog(
       context,
       'Activate Event',
@@ -598,7 +653,8 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     }
   }
 
-  Future<void> _completeEvent(BuildContext context, WidgetRef ref, Event event) async {
+  Future<void> _completeEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
     final confirmed = await _showConfirmationDialog(
       context,
       'Complete Event',
@@ -623,7 +679,8 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
     }
   }
 
-  Future<void> _deleteEvent(BuildContext context, WidgetRef ref, Event event) async {
+  Future<void> _deleteEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
     final confirmed = await _showConfirmationDialog(
       context,
       'Delete Event',
@@ -696,7 +753,8 @@ class _ScheduleEventDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_ScheduleEventDialog> createState() => _ScheduleEventDialogState();
+  ConsumerState<_ScheduleEventDialog> createState() =>
+      _ScheduleEventDialogState();
 }
 
 class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
@@ -709,12 +767,12 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    
+
     // Initialize with existing times or smart defaults
     startTime = widget.event.startTime ?? now.add(const Duration(hours: 1));
     endTime = widget.event.endTime ?? startTime.add(const Duration(hours: 2));
     submissionDeadline = widget.event.submissionDeadline;
-    
+
     // Ensure end time is after start time
     if (endTime.isBefore(startTime)) {
       endTime = startTime.add(const Duration(hours: 2));
@@ -735,11 +793,11 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
               Text(
                 'Event: ${widget.event.title}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 16),
-              
+
               // Start time
               ListTile(
                 leading: const Icon(Icons.play_arrow),
@@ -747,7 +805,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
                 subtitle: Text(_formatDateTime(startTime)),
                 onTap: () => _selectDateTime(context, true),
               ),
-              
+
               // End time
               ListTile(
                 leading: const Icon(Icons.stop),
@@ -755,13 +813,13 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
                 subtitle: Text(_formatDateTime(endTime)),
                 onTap: () => _selectDateTime(context, false),
               ),
-              
+
               // Submission deadline (optional)
               ListTile(
                 leading: const Icon(Icons.access_time),
                 title: const Text('Submission Deadline (Optional)'),
-                subtitle: Text(submissionDeadline != null 
-                    ? _formatDateTime(submissionDeadline!) 
+                subtitle: Text(submissionDeadline != null
+                    ? _formatDateTime(submissionDeadline!)
                     : 'Not set'),
                 onTap: () => _selectSubmissionDeadline(context),
                 trailing: submissionDeadline != null
@@ -800,20 +858,20 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
 
   Future<void> _selectDateTime(BuildContext context, bool isStartTime) async {
     final currentTime = isStartTime ? startTime : endTime;
-    
+
     final date = await showDatePicker(
       context: context,
       initialDate: currentTime,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    
+
     if (date != null && context.mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(currentTime),
       );
-      
+
       if (time != null) {
         final newDateTime = DateTime(
           date.year,
@@ -822,7 +880,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
           time.hour,
           time.minute,
         );
-        
+
         setState(() {
           if (isStartTime) {
             startTime = newDateTime;
@@ -835,7 +893,8 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
               endTime = newDateTime;
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('End time must be after start time')),
+                const SnackBar(
+                    content: Text('End time must be after start time')),
               );
             }
           }
@@ -846,20 +905,20 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
 
   Future<void> _selectSubmissionDeadline(BuildContext context) async {
     final currentDeadline = submissionDeadline ?? endTime;
-    
+
     final date = await showDatePicker(
       context: context,
       initialDate: currentDeadline,
       firstDate: startTime,
       lastDate: endTime.add(const Duration(days: 30)),
     );
-    
+
     if (date != null && context.mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(currentDeadline),
       );
-      
+
       if (time != null) {
         final newDateTime = DateTime(
           date.year,
@@ -868,7 +927,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
           time.hour,
           time.minute,
         );
-        
+
         setState(() {
           submissionDeadline = newDateTime;
         });
@@ -883,11 +942,11 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
 
     try {
       await ref.read(eventServiceProvider).scheduleEvent(
-        widget.event.id,
-        startTime: startTime,
-        endTime: endTime,
-        submissionDeadline: submissionDeadline,
-      );
+            widget.event.id,
+            startTime: startTime,
+            endTime: endTime,
+            submissionDeadline: submissionDeadline,
+          );
 
       if (mounted) {
         widget.onScheduled?.call();
@@ -920,7 +979,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final period = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    
+
     return '$displayHour:$minute $period';
   }
 }
@@ -985,14 +1044,14 @@ class _GroupLeaderboardTab extends ConsumerWidget {
               Text(
                 'Group Leaderboards',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 16),
               ...completedEvents.map((event) => _buildEventLeaderboardCard(
-                context,
-                event,
-              )),
+                    context,
+                    event,
+                  )),
             ],
           ),
         );
@@ -1018,9 +1077,10 @@ class _GroupLeaderboardTab extends ConsumerWidget {
               SelectableErrorMessage(
                 message: error.toString(),
                 title: 'Error Details',
-                backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString()) 
-                    ? Colors.orange 
-                    : Colors.red,
+                backgroundColor:
+                    FirebaseErrorHandler.isFirebaseIndexError(error.toString())
+                        ? Colors.orange
+                        : Colors.red,
                 onRetry: () {
                   ref.invalidate(groupEventsStreamProvider(groupId));
                 },
@@ -1046,15 +1106,16 @@ class _GroupLeaderboardTab extends ConsumerWidget {
                   child: Text(
                     event.title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => LeaderboardScreen(eventId: event.id),
+                        builder: (context) =>
+                            LeaderboardScreen(eventId: event.id),
                       ),
                     );
                   },
@@ -1089,8 +1150,8 @@ class _GroupLeaderboardTab extends ConsumerWidget {
                     Text(
                       'Tap "View Full" to see complete results',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                            color: Colors.grey[600],
+                          ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -1109,11 +1170,13 @@ class _GroupEventsTab extends ConsumerWidget {
   final String groupId;
   final String memberId;
   final Function(String)? onEventSelected;
+  final VoidCallback? onCreateEvent;
 
   const _GroupEventsTab({
     required this.groupId,
     required this.memberId,
     this.onEventSelected,
+    this.onCreateEvent,
   });
 
   @override
@@ -1121,6 +1184,7 @@ class _GroupEventsTab extends ConsumerWidget {
     return EventsListScreen(
       groupId: groupId,
       onEventSelected: onEventSelected,
+      onCreateEvent: onCreateEvent,
     );
   }
 }

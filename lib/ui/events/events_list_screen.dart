@@ -14,12 +14,14 @@ class EventsListScreen extends ConsumerStatefulWidget {
   final String groupId;
   final String? initialFilter;
   final Function(String)? onEventSelected;
+  final VoidCallback? onCreateEvent;
 
   const EventsListScreen({
     super.key,
     required this.groupId,
     this.initialFilter,
     this.onEventSelected,
+    this.onCreateEvent,
   });
 
   @override
@@ -36,7 +38,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
-    
+
     // Set initial tab based on filter
     if (widget.initialFilter != null) {
       switch (widget.initialFilter) {
@@ -139,7 +141,6 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
           ),
         ],
       ),
-
     );
   }
 
@@ -149,7 +150,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
     }
 
     final eventsAsync = ref.watch(groupEventsStreamProvider(widget.groupId));
-    
+
     return eventsAsync.when(
       data: (events) => _buildEventsList(events),
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -163,11 +164,12 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
     }
 
     final eventsAsync = ref.watch(groupEventsStreamProvider(widget.groupId));
-    
+
     return eventsAsync.when(
       data: (allEvents) {
         // Filter events by status
-        final filteredEvents = allEvents.where((event) => event.status == status).toList();
+        final filteredEvents =
+            allEvents.where((event) => event.status == status).toList();
         return _buildEventsList(filteredEvents);
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -176,9 +178,10 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   }
 
   Widget _buildSearchResults() {
-    final params = SearchEventsParams(groupId: widget.groupId, searchTerm: _searchQuery);
+    final params =
+        SearchEventsParams(groupId: widget.groupId, searchTerm: _searchQuery);
     final eventsAsync = ref.watch(searchEventsProvider(params));
-    
+
     return eventsAsync.when(
       data: (events) => _buildEventsList(events),
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -226,17 +229,17 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
           Text(
             _searchQuery.isNotEmpty ? 'No events found' : 'No events yet',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
           ),
           const SizedBox(height: 8),
           Text(
-            _searchQuery.isNotEmpty 
+            _searchQuery.isNotEmpty
                 ? 'Try adjusting your search terms'
                 : 'Create your first event to get started',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
           ),
           if (_searchQuery.isEmpty) ...[
             const SizedBox(height: 24),
@@ -259,9 +262,10 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
           SelectableErrorMessage(
             message: error.toString(),
             title: 'Error loading events',
-            backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString())
-                ? Colors.orange
-                : Colors.red,
+            backgroundColor:
+                FirebaseErrorHandler.isFirebaseIndexError(error.toString())
+                    ? Colors.orange
+                    : Colors.red,
             onRetry: () {
               ref.invalidate(groupEventsStreamProvider(widget.groupId));
             },
@@ -298,15 +302,21 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   }
 
   void _navigateToCreateEvent() async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreateEventScreen(groupId: widget.groupId),
-      ),
-    );
-    
-    // If an event was created, refresh all providers
-    if (result == true) {
-      _refreshAllProviders();
+    if (widget.onCreateEvent != null) {
+      // Use callback if provided (for inner page navigation)
+      widget.onCreateEvent!();
+    } else {
+      // Fall back to navigation (for standalone screen)
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CreateEventScreen(groupId: widget.groupId),
+        ),
+      );
+
+      // If an event was created, refresh all providers
+      if (result == true) {
+        _refreshAllProviders();
+      }
     }
   }
 
@@ -328,11 +338,11 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   void _refreshAllProviders() {
     // Invalidate the main group events stream (this will refresh all tabs)
     ref.invalidate(groupEventsStreamProvider(widget.groupId));
-    
+
     // If there's a search query, also refresh search results
     if (_searchQuery.isNotEmpty) {
       ref.invalidate(searchEventsProvider(SearchEventsParams(
-        groupId: widget.groupId, 
+        groupId: widget.groupId,
         searchTerm: _searchQuery,
       )));
     }

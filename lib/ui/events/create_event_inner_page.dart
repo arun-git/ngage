@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/auth_providers.dart';
-import '../widgets/breadcrumb_navigation.dart';
 
 /// Inner page for creating or editing an event
 class CreateEventInnerPage extends ConsumerStatefulWidget {
@@ -69,190 +68,155 @@ class _CreateEventInnerPageState extends ConsumerState<CreateEventInnerPage> {
   Widget build(BuildContext context) {
     final isEditing = widget.eventToEdit != null;
 
-    return Column(
-      children: [
-        // Breadcrumb navigation
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: BreadcrumbNavigation(
-            items: [
-              BreadcrumbItem(
-                title: widget.groupName,
-                icon: Icons.group,
-                onTap: widget.onBack,
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title field
+            TextFormField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Event Title',
+                hintText: 'Enter a descriptive title for your event',
+                border: OutlineInputBorder(),
               ),
-              BreadcrumbItem(
-                title: 'Events',
-                onTap: widget.onBack,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter an event title';
+                }
+                if (value.trim().length < 3) {
+                  return 'Title must be at least 3 characters long';
+                }
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Description field
+            TextFormField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                hintText: 'Describe what this event is about',
+                border: OutlineInputBorder(),
               ),
-              BreadcrumbItem(
-                title: isEditing ? 'Edit Event' : 'Create Event',
-              ),
-            ],
-          ),
-        ),
-        // Form content
-        Expanded(
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title field
-                  TextFormField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Event Title',
-                      hintText: 'Enter a descriptive title for your event',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter an event title';
-                      }
-                      if (value.trim().length < 3) {
-                        return 'Title must be at least 3 characters long';
-                      }
-                      return null;
-                    },
-                  ),
+              maxLines: 4,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a description';
+                }
+                if (value.trim().length < 10) {
+                  return 'Description must be at least 10 characters long';
+                }
+                return null;
+              },
+            ),
 
-                  const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-                  // Description field
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      hintText: 'Describe what this event is about',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 4,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a description';
-                      }
-                      if (value.trim().length < 10) {
-                        return 'Description must be at least 10 characters long';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Event type selection
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Event Type',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+            // Event type selection
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Event Type',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(height: 12),
-                          ...EventType.values.map((type) {
-                            return RadioListTile<EventType>(
-                              title: Text(_getEventTypeLabel(type)),
-                              subtitle: Text(_getEventTypeDescription(type)),
-                              value: type,
-                              groupValue: _selectedEventType,
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    _selectedEventType = value;
-                                  });
-                                }
-                              },
-                            );
-                          }).toList(),
-                        ],
-                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Access control
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Access Control',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(height: 12),
-                          SwitchListTile(
-                            title: const Text('Open Event'),
-                            subtitle: Text(_isOpenEvent
-                                ? 'All teams in the group can participate'
-                                : 'Only selected teams can participate'),
-                            value: _isOpenEvent,
-                            onChanged: (value) {
-                              setState(() {
-                                _isOpenEvent = value;
-                                if (value) {
-                                  _eligibleTeamIds.clear();
-                                }
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _isLoading ? null : widget.onBack,
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: _isLoading ? null : _saveEvent,
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : Text(
-                                  isEditing ? 'Update Event' : 'Create Event'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    ...EventType.values.map((type) {
+                      return RadioListTile<EventType>(
+                        title: Text(_getEventTypeLabel(type)),
+                        subtitle: Text(_getEventTypeDescription(type)),
+                        value: type,
+                        groupValue: _selectedEventType,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedEventType = value;
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ],
+                ),
               ),
             ),
-          ),
+
+            const SizedBox(height: 16),
+
+            // Access control
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Access Control',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      title: const Text('Open Event'),
+                      subtitle: Text(_isOpenEvent
+                          ? 'All teams in the group can participate'
+                          : 'Only selected teams can participate'),
+                      value: _isOpenEvent,
+                      onChanged: (value) {
+                        setState(() {
+                          _isOpenEvent = value;
+                          if (value) {
+                            _eligibleTeamIds.clear();
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : widget.onBack,
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _isLoading ? null : _saveEvent,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(isEditing ? 'Update Event' : 'Create Event'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
