@@ -84,16 +84,16 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
 
     try {
       final teamNotifier = ref.read(teamManagementProvider.notifier);
-      
+
       await teamNotifier.updateTeam(
         teamId: widget.teamId,
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
-        maxMembers: _maxMembersController.text.isNotEmpty 
-            ? int.tryParse(_maxMembersController.text) 
+        maxMembers: _maxMembersController.text.isNotEmpty
+            ? int.tryParse(_maxMembersController.text)
             : null,
-        teamType: _teamTypeController.text.isNotEmpty 
-            ? _teamTypeController.text.trim() 
+        teamType: _teamTypeController.text.isNotEmpty
+            ? _teamTypeController.text.trim()
             : null,
         isActive: _isActive,
       );
@@ -214,12 +214,14 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
         actions: [
           if (_hasChanges)
             TextButton(
-              onPressed: _isLoading ? null : () {
-                final team = teamAsync.value;
-                if (team != null) {
-                  _saveChanges(team);
-                }
-              },
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      final team = teamAsync.value;
+                      if (team != null) {
+                        _saveChanges(team);
+                      }
+                    },
               child: _isLoading
                   ? const SizedBox(
                       width: 16,
@@ -240,23 +242,28 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
             child: BreadcrumbNavigation(
               items: [
                 BreadcrumbItem(
-                  title: 'Groups',
-                  icon: Icons.group,
+                  title: '',
+                  icon: Icons.home_filled,
                   onTap: () => Navigator.of(context).popUntil(
-                    (route) => route.settings.name == '/groups' || route.isFirst,
+                    (route) =>
+                        route.settings.name == '/groups' || route.isFirst,
                   ),
                 ),
                 if (widget.groupName != null)
                   BreadcrumbItem(
                     title: widget.groupName!,
                     onTap: () => Navigator.of(context).popUntil(
-                      (route) => route.settings.name?.contains('group_detail') == true || route.isFirst,
+                      (route) =>
+                          route.settings.name?.contains('group_detail') ==
+                              true ||
+                          route.isFirst,
                     ),
                   ),
                 BreadcrumbItem(
                   title: 'Manage Teams',
                   onTap: () => Navigator.of(context).popUntil(
-                    (route) => route.settings.name?.contains('manage_teams') == true,
+                    (route) =>
+                        route.settings.name?.contains('manage_teams') == true,
                   ),
                 ),
                 if (widget.teamName != null)
@@ -271,7 +278,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
               ],
             ),
           ),
-          
+
           // Settings content
           Expanded(
             child: teamAsync.when(
@@ -412,14 +419,17 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     const SizedBox(height: 16),
                     SwitchListTile(
                       title: const Text('Active Team'),
-                      subtitle: const Text('Inactive teams cannot participate in events'),
+                      subtitle: const Text(
+                          'Inactive teams cannot participate in events'),
                       value: _isActive,
-                      onChanged: _isLoading ? null : (value) {
-                        setState(() {
-                          _isActive = value;
-                        });
-                        _onFieldChanged();
-                      },
+                      onChanged: _isLoading
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _isActive = value;
+                              });
+                              _onFieldChanged();
+                            },
                     ),
                   ],
                 ),
@@ -487,10 +497,11 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Danger Zone',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.red.shade700,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ],
                     ),
@@ -541,9 +552,10 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
             SelectableErrorMessage(
               message: error.toString(),
               title: 'Error Details',
-              backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString()) 
-                  ? Colors.orange 
-                  : Colors.red,
+              backgroundColor:
+                  FirebaseErrorHandler.isFirebaseIndexError(error.toString())
+                      ? Colors.orange
+                      : Colors.red,
               onRetry: () {
                 ref.invalidate(teamProvider(widget.teamId));
               },
@@ -587,8 +599,8 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
+                  color: Colors.grey.shade600,
+                ),
           ),
         ),
         Expanded(
@@ -596,8 +608,8 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ),
       ],

@@ -18,14 +18,15 @@ class CreateGroupInnerPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<CreateGroupInnerPage> createState() => _CreateGroupInnerPageState();
+  ConsumerState<CreateGroupInnerPage> createState() =>
+      _CreateGroupInnerPageState();
 }
 
 class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   GroupType _selectedGroupType = GroupType.corporate;
   bool _isLoading = false;
 
@@ -48,13 +49,13 @@ class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
     try {
       // Get current member ID from auth state
       final currentMember = ref.read(currentMemberProvider);
-      
+
       if (currentMember == null) {
         throw Exception('No active member profile found');
       }
-      
+
       final groupNotifier = ref.read(groupNotifierProvider.notifier);
-      
+
       await groupNotifier.createGroup(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -108,8 +109,8 @@ class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
           child: BreadcrumbNavigation(
             items: [
               BreadcrumbItem(
-                title: 'Groups',
-                icon: Icons.group,
+                title: '',
+                icon: Icons.home_filled,
                 onTap: widget.onBack,
               ),
               const BreadcrumbItem(
@@ -119,7 +120,7 @@ class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
             ],
           ),
         ),
-        
+
         // Form content
         Expanded(
           child: SingleChildScrollView(
@@ -227,7 +228,8 @@ class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('Create Group'),
                         ),

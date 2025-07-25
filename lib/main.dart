@@ -16,10 +16,10 @@ import 'utils/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize error handling system
   ErrorHandler.initialize();
-  
+
   // Configure logger
   Logger().configure(
     minimumLevel: LogLevel.info,
@@ -27,12 +27,12 @@ void main() async {
     enableLocalStorage: true,
     maxLocalLogs: 1000,
   );
-  
+
   // Initialize Firebase with platform-specific options
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   runApp(
     const ProviderScope(
       child: NgageApp(),
@@ -71,7 +71,7 @@ class AuthWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
-    
+
     switch (authState.status) {
       case AuthStatus.initial:
       case AuthStatus.loading:
@@ -110,8 +110,6 @@ class LoadingScreen extends StatelessWidget {
   }
 }
 
-
-
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -123,10 +121,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   int _selectedIndex = 0;
   bool _showCreateGroup = false;
   String? _selectedGroupId;
-  
+
   final List<NavigationItem> _navigationItems = [
     const NavigationItem(
-      icon: Icon(Icons.group),
+      icon: Icon(Icons.dashboard),
       label: 'Groups',
       tooltip: 'Manage groups',
     ),
@@ -202,21 +200,25 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       ],
       body: _buildBody(context, currentUser, currentMember, memberProfiles),
-      floatingActionButton: _selectedIndex == 0 && !_showCreateGroup && _selectedGroupId == null // Groups tab and not showing create group or group detail
-        ? PlatformFloatingActionButton(
-            onPressed: () {
-              setState(() {
-                _showCreateGroup = true;
-              });
-            },
-            tooltip: 'Create Group',
-            child: const Icon(Icons.add),
-          )
-        : null,
+      floatingActionButton: _selectedIndex == 0 &&
+              !_showCreateGroup &&
+              _selectedGroupId ==
+                  null // Groups tab and not showing create group or group detail
+          ? PlatformFloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  _showCreateGroup = true;
+                });
+              },
+              tooltip: 'Create Group',
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
-  
-  Widget _buildBody(BuildContext context, currentUser, currentMember, memberProfiles) {
+
+  Widget _buildBody(
+      BuildContext context, currentUser, currentMember, memberProfiles) {
     switch (_selectedIndex) {
       case 0:
         if (_showCreateGroup) {
@@ -236,12 +238,11 @@ class _HomePageState extends ConsumerState<HomePage> {
         return _buildGroups(context);
     }
   }
-  
 
   Widget _buildGroups(BuildContext context) {
     final currentMember = ref.watch(currentMemberProvider);
     final currentUser = ref.watch(currentUserProvider);
-    
+
     if (currentMember == null) {
       return Center(
         child: Padding(
@@ -258,16 +259,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               Text(
                 'Complete Your Profile',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                      fontWeight: FontWeight.w600,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'You need to complete your profile to access groups and teams.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                      color: Colors.grey[600],
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -282,7 +283,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 ),
                 child: const Text('Complete Profile'),
               ),
@@ -291,8 +293,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                 Text(
                   'Signed in as: ${currentUser.email}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[500],
-                  ),
+                        color: Colors.grey[500],
+                      ),
                 ),
               ],
             ],
@@ -300,7 +302,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       );
     }
-    
+
     return GroupsListScreen(
       memberId: currentMember.id,
       onCreateGroup: () {
@@ -348,19 +350,19 @@ class _HomePageState extends ConsumerState<HomePage> {
       },
     );
   }
-  
+
   Widget _buildEvents(BuildContext context) {
     return const Center(
       child: Text('Events - Coming Soon'),
     );
   }
-  
+
   Widget _buildLeaderboard(BuildContext context) {
     return const Center(
       child: Text('Leaderboard - Coming Soon'),
     );
   }
-  
+
   Widget _buildProfile(BuildContext context, currentUser, currentMember) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -370,11 +372,11 @@ class _HomePageState extends ConsumerState<HomePage> {
           Text(
             'Profile Information',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
-          
+
           // User Information
           Card(
             child: Padding(
@@ -385,16 +387,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     'User Account',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   if (currentUser != null) ...[
                     Text('Email: ${currentUser.email}'),
-                    if (currentUser.phone != null) 
+                    if (currentUser.phone != null)
                       Text('Phone: ${currentUser.phone}'),
                     Text('User ID: ${currentUser.id}'),
-                    Text('Default Member: ${currentUser.defaultMember ?? 'None'}'),
+                    Text(
+                        'Default Member: ${currentUser.defaultMember ?? 'None'}'),
                   ] else ...[
                     const Text('No user information available'),
                   ],
@@ -402,9 +405,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Member Profile Information
           Card(
             child: Padding(
@@ -415,19 +418,21 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     'Member Profile',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   if (currentMember != null) ...[
-                    Text('Name: ${currentMember.firstName} ${currentMember.lastName}'),
+                    Text(
+                        'Name: ${currentMember.firstName} ${currentMember.lastName}'),
                     Text('Email: ${currentMember.email}'),
-                    if (currentMember.title != null) 
+                    if (currentMember.title != null)
                       Text('Title: ${currentMember.title}'),
-                    if (currentMember.bio != null) 
+                    if (currentMember.bio != null)
                       Text('Bio: ${currentMember.bio}'),
                     Text('Member ID: ${currentMember.id}'),
-                    Text('Claimed At: ${currentMember.claimedAt?.toString() ?? 'Not claimed'}'),
+                    Text(
+                        'Claimed At: ${currentMember.claimedAt?.toString() ?? 'Not claimed'}'),
                   ] else ...[
                     const Text('No member profile available'),
                     const SizedBox(height: 8),
@@ -435,7 +440,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const ProfileCompletionScreen(),
+                            builder: (context) =>
+                                const ProfileCompletionScreen(),
                           ),
                         );
                       },
@@ -446,9 +452,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Actions
           Card(
             child: Padding(
@@ -459,8 +465,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     'Actions',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(

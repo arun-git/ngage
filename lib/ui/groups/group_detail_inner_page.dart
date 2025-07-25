@@ -249,8 +249,8 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
   List<BreadcrumbItem> _buildBreadcrumbItems(Group group) {
     final items = [
       BreadcrumbItem(
-        title: 'Groups',
-        icon: Icons.group,
+        title: '',
+        icon: Icons.home_filled,
         onTap: widget.onBack,
       ),
     ];

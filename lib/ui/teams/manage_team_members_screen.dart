@@ -20,17 +20,20 @@ class ManageTeamMembersScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ManageTeamMembersScreen> createState() => _ManageTeamMembersScreenState();
+  ConsumerState<ManageTeamMembersScreen> createState() =>
+      _ManageTeamMembersScreenState();
 }
 
-class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScreen> {
+class _ManageTeamMembersScreenState
+    extends ConsumerState<ManageTeamMembersScreen> {
   final Set<String> _selectedMembers = {};
   bool _isSelectionMode = false;
 
   @override
   Widget build(BuildContext context) {
     final teamAsync = ref.watch(teamProvider(widget.teamId));
-    final availableMembersAsync = ref.watch(availableMembersProvider(widget.teamId));
+    final availableMembersAsync =
+        ref.watch(availableMembersProvider(widget.teamId));
     final teamManagementAsync = ref.watch(teamManagementProvider);
 
     // Listen to team management state changes
@@ -65,7 +68,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
         actions: [
           if (_isSelectionMode) ...[
             TextButton(
-              onPressed: _selectedMembers.isEmpty ? null : _removeSelectedMembers,
+              onPressed:
+                  _selectedMembers.isEmpty ? null : _removeSelectedMembers,
               child: const Text('Remove'),
             ),
             IconButton(
@@ -115,23 +119,28 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
             child: BreadcrumbNavigation(
               items: [
                 BreadcrumbItem(
-                  title: 'Groups',
-                  icon: Icons.group,
+                  title: '',
+                  icon: Icons.home_filled,
                   onTap: () => Navigator.of(context).popUntil(
-                    (route) => route.settings.name == '/groups' || route.isFirst,
+                    (route) =>
+                        route.settings.name == '/groups' || route.isFirst,
                   ),
                 ),
                 if (widget.groupName != null)
                   BreadcrumbItem(
                     title: widget.groupName!,
                     onTap: () => Navigator.of(context).popUntil(
-                      (route) => route.settings.name?.contains('group_detail') == true || route.isFirst,
+                      (route) =>
+                          route.settings.name?.contains('group_detail') ==
+                              true ||
+                          route.isFirst,
                     ),
                   ),
                 BreadcrumbItem(
                   title: 'Manage Teams',
                   onTap: () => Navigator.of(context).popUntil(
-                    (route) => route.settings.name?.contains('manage_teams') == true,
+                    (route) =>
+                        route.settings.name?.contains('manage_teams') == true,
                   ),
                 ),
                 if (widget.teamName != null)
@@ -146,7 +155,7 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
               ],
             ),
           ),
-          
+
           // Content
           Expanded(
             child: teamAsync.when(
@@ -156,7 +165,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
                 if (team == null) {
                   return _buildNotFoundState(context);
                 }
-                return _buildContent(context, team, availableMembersAsync, teamManagementAsync);
+                return _buildContent(
+                    context, team, availableMembersAsync, teamManagementAsync);
               },
             ),
           ),
@@ -228,7 +238,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
           const SizedBox(height: 16),
           _buildCurrentMembers(context, team, teamManagementAsync),
           const SizedBox(height: 16),
-          _buildAvailableMembers(context, team, availableMembersAsync, teamManagementAsync),
+          _buildAvailableMembers(
+              context, team, availableMembersAsync, teamManagementAsync),
         ],
       ),
     );
@@ -244,8 +255,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
             Text(
               team.name,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -255,21 +266,22 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
                 Text(
                   '${team.memberCount} member${team.memberCount == 1 ? '' : 's'}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                        color: Colors.grey[600],
+                      ),
                 ),
                 if (team.maxMembers != null) ...[
                   Text(
                     ' / ${team.maxMembers} max',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                          color: Colors.grey[600],
+                        ),
                   ),
                 ],
                 const Spacer(),
                 if (team.isAtCapacity)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.orange.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -277,9 +289,9 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
                     child: Text(
                       'At Capacity',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.w500,
-                      ),
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                   ),
               ],
@@ -290,7 +302,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
     );
   }
 
-  Widget _buildCurrentMembers(BuildContext context, Team team, AsyncValue<String?> teamManagementAsync) {
+  Widget _buildCurrentMembers(BuildContext context, Team team,
+      AsyncValue<String?> teamManagementAsync) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -302,8 +315,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
                 Text(
                   'Current Members (${team.memberCount})',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const Spacer(),
                 if (!_isSelectionMode && team.memberCount > 1)
@@ -319,24 +332,25 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
               Center(
                 child: Column(
                   children: [
-                    Icon(Icons.people_outline, size: 48, color: Colors.grey[400]),
+                    Icon(Icons.people_outline,
+                        size: 48, color: Colors.grey[400]),
                     const SizedBox(height: 8),
                     Text(
                       'No members yet',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                            color: Colors.grey[600],
+                          ),
                     ),
                   ],
                 ),
               )
             else
               ...team.memberIds.map((memberId) => _buildCurrentMemberItem(
-                context,
-                memberId,
-                team.isTeamLead(memberId),
-                teamManagementAsync,
-              )),
+                    context,
+                    memberId,
+                    team.isTeamLead(memberId),
+                    teamManagementAsync,
+                  )),
           ],
         ),
       ),
@@ -355,10 +369,14 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.transparent,
+        color: isSelected
+            ? Theme.of(context).primaryColor.withOpacity(0.1)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
-          onTap: _isSelectionMode && !isTeamLead ? () => _toggleMemberSelection(memberId) : null,
+          onTap: _isSelectionMode && !isTeamLead
+              ? () => _toggleMemberSelection(memberId)
+              : null,
           borderRadius: BorderRadius.circular(8),
           child: Container(
             padding: const EdgeInsets.all(12),
@@ -382,7 +400,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
                 else
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: isTeamLead ? Colors.amber : Colors.grey[300],
+                    backgroundColor:
+                        isTeamLead ? Colors.amber : Colors.grey[300],
                     child: Icon(
                       isTeamLead ? Icons.star : Icons.person,
                       color: isTeamLead ? Colors.white : Colors.grey[600],
@@ -397,16 +416,17 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
                       Text(
                         memberId,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                              fontWeight: FontWeight.w500,
+                            ),
                       ),
                       if (isTeamLead)
                         Text(
                           'Team Lead',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.amber[700],
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.amber[700],
+                                    fontWeight: FontWeight.w500,
+                                  ),
                         ),
                     ],
                   ),
@@ -462,34 +482,37 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
             Text(
               'Available Members',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               'Group members who can be added to this team',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+                    color: Colors.grey[600],
+                  ),
             ),
             const SizedBox(height: 16),
             availableMembersAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Text('Error loading available members: $error'),
+              error: (error, _) =>
+                  Text('Error loading available members: $error'),
               data: (availableMembers) {
                 if (availableMembers.isEmpty) {
                   return Center(
                     child: Column(
                       children: [
-                        Icon(Icons.people_outline, size: 48, color: Colors.grey[400]),
+                        Icon(Icons.people_outline,
+                            size: 48, color: Colors.grey[400]),
                         const SizedBox(height: 8),
                         Text(
                           team.isAtCapacity
                               ? 'Team is at maximum capacity'
                               : 'No available members to add',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
                         ),
                       ],
                     ),
@@ -550,20 +573,22 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
                 Text(
                   member.memberId,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 Text(
                   member.role.value,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                        color: Colors.grey[600],
+                      ),
                 ),
               ],
             ),
           ),
           ElevatedButton.icon(
-            onPressed: canAdd && !isLoading ? () => _addMemberToTeam(member.memberId) : null,
+            onPressed: canAdd && !isLoading
+                ? () => _addMemberToTeam(member.memberId)
+                : null,
             icon: isLoading
                 ? const SizedBox(
                     width: 16,
@@ -617,11 +642,15 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
   }
 
   void _addMemberToTeam(String memberId) {
-    ref.read(teamManagementProvider.notifier).addMemberToTeam(widget.teamId, memberId);
+    ref
+        .read(teamManagementProvider.notifier)
+        .addMemberToTeam(widget.teamId, memberId);
   }
 
   void _removeMemberFromTeam(String memberId) {
-    ref.read(teamManagementProvider.notifier).removeMemberFromTeam(widget.teamId, memberId);
+    ref
+        .read(teamManagementProvider.notifier)
+        .removeMemberFromTeam(widget.teamId, memberId);
   }
 
   void _removeSelectedMembers() {
@@ -643,9 +672,9 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
             onPressed: () {
               Navigator.of(context).pop();
               ref.read(teamManagementProvider.notifier).removeMembersFromTeam(
-                widget.teamId,
-                _selectedMembers.toList(),
-              );
+                    widget.teamId,
+                    _selectedMembers.toList(),
+                  );
               _exitSelectionMode();
             },
             style: ElevatedButton.styleFrom(
@@ -694,7 +723,8 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Change Team Lead'),
-        content: const Text('Are you sure you want to make this member the new team lead?'),
+        content: const Text(
+            'Are you sure you want to make this member the new team lead?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -703,7 +733,9 @@ class _ManageTeamMembersScreenState extends ConsumerState<ManageTeamMembersScree
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              ref.read(teamManagementProvider.notifier).changeTeamLead(widget.teamId, newTeamLeadId);
+              ref
+                  .read(teamManagementProvider.notifier)
+                  .changeTeamLead(widget.teamId, newTeamLeadId);
             },
             child: const Text('Confirm'),
           ),

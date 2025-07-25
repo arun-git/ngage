@@ -84,10 +84,11 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
             child: BreadcrumbNavigation(
               items: [
                 BreadcrumbItem(
-                  title: 'Groups',
-                  icon: Icons.group,
+                  title: '',
+                  icon: Icons.home_filled,
                   onTap: () => Navigator.of(context).popUntil(
-                    (route) => route.settings.name == '/groups' || route.isFirst,
+                    (route) =>
+                        route.settings.name == '/groups' || route.isFirst,
                   ),
                 ),
                 if (widget.groupName != null)
@@ -106,27 +107,29 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
               ],
             ),
           ),
-          
+
           // Form content
           Expanded(
             child: groupMembersAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-              const SizedBox(height: 16),
-              Text('Error loading group members: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(groupMembersProvider(widget.groupId)),
-                child: const Text('Retry'),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                    const SizedBox(height: 16),
+                    Text('Error loading group members: $error'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.refresh(groupMembersProvider(widget.groupId)),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-        data: (groupMembers) => _buildForm(context, groupMembers, teamCreationAsync),
+              data: (groupMembers) =>
+                  _buildForm(context, groupMembers, teamCreationAsync),
             ),
           ),
         ],
@@ -134,7 +137,8 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     );
   }
 
-  Widget _buildForm(BuildContext context, List<GroupMember> groupMembers, AsyncValue<Team?> teamCreationAsync) {
+  Widget _buildForm(BuildContext context, List<GroupMember> groupMembers,
+      AsyncValue<Team?> teamCreationAsync) {
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -262,7 +266,8 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                         items: groupMembers.map((member) {
                           return DropdownMenuItem(
                             value: member.memberId,
-                            child: Text('${member.memberId} (${member.role.name})'),
+                            child: Text(
+                                '${member.memberId} (${member.role.name})'),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -305,25 +310,30 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                       const Text('No group members available')
                     else
                       ...groupMembers.map((member) {
-                        final isTeamLead = member.memberId == _selectedTeamLeadId;
-                        final isSelected = _selectedMemberIds.contains(member.memberId);
-                        
+                        final isTeamLead =
+                            member.memberId == _selectedTeamLeadId;
+                        final isSelected =
+                            _selectedMemberIds.contains(member.memberId);
+
                         return CheckboxListTile(
                           title: Text(member.memberId),
                           subtitle: Text(member.role.name),
                           value: isSelected,
-                          onChanged: isTeamLead ? null : (value) {
-                            setState(() {
-                              if (value == true) {
-                                _selectedMemberIds.add(member.memberId);
-                              } else {
-                                _selectedMemberIds.remove(member.memberId);
-                              }
-                            });
-                          },
-                          secondary: isTeamLead 
-                            ? const Icon(Icons.star, color: Colors.amber)
-                            : null,
+                          onChanged: isTeamLead
+                              ? null
+                              : (value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      _selectedMemberIds.add(member.memberId);
+                                    } else {
+                                      _selectedMemberIds
+                                          .remove(member.memberId);
+                                    }
+                                  });
+                                },
+                          secondary: isTeamLead
+                              ? const Icon(Icons.star, color: Colors.amber)
+                              : null,
                         );
                       }).toList(),
                   ],
@@ -337,12 +347,12 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: teamCreationAsync.isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Create Team'),
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Create Team'),
             ),
           ],
         ),
@@ -364,13 +374,13 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
         : null;
 
     ref.read(teamCreationProvider.notifier).createTeam(
-      groupId: widget.groupId,
-      name: _nameController.text.trim(),
-      description: _descriptionController.text.trim(),
-      teamLeadId: _selectedTeamLeadId!,
-      initialMemberIds: _selectedMemberIds.toList(),
-      maxMembers: maxMembers,
-      teamType: teamType,
-    );
+          groupId: widget.groupId,
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          teamLeadId: _selectedTeamLeadId!,
+          initialMemberIds: _selectedMemberIds.toList(),
+          maxMembers: maxMembers,
+          teamType: teamType,
+        );
   }
 }
