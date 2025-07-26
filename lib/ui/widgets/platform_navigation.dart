@@ -12,7 +12,7 @@ class PlatformNavigation extends StatefulWidget {
   final String title;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
-  
+
   const PlatformNavigation({
     super.key,
     required this.items,
@@ -23,30 +23,32 @@ class PlatformNavigation extends StatefulWidget {
     this.actions,
     this.floatingActionButton,
   });
-  
+
   @override
   State<PlatformNavigation> createState() => _PlatformNavigationState();
 }
 
-class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNavigationMixin {
+class _PlatformNavigationState extends State<PlatformNavigation>
+    with KeyboardNavigationMixin {
   late Map<ShortcutActivator, Intent> _shortcuts;
   late Map<Type, Action<Intent>> _actions;
-  
+
   @override
   void initState() {
     super.initState();
     _setupKeyboardShortcuts();
   }
-  
+
   void _setupKeyboardShortcuts() {
     _shortcuts = {
       ...AccessibilityUtils.getCommonShortcuts(),
       // Add number key shortcuts for navigation (1-9)
       for (int i = 0; i < widget.items.length && i < 9; i++)
-        SingleActivator(LogicalKeyboardKey(LogicalKeyboardKey.digit1.keyId + i)): 
-          NavigateToIndexIntent(i),
+        SingleActivator(
+                LogicalKeyboardKey(LogicalKeyboardKey.digit1.keyId + i)):
+            NavigateToIndexIntent(i),
     };
-    
+
     _actions = {
       NavigateToIndexIntent: CallbackAction<NavigateToIndexIntent>(
         onInvoke: (intent) {
@@ -64,7 +66,7 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       }),
     };
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Shortcuts(
@@ -79,10 +81,10 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       ),
     );
   }
-  
+
   Widget _buildPlatformSpecificNavigation(BuildContext context) {
     final responsive = context.responsive;
-    
+
     if (PlatformUtils.isDesktop || responsive.isDesktop) {
       return _buildDesktopNavigation(context);
     } else if (responsive.isTablet) {
@@ -91,18 +93,18 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       return _buildMobileNavigation(context);
     }
   }
-  
+
   Widget _buildDesktopNavigation(BuildContext context) {
     final responsive = context.responsive;
     final extended = responsive.isLargeDesktop;
-    
+
     return Scaffold(
-      appBar: AppBar(
+      /*appBar: AppBar(
         title: Text(widget.title),
         actions: widget.actions,
         automaticallyImplyLeading: false,
         elevation: 1,
-      ),
+      ),*/
       body: Row(
         children: [
           Container(
@@ -126,14 +128,16 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
                     extended: extended,
                     minWidth: extended ? 200 : 72,
                     backgroundColor: Colors.transparent,
-                    destinations: widget.items.map((item) => NavigationRailDestination(
-                      icon: Tooltip(
-                        message: item.tooltip ?? item.label,
-                        child: item.icon,
-                      ),
-                      selectedIcon: item.selectedIcon ?? item.icon,
-                      label: Text(item.label),
-                    )).toList(),
+                    destinations: widget.items
+                        .map((item) => NavigationRailDestination(
+                              icon: Tooltip(
+                                message: item.tooltip ?? item.label,
+                                child: item.icon,
+                              ),
+                              selectedIcon: item.selectedIcon ?? item.icon,
+                              label: Text(item.label),
+                            ))
+                        .toList(),
                   ),
                 ),
                 if (extended) ...[
@@ -154,7 +158,7 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       floatingActionButton: widget.floatingActionButton,
     );
   }
-  
+
   Widget _buildTabletNavigation(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -163,13 +167,12 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       ),
       drawer: _buildNavigationDrawer(context),
       body: widget.body,
-      bottomNavigationBar: widget.items.length <= 5 
-        ? _buildBottomNavigationBar(context)
-        : null,
+      bottomNavigationBar:
+          widget.items.length <= 5 ? _buildBottomNavigationBar(context) : null,
       floatingActionButton: widget.floatingActionButton,
     );
   }
-  
+
   Widget _buildMobileNavigation(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -178,29 +181,31 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       ),
       drawer: widget.items.length > 5 ? _buildNavigationDrawer(context) : null,
       body: widget.body,
-      bottomNavigationBar: widget.items.length <= 5 
-        ? _buildBottomNavigationBar(context)
-        : null,
+      bottomNavigationBar:
+          widget.items.length <= 5 ? _buildBottomNavigationBar(context) : null,
       floatingActionButton: widget.floatingActionButton,
     );
   }
-  
+
   Widget _buildBottomNavigationBar(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: widget.selectedIndex,
       onTap: widget.onItemSelected,
-      type: widget.items.length > 3 
-        ? BottomNavigationBarType.fixed 
-        : BottomNavigationBarType.shifting,
-      items: widget.items.take(5).map((item) => BottomNavigationBarItem(
-        icon: item.icon,
-        activeIcon: item.selectedIcon ?? item.icon,
-        label: item.label,
-        tooltip: item.tooltip,
-      )).toList(),
+      type: widget.items.length > 3
+          ? BottomNavigationBarType.fixed
+          : BottomNavigationBarType.shifting,
+      items: widget.items
+          .take(5)
+          .map((item) => BottomNavigationBarItem(
+                icon: item.icon,
+                activeIcon: item.selectedIcon ?? item.icon,
+                label: item.label,
+                tooltip: item.tooltip,
+              ))
+          .toList(),
     );
   }
-  
+
   Widget _buildNavigationDrawer(BuildContext context) {
     return Drawer(
       child: Column(
@@ -215,8 +220,8 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
                 Text(
                   widget.title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                 ),
                 const Spacer(),
                 _buildUserProfile(),
@@ -229,12 +234,13 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
               itemBuilder: (context, index) {
                 final item = widget.items[index];
                 final isSelected = index == widget.selectedIndex;
-                
+
                 return AccessibilityUtils.createAccessibleListTile(
                   leading: item.icon,
                   title: Text(item.label),
                   selected: isSelected,
-                  semanticLabel: '${item.label}${isSelected ? ', selected' : ''}',
+                  semanticLabel:
+                      '${item.label}${isSelected ? ', selected' : ''}',
                   onTap: () {
                     widget.onItemSelected(index);
                     Navigator.of(context).pop();
@@ -247,10 +253,10 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
       ),
     );
   }
-  
+
   Widget _buildUserProfile() {
     final responsive = context.responsive;
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -268,17 +274,17 @@ class _PlatformNavigationState extends State<PlatformNavigation> with KeyboardNa
                 Text(
                   'User Name',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'user@example.com',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -297,7 +303,7 @@ class NavigationItem {
   final String label;
   final String? tooltip;
   final VoidCallback? onTap;
-  
+
   const NavigationItem({
     required this.icon,
     this.selectedIcon,
@@ -310,7 +316,7 @@ class NavigationItem {
 /// Intent for navigating to a specific index
 class NavigateToIndexIntent extends Intent {
   final int index;
-  
+
   const NavigateToIndexIntent(this.index);
 }
 
@@ -321,7 +327,7 @@ class PlatformAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final bool automaticallyImplyLeading;
   final double? elevation;
-  
+
   const PlatformAppBar({
     super.key,
     required this.title,
@@ -330,11 +336,11 @@ class PlatformAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.automaticallyImplyLeading = true,
     this.elevation,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    
+
     return AppBar(
       title: Text(title),
       actions: actions,
@@ -350,7 +356,7 @@ class PlatformAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
-  
+
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
@@ -361,7 +367,7 @@ class PlatformFloatingActionButton extends StatelessWidget {
   final Widget child;
   final String? tooltip;
   final String? heroTag;
-  
+
   const PlatformFloatingActionButton({
     super.key,
     required this.onPressed,
@@ -369,11 +375,11 @@ class PlatformFloatingActionButton extends StatelessWidget {
     this.tooltip,
     this.heroTag,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    
+
     if (responsive.isDesktop) {
       return FloatingActionButton.extended(
         onPressed: onPressed,

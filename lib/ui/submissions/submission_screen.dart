@@ -32,7 +32,7 @@ class SubmissionScreen extends ConsumerStatefulWidget {
 class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _textController = TextEditingController();
-  
+
   Submission? _submission;
   Event? _event;
   bool _isLoading = false;
@@ -63,8 +63,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     try {
       final submissionService = ref.read(submissionServiceProvider);
-      final submission = await submissionService.getSubmission(widget.submissionId!);
-      
+      final submission =
+          await submissionService.getSubmission(widget.submissionId!);
+
       if (submission != null) {
         setState(() {
           _submission = submission;
@@ -90,7 +91,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     try {
       final eventService = ref.read(eventServiceProvider);
       final event = await eventService.getEventById(widget.eventId);
-      
+
       if (event != null) {
         setState(() {
           _event = event;
@@ -111,7 +112,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     try {
       final submissionService = ref.read(submissionServiceProvider);
-      
+
       if (_submission == null) {
         // Create new submission
         final submission = await submissionService.createSubmission(
@@ -127,8 +128,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
         // Update existing submission
         final updatedContent = Map<String, dynamic>.from(_submission!.content);
         updatedContent['text'] = _textController.text.trim();
-        
-        final updatedSubmission = await submissionService.updateSubmissionContent(
+
+        final updatedSubmission =
+            await submissionService.updateSubmissionContent(
           submissionId: _submission!.id,
           content: updatedContent,
         );
@@ -179,7 +181,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     final result = await FilePicker.platform.pickFiles(
       type: pickerFileType,
-      allowedExtensions: allowedExtensions.isNotEmpty ? allowedExtensions : null,
+      allowedExtensions:
+          allowedExtensions.isNotEmpty ? allowedExtensions : null,
       allowMultiple: true,
     );
 
@@ -213,7 +216,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${files.length} file(s) uploaded successfully')),
+        SnackBar(
+            content: Text('${files.length} file(s) uploaded successfully')),
       );
     } catch (e) {
       setState(() {
@@ -284,8 +288,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     try {
       final submissionService = ref.read(submissionServiceProvider);
-      final submittedSubmission = await submissionService.submitSubmission(_submission!.id);
-      
+      final submittedSubmission =
+          await submissionService.submitSubmission(_submission!.id);
+
       setState(() {
         _submission = submittedSubmission;
       });
@@ -319,7 +324,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           : _buildContent(),
       floatingActionButton: _submission?.canBeEdited == true
           ? FloatingActionButton.extended(
-              onPressed: _submission?.hasContent == true ? _submitSubmission : null,
+              onPressed:
+                  _submission?.hasContent == true ? _submitSubmission : null,
               icon: const Icon(Icons.send),
               label: const Text('Submit'),
             )
@@ -333,7 +339,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error, size: 64, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error,
+                size: 64, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
             Text(_error!, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 16),
@@ -353,12 +360,51 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Event information section
+            if (_event != null) ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.event,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _event!.title,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_event!.description.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _event!.description,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Deadline countdown section
             if (_event != null && _event!.submissionDeadline != null) ...[
               DeadlineCountdownWidget(event: _event!),
               const SizedBox(height: 16),
             ],
-            
+
             // Text content section
             Card(
               child: Padding(
@@ -391,14 +437,16 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: _submission?.canBeEdited != false ? _createOrUpdateSubmission : null,
+                      onPressed: _submission?.canBeEdited != false
+                          ? _createOrUpdateSubmission
+                          : null,
                       child: const Text('Save Description'),
                     ),
                   ],
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
 
             // File upload sections
@@ -413,9 +461,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                 onUpload: () => _uploadFiles('photos'),
                 onRemove: (url) => _removeFile(url, 'photos'),
               ),
-              
               const SizedBox(height: 16),
-              
               FileUploadWidget(
                 title: 'Videos',
                 fileType: 'videos',
@@ -426,9 +472,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                 onUpload: () => _uploadFiles('videos'),
                 onRemove: (url) => _removeFile(url, 'videos'),
               ),
-              
               const SizedBox(height: 16),
-              
               FileUploadWidget(
                 title: 'Documents',
                 fileType: 'documents',

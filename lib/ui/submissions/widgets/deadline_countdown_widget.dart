@@ -1,27 +1,24 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../models/event.dart';
-import '../../../services/deadline_service.dart';
+import '../../../services/deadline_enforcement_service.dart';
 
-/// Widget that displays a countdown timer for submission deadlines
+/// Widget that displays a countdown timer to submission deadline
 class DeadlineCountdownWidget extends StatefulWidget {
   final Event event;
-  final DeadlineService deadlineService;
-  final TextStyle? textStyle;
   final bool showIcon;
   final bool compact;
 
   const DeadlineCountdownWidget({
     super.key,
     required this.event,
-    required this.deadlineService,
-    this.textStyle,
     this.showIcon = true,
     this.compact = false,
   });
 
   @override
-  State<DeadlineCountdownWidget> createState() => _DeadlineCountdownWidgetState();
+  State<DeadlineCountdownWidget> createState() =>
+      _DeadlineCountdownWidgetState();
 }
 
 class _DeadlineCountdownWidgetState extends State<DeadlineCountdownWidget> {
@@ -49,259 +46,252 @@ class _DeadlineCountdownWidgetState extends State<DeadlineCountdownWidget> {
   }
 
   void _updateCountdown() {
-    if (mounted) {
+    if (widget.event.submissionDeadline == null) {
       setState(() {
-        _timeRemaining = widget.deadlineService.getTimeUntilDeadline(widget.event);
-        _status = widget.deadlineService.getDeadlineStatus(widget.event);
+        _timeRemaining = null;
+        _status = DeadlineStatus.noDeadline;
       });
+      return;
+    }
+
+    final now = DateTime.now();
+    final deadline = widget.event.submissionDeadline!;
+
+    if (now.isAfter(deadline)) {
+      setState(() {
+        _timeRemaining = Duration.zero;
+        _status = DeadlineStatus.passed;
+      });
+      _timer?.cancel();
+      return;
+    }
+
+    final timeRemaining = deadline.difference(now);
+
+    setState(() {
+      _timeRemaining = timeRemaining;
+      _status = _getDeadlineStatus(timeRemaining);
+    });
+  }
+
+  DeadlineStatus _getDeadlineStatus(Duration timeRemaining) {
+    if (timeRemaining.inMinutes <= 15) {
+      return DeadlineStatus.critical;
+    } else if (timeRemaining.inHours <= 1) {
+      return DeadlineStatus.urgent;
+    } else if (timeRemaining.inHours <= 4) {
+      return DeadlineStatus.warning;
+    } else if (timeRemaining.inHours <= 24) {
+      return DeadlineStatus.approaching;
+    } else {
+      return DeadlineStatus.normal;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.event.submissionDeadline == null) {
+    if (_status == DeadlineStatus.noDeadline) {
       return const SizedBox.shrink();
     }
 
-    final theme = Theme.of(context);
-    final countdownText = widget.deadlineService.formatTimeRemaining(_timeRemaining);
-    
-    Color textColor;
-    IconData icon;
-    
-    switch (_status) {
-      case DeadlineStatus.passed:
-        textColor = theme.colorScheme.error;
-        icon = Icons.schedule_outlined;
-        break;
-      case DeadlineStatus.critical:
-        textColor = theme.colorScheme.error;
-        icon = Icons.warning_amber_outlined;
-        break;
-      case DeadlineStatus.urgent:
-        textColor = Colors.orange;
-        icon = Icons.access_time_outlined;
-        break;
-      case DeadlineStatus.warning:
-        textColor = Colors.amber.shade700;
-        icon = Icons.schedule_outlined;
-        break;
-      case DeadlineStatus.approaching:
-        textColor = theme.colorScheme.primary;
-        icon = Icons.schedule_outlined;
-        break;
-      default:
-        textColor = theme.colorScheme.onSurface;
-        icon = Icons.schedule_outlined;
-    }
+    final statusInfo = _getStatusInfo(context);
 
     if (widget.compact) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.showIcon) ...[
-            Icon(
-              icon,
-              size: 16,
-              color: textColor,
-            ),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            countdownText,
-            style: widget.textStyle?.copyWith(color: textColor) ??
-                theme.textTheme.bodySmall?.copyWith(color: textColor),
-          ),
-        ],
-      );
+      return _buildCompactView(statusInfo);
+    } else {
+      return _buildFullView(statusInfo);
     }
+  }
 
+  Widget _buildCompactView(_StatusInfo statusInfo) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _getBackgroundColor(theme),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: textColor.withOpacity(0.3),
-          width: 1,
-        ),
+        color: statusInfo.color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: statusInfo.color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.showIcon) ...[
             Icon(
-              icon,
-              size: 20,
-              color: textColor,
+              statusInfo.icon,
+              size: 14,
+              color: statusInfo.color,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
           ],
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Submission Deadline',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: textColor.withOpacity(0.8),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                countdownText,
-                style: widget.textStyle?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ) ?? theme.textTheme.bodyMedium?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Text(
+            _formatTimeRemaining(),
+            style: TextStyle(
+              color: statusInfo.color,
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Color _getBackgroundColor(ThemeData theme) {
-    switch (_status) {
-      case DeadlineStatus.passed:
-        return theme.colorScheme.errorContainer.withOpacity(0.1);
-      case DeadlineStatus.critical:
-        return theme.colorScheme.errorContainer.withOpacity(0.1);
-      case DeadlineStatus.urgent:
-        return Colors.orange.withOpacity(0.1);
-      case DeadlineStatus.warning:
-        return Colors.amber.withOpacity(0.1);
-      case DeadlineStatus.approaching:
-        return theme.colorScheme.primaryContainer.withOpacity(0.1);
-      default:
-        return theme.colorScheme.surfaceVariant.withOpacity(0.3);
-    }
-  }
-}
-
-/// Simple text-only countdown widget
-class SimpleCountdownText extends StatefulWidget {
-  final Event event;
-  final DeadlineService deadlineService;
-  final TextStyle? style;
-
-  const SimpleCountdownText({
-    super.key,
-    required this.event,
-    required this.deadlineService,
-    this.style,
-  });
-
-  @override
-  State<SimpleCountdownText> createState() => _SimpleCountdownTextState();
-}
-
-class _SimpleCountdownTextState extends State<SimpleCountdownText> {
-  Timer? _timer;
-  String _countdownText = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _updateText();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateText();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _updateText() {
-    if (mounted) {
-      setState(() {
-        _countdownText = widget.deadlineService.getCountdownText(widget.event);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      _countdownText,
-      style: widget.style,
-    );
-  }
-}
-
-/// Deadline status indicator chip
-class DeadlineStatusChip extends StatelessWidget {
-  final Event event;
-  final DeadlineService deadlineService;
-
-  const DeadlineStatusChip({
-    super.key,
-    required this.event,
-    required this.deadlineService,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (event.submissionDeadline == null) {
-      return const SizedBox.shrink();
-    }
-
-    final status = deadlineService.getDeadlineStatus(event);
-    final theme = Theme.of(context);
-
-    Color backgroundColor;
-    Color textColor;
-    String label;
-
-    switch (status) {
-      case DeadlineStatus.passed:
-        backgroundColor = theme.colorScheme.errorContainer;
-        textColor = theme.colorScheme.onErrorContainer;
-        label = 'Deadline Passed';
-        break;
-      case DeadlineStatus.critical:
-        backgroundColor = theme.colorScheme.errorContainer;
-        textColor = theme.colorScheme.onErrorContainer;
-        label = 'Critical';
-        break;
-      case DeadlineStatus.urgent:
-        backgroundColor = Colors.orange.shade100;
-        textColor = Colors.orange.shade800;
-        label = 'Urgent';
-        break;
-      case DeadlineStatus.warning:
-        backgroundColor = Colors.amber.shade100;
-        textColor = Colors.amber.shade800;
-        label = 'Warning';
-        break;
-      case DeadlineStatus.approaching:
-        backgroundColor = theme.colorScheme.primaryContainer;
-        textColor = theme.colorScheme.onPrimaryContainer;
-        label = 'Approaching';
-        break;
-      default:
-        return const SizedBox.shrink();
-    }
-
-    return Chip(
-      label: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: textColor,
-          fontWeight: FontWeight.w500,
+  Widget _buildFullView(_StatusInfo statusInfo) {
+    return Card(
+      color: statusInfo.color.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (widget.showIcon) ...[
+                  Icon(
+                    statusInfo.icon,
+                    color: statusInfo.color,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  'Submission Deadline',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: statusInfo.color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _formatTimeRemaining(),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: statusInfo.color,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Until ${_formatDeadlineDate()}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: statusInfo.color.withOpacity(0.8),
+                  ),
+            ),
+            if (_status == DeadlineStatus.critical ||
+                _status == DeadlineStatus.urgent) ...[
+              const SizedBox(height: 8),
+              Text(
+                statusInfo.message,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: statusInfo.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ],
+          ],
         ),
       ),
-      backgroundColor: backgroundColor,
-      side: BorderSide.none,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: VisualDensity.compact,
     );
   }
+
+  String _formatTimeRemaining() {
+    if (_timeRemaining == null) return 'No deadline';
+    if (_timeRemaining!.isNegative || _timeRemaining == Duration.zero) {
+      return 'Deadline passed';
+    }
+
+    final days = _timeRemaining!.inDays;
+    final hours = _timeRemaining!.inHours % 24;
+    final minutes = _timeRemaining!.inMinutes % 60;
+    final seconds = _timeRemaining!.inSeconds % 60;
+
+    if (days > 0) {
+      return '$days day${days == 1 ? '' : 's'}, $hours hour${hours == 1 ? '' : 's'}';
+    } else if (hours > 0) {
+      return '$hours hour${hours == 1 ? '' : 's'}, $minutes minute${minutes == 1 ? '' : 's'}';
+    } else if (minutes > 0) {
+      return '$minutes minute${minutes == 1 ? '' : 's'}';
+    } else {
+      return '$seconds second${seconds == 1 ? '' : 's'}';
+    }
+  }
+
+  String _formatDeadlineDate() {
+    if (widget.event.submissionDeadline == null) return '';
+
+    final deadline = widget.event.submissionDeadline!;
+    final now = DateTime.now();
+
+    // Format based on how far away the deadline is
+    if (deadline.day == now.day &&
+        deadline.month == now.month &&
+        deadline.year == now.year) {
+      // Same day - show time only
+      return '${deadline.hour.toString().padLeft(2, '0')}:${deadline.minute.toString().padLeft(2, '0')}';
+    } else {
+      // Different day - show date and time
+      return '${deadline.day}/${deadline.month} at ${deadline.hour.toString().padLeft(2, '0')}:${deadline.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
+  _StatusInfo _getStatusInfo(BuildContext context) {
+    final theme = Theme.of(context);
+
+    switch (_status) {
+      case DeadlineStatus.noDeadline:
+        return _StatusInfo(
+          icon: Icons.schedule,
+          color: theme.colorScheme.outline,
+          message: 'No deadline set',
+        );
+      case DeadlineStatus.normal:
+        return _StatusInfo(
+          icon: Icons.schedule,
+          color: theme.colorScheme.primary,
+          message: 'Plenty of time remaining',
+        );
+      case DeadlineStatus.approaching:
+        return _StatusInfo(
+          icon: Icons.schedule,
+          color: Colors.blue,
+          message: 'Deadline approaching',
+        );
+      case DeadlineStatus.warning:
+        return _StatusInfo(
+          icon: Icons.warning,
+          color: Colors.orange,
+          message: 'Submit soon to avoid missing the deadline',
+        );
+      case DeadlineStatus.urgent:
+        return _StatusInfo(
+          icon: Icons.warning_amber,
+          color: Colors.deepOrange,
+          message: 'Urgent: Submit immediately!',
+        );
+      case DeadlineStatus.critical:
+        return _StatusInfo(
+          icon: Icons.error,
+          color: Colors.red,
+          message: 'Critical: Only minutes remaining!',
+        );
+      case DeadlineStatus.passed:
+        return _StatusInfo(
+          icon: Icons.block,
+          color: Colors.grey,
+          message: 'Deadline has passed',
+        );
+    }
+  }
+}
+
+class _StatusInfo {
+  final IconData icon;
+  final Color color;
+  final String message;
+
+  _StatusInfo({
+    required this.icon,
+    required this.color,
+    required this.message,
+  });
 }

@@ -21,7 +21,8 @@ class SubmissionsListScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SubmissionsListScreen> createState() => _SubmissionsListScreenState();
+  ConsumerState<SubmissionsListScreen> createState() =>
+      _SubmissionsListScreenState();
 }
 
 class _SubmissionsListScreenState extends ConsumerState<SubmissionsListScreen> {
@@ -45,13 +46,16 @@ class _SubmissionsListScreenState extends ConsumerState<SubmissionsListScreen> {
     try {
       final submissionService = ref.read(submissionServiceProvider);
       List<Submission> submissions;
-      
+
       if (widget.teamId != null) {
-        submissions = await submissionService.getTeamSubmissions(widget.teamId!);
+        submissions =
+            await submissionService.getTeamSubmissions(widget.teamId!);
         // Filter by event ID
-        submissions = submissions.where((s) => s.eventId == widget.eventId).toList();
+        submissions =
+            submissions.where((s) => s.eventId == widget.eventId).toList();
       } else {
-        submissions = await submissionService.getEventSubmissions(widget.eventId);
+        submissions =
+            await submissionService.getEventSubmissions(widget.eventId);
       }
 
       setState(() {
@@ -94,15 +98,16 @@ class _SubmissionsListScreenState extends ConsumerState<SubmissionsListScreen> {
                 child: Text('All Submissions'),
               ),
               ...SubmissionStatus.values.map((status) => PopupMenuItem(
-                value: status,
-                child: Row(
-                  children: [
-                    SubmissionStatusIndicator(status: status, showLabel: false),
-                    const SizedBox(width: 8),
-                    Text(status.value.replaceAll('_', ' ').toUpperCase()),
-                  ],
-                ),
-              )),
+                    value: status,
+                    child: Row(
+                      children: [
+                        SubmissionStatusIndicator(
+                            status: status, showLabel: false),
+                        const SizedBox(width: 8),
+                        Text(status.value.replaceAll('_', ' ').toUpperCase()),
+                      ],
+                    ),
+                  )),
             ],
           ),
           // Refresh button
@@ -133,7 +138,7 @@ class _SubmissionsListScreenState extends ConsumerState<SubmissionsListScreen> {
               color: Theme.of(context).colorScheme.error,
             ),
             const SizedBox(height: 16),
-            Text(
+            SelectableText(
               _error!,
               style: Theme.of(context).textTheme.bodyLarge,
               textAlign: TextAlign.center,
@@ -162,7 +167,7 @@ class _SubmissionsListScreenState extends ConsumerState<SubmissionsListScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              _statusFilter == null 
+              _statusFilter == null
                   ? 'No submissions yet'
                   : 'No submissions with selected status',
               style: Theme.of(context).textTheme.bodyLarge,
@@ -198,8 +203,6 @@ class _SubmissionsListScreenState extends ConsumerState<SubmissionsListScreen> {
       ),
     );
   }
-
-
 
   void _openSubmission(Submission submission) {
     Navigator.of(context).push(

@@ -1,98 +1,87 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/deadline_service.dart';
+import '../services/deadline_enforcement_service.dart';
 import '../services/notification_service.dart';
-import '../repositories/event_repository.dart';
-import '../repositories/submission_repository.dart';
-import '../repositories/member_repository.dart';
 import '../repositories/repository_providers.dart';
 import '../models/event.dart';
 
 /// Provider for the notification service
 final notificationServiceProvider = Provider<NotificationService>((ref) {
-  final notificationRepository = ref.watch(notificationRepositoryProvider);
-  return NotificationService(repository: notificationRepository);
+  return NotificationService();
 });
 
-/// Provider for the deadline service
-final deadlineServiceProvider = Provider<DeadlineService>((ref) {
+/// Provider for the deadline enforcement service
+final deadlineEnforcementServiceProvider =
+    Provider<DeadlineEnforcementService>((ref) {
   final eventRepository = ref.watch(eventRepositoryProvider);
   final submissionRepository = ref.watch(submissionRepositoryProvider);
   final notificationService = ref.watch(notificationServiceProvider);
-  
-  return DeadlineService(
+
+  return DeadlineEnforcementService(
     eventRepository,
     submissionRepository,
     notificationService,
   );
 });
 
-/// Provider for event repository
-final eventRepositoryProvider = Provider<EventRepository>((ref) {
-  return EventRepository();
-});
-
-/// Provider for submission repository
-final submissionRepositoryProvider = Provider<SubmissionRepository>((ref) {
-  return SubmissionRepository();
-});
-
-/// Provider for member repository
-final memberRepositoryProvider = Provider<MemberRepository>((ref) {
-  return MemberRepository();
-});
-
 /// Provider to get deadline status for a specific event
-final eventDeadlineStatusProvider = Provider.family<DeadlineStatus, String>((ref, eventId) {
-  final deadlineService = ref.watch(deadlineServiceProvider);
+final eventDeadlineStatusProvider =
+    Provider.family<DeadlineStatus, String>((ref, eventId) {
   // This would need to be implemented with proper state management
   // For now, returning a default value
   return DeadlineStatus.normal;
 });
 
 /// Provider to get time remaining for a specific event
-final eventTimeRemainingProvider = Provider.family<Duration?, String>((ref, eventId) {
-  final deadlineService = ref.watch(deadlineServiceProvider);
+final eventTimeRemainingProvider =
+    Provider.family<Duration?, String>((ref, eventId) {
   // This would need to be implemented with proper state management
   // For now, returning null
   return null;
 });
 
 /// Provider to start/stop deadline monitoring
-final deadlineMonitoringProvider = StateNotifierProvider<DeadlineMonitoringNotifier, bool>((ref) {
-  final deadlineService = ref.watch(deadlineServiceProvider);
+final deadlineMonitoringProvider =
+    StateNotifierProvider<DeadlineMonitoringNotifier, DeadlineMonitoringState>(
+        (ref) {
+  final deadlineService = ref.watch(deadlineEnforcementServiceProvider);
   return DeadlineMonitoringNotifier(deadlineService);
 });
 
 /// State notifier for deadline monitoring
-class DeadlineMonitoringNotifier extends StateNotifier<bool> {
-  final DeadlineService _deadlineService;
+class DeadlineMonitoringNotifier
+    extends StateNotifier<DeadlineMonitoringState> {
+  final DeadlineEnforcementService _deadlineService;
 
-  DeadlineMonitoringNotifier(this._deadlineService) : super(false);
+  DeadlineMonitoringNotifier(this._deadlineService)
+      : super(DeadlineMonitoringState.initial());
 
   /// Start deadline monitoring
-  void startMonitoring() {
-    if (!state) {
-      _deadlineService.startDeadlineMonitoring();
-      state = true;
+  Future<void> startMonitoring() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await _deadlineService.startDeadlineMonitoring();
+      state = state.copyWith(
+        isLoading: false,
+        isMonitoring: true,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
     }
   }
 
   /// Stop deadline monitoring
   void stopMonitoring() {
-    if (state) {
-      _deadlineService.stopDeadlineMonitoring();
-      state = false;
-    }
+    _deadlineService.stopDeadlineMonitoring();
+    state = state.copyWith(isMonitoring: false);
   }
 
-  /// Schedule deadline enforcement for an event
-  Future<void> scheduleEventDeadline(Event event) async {
-    await _deadlineService.scheduleEventDeadlineEnforcement(event);
-  }
-
-  /// Cancel deadline enforcement for an event
-  void cancelEventDeadline(String eventId) {
-    _deadlineService.cancelEventDeadlineEnforcement(eventId);
+  /// Clear error
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 
   @override
@@ -102,20 +91,34 @@ class DeadlineMonitoringNotifier extends StateNotifier<bool> {
   }
 }
 
-/// Provider for deadline countdown text
-final deadlineCountdownProvider = Provider.family<String, Event>((ref, event) {
-  final deadlineService = ref.watch(deadlineServiceProvider);
-  return deadlineService.getCountdownText(event);
-});
+/// State class for deadline monitoring
+class DeadlineMonitoringState {
+  final bool isLoading;
+  final bool isMonitoring;
+  final String? error;
 
-/// Provider for deadline status
-final deadlineStatusProvider = Provider.family<DeadlineStatus, Event>((ref, event) {
-  final deadlineService = ref.watch(deadlineServiceProvider);
-  return deadlineService.getDeadlineStatus(event);
-});
+  const DeadlineMonitoringState({
+    required this.isLoading,
+    required this.isMonitoring,
+    this.error,
+  });
 
-/// Provider to check if deadline has passed
-final hasDeadlinePassedProvider = Provider.family<bool, Event>((ref, event) {
-  final deadlineService = ref.watch(deadlineServiceProvider);
-  return deadlineService.hasDeadlinePassed(event);
-});
+  factory DeadlineMonitoringState.initial() {
+    return const DeadlineMonitoringState(
+      isLoading: false,
+      isMonitoring: false,
+    );
+  }
+
+  DeadlineMonitoringState copyWith({
+    bool? isLoading,
+    bool? isMonitoring,
+    String? error,
+  }) {
+    return DeadlineMonitoringState(
+      isLoading: isLoading ?? this.isLoading,
+      isMonitoring: isMonitoring ?? this.isMonitoring,
+      error: error ?? this.error,
+    );
+  }
+}

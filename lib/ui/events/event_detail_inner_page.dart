@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
+import '../../providers/event_submission_integration_providers.dart';
+import '../../services/event_submission_integration_service.dart';
 import '../widgets/event_banner_image.dart';
 import '../widgets/robust_network_image.dart';
+import '../submissions/widgets/deadline_countdown_widget.dart';
+import '../submissions/widgets/deadline_status_widget.dart';
+import '../submissions/submissions_list_screen.dart';
 
 import 'create_event_inner_page.dart';
 import 'clone_event_screen.dart';
@@ -103,6 +108,10 @@ class EventDetailInnerPage extends ConsumerWidget {
                   _buildJudgingSection(context, event),
                   const SizedBox(height: 24),
                 ],
+
+                // Submissions Section
+                _buildSubmissionsSection(context, ref, event),
+                const SizedBox(height: 24),
 
                 // Action Buttons
                 _buildActionButtons(context, ref, event),
@@ -227,13 +236,24 @@ class EventDetailInnerPage extends ConsumerWidget {
               const SizedBox(height: 12),
             ],
             if (event.submissionDeadline != null) ...[
-              _buildScheduleItem(
-                context,
-                icon: Icons.access_time,
-                label: 'Submission Deadline',
-                value: _formatDateTime(event.submissionDeadline!),
-                color: Colors.orange,
-                subtitle: _getDeadlineStatus(event),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildScheduleItem(
+                      context,
+                      icon: Icons.access_time,
+                      label: 'Submission Deadline',
+                      value: _formatDateTime(event.submissionDeadline!),
+                      color: Colors.orange,
+                      subtitle: _getDeadlineStatus(event),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  DeadlineStatusWidget(
+                    event: event,
+                    showTime: false,
+                  ),
+                ],
               ),
             ],
             if (event.startTime == null && event.endTime == null) ...[
@@ -391,6 +411,277 @@ class EventDetailInnerPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildSubmissionsSection(
+      BuildContext context, WidgetRef ref, Event event) {
+    final eventStatsAsync =
+        ref.watch(eventWithSubmissionStatsProvider(event.id));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.assignment,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Submissions',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => _viewAllSubmissions(context, event),
+                  icon: const Icon(Icons.list, size: 16),
+                  label: const Text('View All'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Deadline countdown if active
+            if (event.submissionDeadline != null &&
+                event.status == EventStatus.active) ...[
+              DeadlineCountdownWidget(
+                event: event,
+                compact: true,
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Submission statistics
+            eventStatsAsync.when(
+              data: (stats) => _buildSubmissionStatistics(context, stats),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, stack) => Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Theme.of(context).colorScheme.error,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Error loading submissions: $error',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Quick actions
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _viewAllSubmissions(context, event),
+                    icon: const Icon(Icons.visibility, size: 16),
+                    label: const Text('View Submissions'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (event.status == EventStatus.active)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _manageSubmissions(context, event),
+                      icon: const Icon(Icons.settings, size: 16),
+                      label: const Text('Manage'),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmissionStatistics(
+      BuildContext context, EventWithSubmissionStats stats) {
+    return Column(
+      children: [
+        // Overview row
+        Row(
+          children: [
+            _buildStatItem(
+              context,
+              'Total',
+              stats.totalSubmissions.toString(),
+              Icons.assignment,
+              Colors.blue,
+            ),
+            const SizedBox(width: 16),
+            _buildStatItem(
+              context,
+              'Submitted',
+              stats.submittedSubmissions.toString(),
+              Icons.send,
+              Colors.green,
+            ),
+            const SizedBox(width: 16),
+            _buildStatItem(
+              context,
+              'Draft',
+              stats.draftSubmissions.toString(),
+              Icons.edit,
+              Colors.orange,
+            ),
+          ],
+        ),
+
+        // Review status row (if there are submissions under review)
+        if (stats.underReviewSubmissions > 0 ||
+            stats.approvedSubmissions > 0 ||
+            stats.rejectedSubmissions > 0) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildStatItem(
+                context,
+                'Under Review',
+                stats.underReviewSubmissions.toString(),
+                Icons.hourglass_empty,
+                Colors.purple,
+              ),
+              const SizedBox(width: 16),
+              _buildStatItem(
+                context,
+                'Approved',
+                stats.approvedSubmissions.toString(),
+                Icons.check_circle,
+                Colors.green,
+              ),
+              const SizedBox(width: 16),
+              _buildStatItem(
+                context,
+                'Rejected',
+                stats.rejectedSubmissions.toString(),
+                Icons.cancel,
+                Colors.red,
+              ),
+            ],
+          ),
+        ],
+
+        // Progress indicator
+        if (stats.totalSubmissions > 0) ...[
+          const SizedBox(height: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Submission Progress',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
+                  Text(
+                    '${(stats.submissionRate * 100).toInt()}%',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              LinearProgressIndicator(
+                value: stats.submissionRate,
+                backgroundColor:
+                    Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  stats.submissionRate > 0.7 ? Colors.green : Colors.orange,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStatItem(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: color,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _viewAllSubmissions(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SubmissionsListScreen(
+          eventId: event.id,
+          isJudgeView: true,
+        ),
+      ),
+    );
+  }
+
+  void _manageSubmissions(BuildContext context, Event event) {
+    // Navigate to submission management screen
+    // This could be a more advanced management interface
+    _viewAllSubmissions(context, event);
   }
 
   Widget _buildActionButtons(BuildContext context, WidgetRef ref, Event event) {
