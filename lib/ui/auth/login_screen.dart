@@ -16,7 +16,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   //TODO - remove hardcoded values before production
   final _emailController = TextEditingController(text: 'arun.gen.ai@gmail.com');
-  final _phoneController = TextEditingController(text:'1111122222');
+  final _phoneController = TextEditingController(text: '1111122222');
   final _emailFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
   bool _isSignUp = false;
@@ -38,189 +38,204 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Welcome message
-              Text(
-                _isSignUp ? 'Welcome to Ngage' : 'Welcome back',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-
-              // Email or Phone input
-              _isPhoneMode ? _buildPhoneInput(isLoading) : _buildEmailInput(isLoading),
-              const SizedBox(height: 16),
-
-              // Continue button
-              SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : _handleContinue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
+        backgroundColor: Colors.grey[50],
+        body: SafeArea(
+            child: SingleChildScrollView(
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Welcome message
+                  Text(
+                    _isSignUp ? 'Welcome to Ngage' : 'Welcome back',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                    textAlign: TextAlign.center,
                   ),
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 16,
+                  const SizedBox(height: 32),
+
+                  // Email or Phone input
+                  _isPhoneMode
+                      ? _buildPhoneInput(isLoading)
+                      : _buildEmailInput(isLoading),
+                  const SizedBox(height: 16),
+
+                  // Continue button
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _handleContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Sign up link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isSignUp
+                            ? 'Already have an account? '
+                            : "Don't have an account? ",
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      GestureDetector(
+                        onTap: isLoading
+                            ? null
+                            : () => setState(() => _isSignUp = !_isSignUp),
+                        child: Text(
+                          _isSignUp ? 'Sign in' : 'Sign up',
+                          style: const TextStyle(
+                            color: Colors.blue,
                             fontWeight: FontWeight.w500,
                           ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Sign up link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  GestureDetector(
-                    onTap: isLoading ? null : () => setState(() => _isSignUp = !_isSignUp),
-                    child: Text(
-                      _isSignUp ? 'Sign in' : 'Sign up',
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // Divider
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Toggle between email and phone
-              SizedBox(
-                height: 48,
-                child: OutlinedButton(
-                  onPressed: isLoading ? null : () {
-                    setState(() => _isPhoneMode = !_isPhoneMode);
-                    // Auto-focus the appropriate field after mode change
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (_isPhoneMode) {
-                        _phoneFocusNode.requestFocus();
-                      } else {
-                        _emailFocusNode.requestFocus();
-                      }
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black87,
-                    side: BorderSide(color: Colors.grey[300]!),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const SizedBox(width: 8),
-                      Icon(_isPhoneMode ? Icons.email : Icons.phone, size: 20),
-                      const SizedBox(width: 12),
-                      Text(
-                        _isPhoneMode ? 'Continue with email' : 'Continue with phone',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
+                  const SizedBox(height: 32),
 
-              // Social login buttons
-              SocialLoginButtons(isEnabled: !isLoading, hidePhoneButton: true),
+                  // Divider
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-              const SizedBox(height: 32),
-
-              // Terms and Privacy
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () => _showTermsDialog(),
-                    child: Text(
-                      'Terms of Use',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                        decoration: TextDecoration.underline,
+                  // Toggle between email and phone
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              setState(() => _isPhoneMode = !_isPhoneMode);
+                              // Auto-focus the appropriate field after mode change
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (_isPhoneMode) {
+                                  _phoneFocusNode.requestFocus();
+                                } else {
+                                  _emailFocusNode.requestFocus();
+                                }
+                              });
+                            },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        side: BorderSide(color: Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const SizedBox(width: 8),
+                          Icon(_isPhoneMode ? Icons.email : Icons.phone,
+                              size: 20),
+                          const SizedBox(width: 12),
+                          Text(
+                            _isPhoneMode
+                                ? 'Continue with email'
+                                : 'Continue with phone',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  Text(
-                    '  |  ',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                  GestureDetector(
-                    onTap: () => _showPrivacyDialog(),
-                    child: Text(
-                      'Privacy Policy',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                        decoration: TextDecoration.underline,
+                  const SizedBox(height: 12),
+
+                  // Social login buttons
+                  SocialLoginButtons(
+                      isEnabled: !isLoading, hidePhoneButton: true),
+
+                  const SizedBox(height: 32),
+
+                  // Terms and Privacy
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () => _showTermsDialog(),
+                        child: Text(
+                          'Terms of Use',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
                       ),
-                    ),
+                      Text(
+                        '  |  ',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      GestureDetector(
+                        onTap: () => _showPrivacyDialog(),
+                        child: Text(
+                          'Privacy Policy',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        )));
   }
 
   Widget _buildEmailInput(bool isLoading) {
@@ -232,7 +247,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
       });
     }
-    
+
     return TextField(
       controller: _emailController,
       focusNode: _emailFocusNode,
@@ -272,7 +287,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
       });
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -299,7 +314,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Phone number input
         TextField(
           controller: _phoneController,
@@ -379,7 +394,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleEmailContinue() {
     final email = _emailController.text.trim();
-    
+
     if (email.isEmpty) {
       _showError('Please enter your email address');
       return;
@@ -403,7 +418,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handlePhoneContinue() async {
     final phone = _phoneController.text.trim();
-    
+
     if (phone.isEmpty) {
       _showError('Please enter your phone number');
       return;
