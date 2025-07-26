@@ -2,7 +2,7 @@ import 'enums.dart';
 import 'validation.dart';
 
 /// Event model
-/// 
+///
 /// Represents an event within a group. Events can be competitions, challenges,
 /// or surveys. They have a lifecycle with different statuses and can be restricted
 /// to specific teams.
@@ -13,6 +13,7 @@ class Event {
   final String description;
   final EventType eventType;
   final EventStatus status;
+  final String? bannerImageUrl;
   final DateTime? startTime;
   final DateTime? endTime;
   final DateTime? submissionDeadline;
@@ -29,6 +30,7 @@ class Event {
     required this.description,
     required this.eventType,
     this.status = EventStatus.draft,
+    this.bannerImageUrl,
     this.startTime,
     this.endTime,
     this.submissionDeadline,
@@ -48,19 +50,21 @@ class Event {
       description: json['description'] as String,
       eventType: EventType.fromString(json['eventType'] as String),
       status: EventStatus.fromString(json['status'] as String),
-      startTime: json['startTime'] != null 
-          ? DateTime.parse(json['startTime'] as String) 
+      bannerImageUrl: json['bannerImageUrl'] as String?,
+      startTime: json['startTime'] != null
+          ? DateTime.parse(json['startTime'] as String)
           : null,
-      endTime: json['endTime'] != null 
-          ? DateTime.parse(json['endTime'] as String) 
+      endTime: json['endTime'] != null
+          ? DateTime.parse(json['endTime'] as String)
           : null,
-      submissionDeadline: json['submissionDeadline'] != null 
-          ? DateTime.parse(json['submissionDeadline'] as String) 
+      submissionDeadline: json['submissionDeadline'] != null
+          ? DateTime.parse(json['submissionDeadline'] as String)
           : null,
       eligibleTeamIds: json['eligibleTeamIds'] != null
           ? List<String>.from(json['eligibleTeamIds'] as List)
           : null,
-      judgingCriteria: Map<String, dynamic>.from(json['judgingCriteria'] as Map? ?? {}),
+      judgingCriteria:
+          Map<String, dynamic>.from(json['judgingCriteria'] as Map? ?? {}),
       createdBy: json['createdBy'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
@@ -76,6 +80,7 @@ class Event {
       'description': description,
       'eventType': eventType.value,
       'status': status.value,
+      'bannerImageUrl': bannerImageUrl,
       'startTime': startTime?.toIso8601String(),
       'endTime': endTime?.toIso8601String(),
       'submissionDeadline': submissionDeadline?.toIso8601String(),
@@ -95,6 +100,7 @@ class Event {
     String? description,
     EventType? eventType,
     EventStatus? status,
+    String? bannerImageUrl,
     DateTime? startTime,
     DateTime? endTime,
     DateTime? submissionDeadline,
@@ -111,6 +117,7 @@ class Event {
       description: description ?? this.description,
       eventType: eventType ?? this.eventType,
       status: status ?? this.status,
+      bannerImageUrl: bannerImageUrl ?? this.bannerImageUrl,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       submissionDeadline: submissionDeadline ?? this.submissionDeadline,
@@ -151,26 +158,27 @@ class Event {
   /// Check if submissions are currently open
   bool get areSubmissionsOpen {
     if (!isActive) return false;
-    
+
     final now = DateTime.now();
-    
+
     // Check if we're within the event time window
     if (startTime != null && now.isBefore(startTime!)) return false;
     if (endTime != null && now.isAfter(endTime!)) return false;
-    
+
     // Check if submission deadline has passed
-    if (submissionDeadline != null && now.isAfter(submissionDeadline!)) return false;
-    
+    if (submissionDeadline != null && now.isAfter(submissionDeadline!))
+      return false;
+
     return true;
   }
 
   /// Get time remaining until submission deadline
   Duration? get timeUntilDeadline {
     if (submissionDeadline == null) return null;
-    
+
     final now = DateTime.now();
     if (now.isAfter(submissionDeadline!)) return null;
-    
+
     return submissionDeadline!.difference(now);
   }
 
@@ -202,47 +210,49 @@ class Event {
 
     // Additional business logic validation
     final additionalErrors = <String>[];
-    
+
     if (title.length > 200) {
       additionalErrors.add('Event title must not exceed 200 characters');
     }
-    
+
     if (description.isEmpty) {
       additionalErrors.add('Event description is required');
     }
-    
+
     // Date validation
     if (startTime != null && endTime != null) {
       if (endTime!.isBefore(startTime!)) {
         additionalErrors.add('End time must be after start time');
       }
     }
-    
+
     if (submissionDeadline != null) {
       if (startTime != null && submissionDeadline!.isBefore(startTime!)) {
         additionalErrors.add('Submission deadline must be after start time');
       }
-      
+
       if (endTime != null && submissionDeadline!.isAfter(endTime!)) {
         additionalErrors.add('Submission deadline must be before end time');
       }
     }
-    
+
     // Status validation
-    if (status == EventStatus.scheduled && (startTime == null || endTime == null)) {
+    if (status == EventStatus.scheduled &&
+        (startTime == null || endTime == null)) {
       additionalErrors.add('Scheduled events must have start and end times');
     }
-    
+
     if (status == EventStatus.active && startTime == null) {
       additionalErrors.add('Active events must have a start time');
     }
-    
+
     // Eligible teams validation
     if (eligibleTeamIds != null) {
       if (eligibleTeamIds!.isEmpty) {
-        additionalErrors.add('If eligible teams are specified, at least one team must be included');
+        additionalErrors.add(
+            'If eligible teams are specified, at least one team must be included');
       }
-      
+
       // Check for duplicates
       if (eligibleTeamIds!.length != eligibleTeamIds!.toSet().length) {
         additionalErrors.add('Eligible teams list cannot contain duplicates');
@@ -250,19 +260,19 @@ class Event {
     }
 
     final baseValidation = Validators.combine(results);
-    
+
     if (additionalErrors.isNotEmpty) {
       final allErrors = [...baseValidation.errors, ...additionalErrors];
       return ValidationResult.invalid(allErrors);
     }
-    
+
     return baseValidation;
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is Event &&
         other.id == id &&
         other.groupId == groupId &&
@@ -270,6 +280,7 @@ class Event {
         other.description == description &&
         other.eventType == eventType &&
         other.status == status &&
+        other.bannerImageUrl == bannerImageUrl &&
         other.startTime == startTime &&
         other.endTime == endTime &&
         other.submissionDeadline == submissionDeadline &&
@@ -289,6 +300,7 @@ class Event {
       description,
       eventType,
       status,
+      bannerImageUrl,
       startTime,
       endTime,
       submissionDeadline,
@@ -305,24 +317,24 @@ class Event {
     if (list1 == null && list2 == null) return true;
     if (list1 == null || list2 == null) return false;
     if (list1.length != list2.length) return false;
-    
+
     for (int i = 0; i < list1.length; i++) {
       if (list1[i] != list2[i]) return false;
     }
-    
+
     return true;
   }
 
   /// Helper method to compare maps
   bool _mapEquals(Map<String, dynamic> map1, Map<String, dynamic> map2) {
     if (map1.length != map2.length) return false;
-    
+
     for (final key in map1.keys) {
       if (!map2.containsKey(key) || map1[key] != map2[key]) {
         return false;
       }
     }
-    
+
     return true;
   }
 

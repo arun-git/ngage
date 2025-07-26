@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/auth_providers.dart';
+import '../widgets/event_banner_image_picker.dart';
 
 /// Inner page for creating or editing an event
 class CreateEventInnerPage extends ConsumerStatefulWidget {
@@ -32,6 +33,7 @@ class _CreateEventInnerPageState extends ConsumerState<CreateEventInnerPage> {
   final _descriptionController = TextEditingController();
 
   EventType _selectedEventType = EventType.competition;
+  String? _bannerImageUrl;
   DateTime? _startTime;
   DateTime? _endTime;
   DateTime? _submissionDeadline;
@@ -49,6 +51,7 @@ class _CreateEventInnerPageState extends ConsumerState<CreateEventInnerPage> {
       _titleController.text = event.title;
       _descriptionController.text = event.description;
       _selectedEventType = event.eventType;
+      _bannerImageUrl = event.bannerImageUrl;
       _startTime = event.startTime;
       _endTime = event.endTime;
       _submissionDeadline = event.submissionDeadline;
@@ -115,6 +118,21 @@ class _CreateEventInnerPageState extends ConsumerState<CreateEventInnerPage> {
                   }
                   return null;
                 },
+              ),
+
+              const SizedBox(height: 16),
+
+              // Banner image picker
+              EventBannerImagePicker(
+                currentImageUrl: _bannerImageUrl,
+                onImageChanged: (imageUrl) {
+                  setState(() {
+                    _bannerImageUrl = imageUrl;
+                  });
+                },
+                eventId: widget.eventToEdit?.id,
+                groupId: widget.groupId,
+                enabled: !_isLoading,
               ),
 
               const SizedBox(height: 16),
@@ -244,6 +262,7 @@ class _CreateEventInnerPageState extends ConsumerState<CreateEventInnerPage> {
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           eventType: _selectedEventType,
+          bannerImageUrl: _bannerImageUrl,
           eligibleTeamIds: _isOpenEvent ? null : _eligibleTeamIds,
           startTime: _startTime,
           endTime: _endTime,
@@ -266,6 +285,7 @@ class _CreateEventInnerPageState extends ConsumerState<CreateEventInnerPage> {
           description: _descriptionController.text.trim(),
           eventType: _selectedEventType,
           createdBy: currentUser.id,
+          bannerImageUrl: _bannerImageUrl,
           startTime: _startTime,
           endTime: _endTime,
           submissionDeadline: _submissionDeadline,

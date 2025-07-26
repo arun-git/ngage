@@ -1,15 +1,20 @@
 import '../models/models.dart';
 import '../repositories/event_repository.dart';
+import 'image_service.dart';
 
 /// Service for event business logic and operations
-/// 
+///
 /// Handles event lifecycle management, validation, and business rules.
 /// Provides high-level operations for event management.
 class EventService {
   final EventRepository _eventRepository;
+  final ImageService _imageService;
 
-  EventService({EventRepository? eventRepository})
-      : _eventRepository = eventRepository ?? EventRepository();
+  EventService({
+    EventRepository? eventRepository,
+    ImageService? imageService,
+  })  : _eventRepository = eventRepository ?? EventRepository(),
+        _imageService = imageService ?? ImageService();
 
   /// Create a new event
   Future<Event> createEvent({
@@ -18,6 +23,7 @@ class EventService {
     required String description,
     required EventType eventType,
     required String createdBy,
+    String? bannerImageUrl,
     DateTime? startTime,
     DateTime? endTime,
     DateTime? submissionDeadline,
@@ -28,6 +34,23 @@ class EventService {
     final eventId = _generateEventId();
     final now = DateTime.now();
 
+    // Handle banner image - move from temp location if needed
+    String? finalBannerImageUrl = bannerImageUrl;
+    if (bannerImageUrl != null && bannerImageUrl.contains('/temp/events/')) {
+      try {
+        finalBannerImageUrl = await _imageService.moveTempBannerToEvent(
+          tempImageUrl: bannerImageUrl,
+          eventId: eventId,
+          groupId: groupId,
+        );
+      } catch (e) {
+        // If moving fails, we'll still create the event without the banner
+        // Log the error but don't fail the entire operation
+        finalBannerImageUrl = null;
+        // In a production app, you might want to log this error
+      }
+    }
+
     // Create event object
     final event = Event(
       id: eventId,
@@ -36,6 +59,7 @@ class EventService {
       description: description.trim(),
       eventType: eventType,
       status: EventStatus.draft,
+      bannerImageUrl: finalBannerImageUrl,
       startTime: startTime,
       endTime: endTime,
       submissionDeadline: submissionDeadline,
@@ -97,8 +121,7 @@ class EventService {
     // Business rule: Can only delete draft events
     if (event.status != EventStatus.draft) {
       throw EventOperationException(
-        'Cannot delete event with status: ${event.status.value}. Only draft events can be deleted.'
-      );
+          'Cannot delete event with status: ${event.status.value}. Only draft events can be deleted.');
     }
 
     await _eventRepository.deleteEvent(eventId);
@@ -124,8 +147,7 @@ class EventService {
     // Business rule: Can only schedule draft events
     if (event.status != EventStatus.draft) {
       throw EventOperationException(
-        'Cannot schedule event with status: ${event.status.value}. Only draft events can be scheduled.'
-      );
+          'Cannot schedule event with status: ${event.status.value}. Only draft events can be scheduled.');
     }
 
     // Validate scheduling times
@@ -157,18 +179,20 @@ class EventService {
     // Additional validation for specific status changes
     if (newStatus == EventStatus.active) {
       if (event.startTime == null) {
-        throw EventOperationException('Cannot activate event without start time');
+        throw EventOperationException(
+            'Cannot activate event without start time');
       }
     }
 
     if (newStatus == EventStatus.scheduled) {
       if (event.startTime == null || event.endTime == null) {
-        throw EventOperationException('Cannot schedule event without start and end times');
+        throw EventOperationException(
+            'Cannot schedule event without start and end times');
       }
     }
 
     await _eventRepository.updateEventStatus(eventId, newStatus);
-    
+
     return event.copyWith(
       status: newStatus,
       updatedAt: DateTime.now(),
@@ -191,7 +215,8 @@ class EventService {
   }
 
   /// Clone an event with enhanced options
-  Future<Event> cloneEvent(String eventId, {
+  Future<Event> cloneEvent(
+    String eventId, {
     String? newTitle,
     String? newDescription,
     String? createdBy,
@@ -230,7 +255,8 @@ class EventService {
       createdBy: createdBy ?? originalEvent.createdBy,
       startTime: preserveSchedule ? originalEvent.startTime : null,
       endTime: preserveSchedule ? originalEvent.endTime : null,
-      submissionDeadline: preserveSchedule ? originalEvent.submissionDeadline : null,
+      submissionDeadline:
+          preserveSchedule ? originalEvent.submissionDeadline : null,
       eligibleTeamIds: eligibleTeamIds,
       judgingCriteria: Map<String, dynamic>.from(originalEvent.judgingCriteria),
     );
@@ -239,7 +265,8 @@ class EventService {
   }
 
   /// Update event access control
-  Future<Event> updateEventAccess(String eventId, {
+  Future<Event> updateEventAccess(
+    String eventId, {
     List<String>? eligibleTeamIds,
   }) async {
     final event = await _eventRepository.getEventById(eventId);
@@ -252,8 +279,9 @@ class EventService {
       await _validateTeamEligibility(event.groupId, eligibleTeamIds);
     }
 
-    await _eventRepository.updateEventAccess(eventId, eligibleTeamIds: eligibleTeamIds);
-    
+    await _eventRepository.updateEventAccess(eventId,
+        eligibleTeamIds: eligibleTeamIds);
+
     return event.copyWith(
       eligibleTeamIds: eligibleTeamIds,
       updatedAt: DateTime.now(),
@@ -264,7 +292,7 @@ class EventService {
   Future<bool> canTeamAccessEvent(String eventId, String teamId) async {
     final event = await _eventRepository.getEventById(eventId);
     if (event == null) return false;
-    
+
     return event.isTeamEligible(teamId);
   }
 
@@ -274,17 +302,18 @@ class EventService {
     if (event == null) {
       throw EventNotFoundException('Event not found: $eventId');
     }
-    
+
     if (event.isOpenEvent) {
       // Return all teams in the group
       return await _eventRepository.getAllGroupTeamIds(event.groupId);
     }
-    
+
     return event.eligibleTeamIds ?? [];
   }
 
   /// Set event prerequisites
-  Future<Event> setEventPrerequisites(String eventId, {
+  Future<Event> setEventPrerequisites(
+    String eventId, {
     List<String>? prerequisiteEventIds,
     Map<String, dynamic>? customPrerequisites,
   }) async {
@@ -298,10 +327,12 @@ class EventService {
       for (final prereqId in prerequisiteEventIds) {
         final prereqEvent = await _eventRepository.getEventById(prereqId);
         if (prereqEvent == null) {
-          throw EventValidationException('Prerequisite event not found: $prereqId');
+          throw EventValidationException(
+              'Prerequisite event not found: $prereqId');
         }
         if (prereqEvent.groupId != event.groupId) {
-          throw EventValidationException('Prerequisite events must be in the same group');
+          throw EventValidationException(
+              'Prerequisite events must be in the same group');
         }
       }
     }
@@ -329,7 +360,8 @@ class EventService {
     final event = await _eventRepository.getEventById(eventId);
     if (event == null) return false;
 
-    final prerequisites = event.getJudgingCriterion<List<dynamic>>('prerequisites');
+    final prerequisites =
+        event.getJudgingCriterion<List<dynamic>>('prerequisites');
     if (prerequisites == null || prerequisites.isEmpty) {
       return true; // No prerequisites
     }
@@ -337,7 +369,8 @@ class EventService {
     // Check if team has completed all prerequisite events
     for (final prereqId in prerequisites) {
       if (prereqId is String) {
-        final hasCompleted = await _eventRepository.hasTeamCompletedEvent(prereqId, teamId);
+        final hasCompleted =
+            await _eventRepository.hasTeamCompletedEvent(prereqId, teamId);
         if (!hasCompleted) {
           return false;
         }
@@ -348,7 +381,8 @@ class EventService {
   }
 
   /// Get events accessible to a team (considering prerequisites and access control)
-  Future<List<Event>> getAccessibleEventsForTeam(String groupId, String teamId) async {
+  Future<List<Event>> getAccessibleEventsForTeam(
+      String groupId, String teamId) async {
     final allEvents = await _eventRepository.getGroupEvents(groupId);
     final accessibleEvents = <Event>[];
 
@@ -359,7 +393,8 @@ class EventService {
       }
 
       // Check prerequisites
-      final meetsPrerequisites = await doesTeamMeetPrerequisites(event.id, teamId);
+      final meetsPrerequisites =
+          await doesTeamMeetPrerequisites(event.id, teamId);
       if (!meetsPrerequisites) {
         continue;
       }
@@ -371,7 +406,8 @@ class EventService {
   }
 
   /// Get events by status
-  Future<List<Event>> getEventsByStatus(String groupId, EventStatus status) async {
+  Future<List<Event>> getEventsByStatus(
+      String groupId, EventStatus status) async {
     return await _eventRepository.getEventsByStatus(groupId, status);
   }
 
@@ -386,13 +422,16 @@ class EventService {
   }
 
   /// Get events that a team is eligible for
-  Future<List<Event>> getTeamEligibleEvents(String groupId, String teamId) async {
+  Future<List<Event>> getTeamEligibleEvents(
+      String groupId, String teamId) async {
     return await _eventRepository.getTeamEligibleEvents(groupId, teamId);
   }
 
   /// Get events with upcoming deadlines
-  Future<List<Event>> getEventsWithUpcomingDeadlines(String groupId, {int daysAhead = 7}) async {
-    return await _eventRepository.getEventsWithUpcomingDeadlines(groupId, daysAhead: daysAhead);
+  Future<List<Event>> getEventsWithUpcomingDeadlines(String groupId,
+      {int daysAhead = 7}) async {
+    return await _eventRepository.getEventsWithUpcomingDeadlines(groupId,
+        daysAhead: daysAhead);
   }
 
   /// Stream events for real-time updates
@@ -428,7 +467,8 @@ class EventService {
     // Validate new times
     final newStartTime = startTime ?? event.startTime;
     final newEndTime = endTime ?? event.endTime;
-    final newSubmissionDeadline = submissionDeadline ?? event.submissionDeadline;
+    final newSubmissionDeadline =
+        submissionDeadline ?? event.submissionDeadline;
 
     if (newStartTime != null && newEndTime != null) {
       _validateEventTimes(newStartTime, newEndTime, newSubmissionDeadline);
@@ -453,7 +493,7 @@ class EventService {
   Future<bool> areSubmissionsOpen(String eventId) async {
     final event = await _eventRepository.getEventById(eventId);
     if (event == null) return false;
-    
+
     return event.areSubmissionsOpen;
   }
 
@@ -461,7 +501,7 @@ class EventService {
   Future<Duration?> getTimeUntilDeadline(String eventId) async {
     final event = await _eventRepository.getEventById(eventId);
     if (event == null) return null;
-    
+
     return event.timeUntilDeadline;
   }
 
@@ -476,48 +516,54 @@ class EventService {
   String _generateRandomString(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final random = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(length, (index) => chars[random % chars.length]).join();
+    return List.generate(length, (index) => chars[random % chars.length])
+        .join();
   }
 
   /// Validate event business rules
   Future<void> _validateEventBusinessRules(Event event) async {
     // Check if group exists (this would require GroupService dependency)
     // For now, we'll assume the group exists if groupId is provided
-    
+
     // Validate eligible teams exist if specified
     if (event.eligibleTeamIds != null && event.eligibleTeamIds!.isNotEmpty) {
       await _validateTeamEligibility(event.groupId, event.eligibleTeamIds!);
     }
-    
+
     // Additional business rules can be added here
   }
 
   /// Validate that teams exist in the group
-  Future<void> _validateTeamEligibility(String groupId, List<String> teamIds) async {
+  Future<void> _validateTeamEligibility(
+      String groupId, List<String> teamIds) async {
     // This would typically validate against TeamService
     // For now, we'll delegate to the repository
-    final validTeams = await _eventRepository.validateTeamsInGroup(groupId, teamIds);
-    final invalidTeams = teamIds.where((id) => !validTeams.contains(id)).toList();
-    
+    final validTeams =
+        await _eventRepository.validateTeamsInGroup(groupId, teamIds);
+    final invalidTeams =
+        teamIds.where((id) => !validTeams.contains(id)).toList();
+
     if (invalidTeams.isNotEmpty) {
       throw EventValidationException(
-        'Invalid team IDs for group $groupId: ${invalidTeams.join(', ')}'
-      );
+          'Invalid team IDs for group $groupId: ${invalidTeams.join(', ')}');
     }
   }
 
   /// Validate event times
-  void _validateEventTimes(DateTime startTime, DateTime endTime, DateTime? submissionDeadline) {
+  void _validateEventTimes(
+      DateTime startTime, DateTime endTime, DateTime? submissionDeadline) {
     if (endTime.isBefore(startTime)) {
       throw EventValidationException('End time must be after start time');
     }
 
     if (submissionDeadline != null) {
       if (submissionDeadline.isBefore(startTime)) {
-        throw EventValidationException('Submission deadline must be after start time');
+        throw EventValidationException(
+            'Submission deadline must be after start time');
       }
       if (submissionDeadline.isAfter(endTime)) {
-        throw EventValidationException('Submission deadline must be before end time');
+        throw EventValidationException(
+            'Submission deadline must be before end time');
       }
     }
 
@@ -534,22 +580,28 @@ class EventService {
   }
 
   /// Validate status transitions
-  void _validateStatusTransition(EventStatus currentStatus, EventStatus newStatus) {
+  void _validateStatusTransition(
+      EventStatus currentStatus, EventStatus newStatus) {
     // Define valid status transitions
     final validTransitions = <EventStatus, List<EventStatus>>{
       EventStatus.draft: [EventStatus.scheduled, EventStatus.cancelled],
-      EventStatus.scheduled: [EventStatus.active, EventStatus.cancelled, EventStatus.draft],
+      EventStatus.scheduled: [
+        EventStatus.active,
+        EventStatus.cancelled,
+        EventStatus.draft
+      ],
       EventStatus.active: [EventStatus.completed, EventStatus.cancelled],
       EventStatus.completed: [], // No transitions from completed
-      EventStatus.cancelled: [EventStatus.draft], // Can reactivate cancelled draft events
+      EventStatus.cancelled: [
+        EventStatus.draft
+      ], // Can reactivate cancelled draft events
     };
 
     final allowedTransitions = validTransitions[currentStatus] ?? [];
-    
+
     if (!allowedTransitions.contains(newStatus)) {
       throw EventOperationException(
-        'Invalid status transition from ${currentStatus.value} to ${newStatus.value}'
-      );
+          'Invalid status transition from ${currentStatus.value} to ${newStatus.value}');
     }
   }
 }
@@ -558,7 +610,7 @@ class EventService {
 class EventNotFoundException implements Exception {
   final String message;
   EventNotFoundException(this.message);
-  
+
   @override
   String toString() => 'EventNotFoundException: $message';
 }
@@ -566,7 +618,7 @@ class EventNotFoundException implements Exception {
 class EventOperationException implements Exception {
   final String message;
   EventOperationException(this.message);
-  
+
   @override
   String toString() => 'EventOperationException: $message';
 }
@@ -574,7 +626,7 @@ class EventOperationException implements Exception {
 class EventValidationException implements Exception {
   final String message;
   EventValidationException(this.message);
-  
+
   @override
   String toString() => 'EventValidationException: $message';
 }
@@ -583,7 +635,7 @@ class ValidationException implements Exception {
   final String message;
   final List<String> errors;
   ValidationException(this.message, this.errors);
-  
+
   @override
   String toString() => 'ValidationException: $message - ${errors.join(', ')}';
 }

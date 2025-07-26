@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
+import '../widgets/event_banner_image.dart';
+import '../widgets/robust_network_image.dart';
 
 import 'create_event_inner_page.dart';
 import 'clone_event_screen.dart';
@@ -48,6 +50,34 @@ class EventDetailInnerPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Banner image if available
+                if (event.bannerImageUrl != null) ...[
+                  Container(
+                    width: double.infinity,
+                    height: 200,
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: EventBannerImage(
+                        imageUrl: event.bannerImageUrl!,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+
                 // Status and Type Header
                 _buildHeaderSection(context, event),
 

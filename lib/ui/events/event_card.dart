@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
+import '../widgets/event_banner_image.dart';
 
 /// Card widget displaying event information
 class EventCard extends StatelessWidget {
@@ -20,85 +21,100 @@ class EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with title and status
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Banner image if available
+            if (event.bannerImageUrl != null)
+              EventBannerImage(
+                imageUrl: event.bannerImageUrl!,
+                width: double.infinity,
+                height: 120,
+                fit: BoxFit.cover,
+              ),
+
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      event.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                  // Header with title and status
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          event.title,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      const SizedBox(width: 8),
+                      _buildStatusChip(context),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  _buildStatusChip(context),
-                ],
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Event type
-              Row(
-                children: [
-                  Icon(
-                    _getEventTypeIcon(),
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
+
+                  const SizedBox(height: 8),
+
+                  // Event type
+                  Row(
+                    children: [
+                      Icon(
+                        _getEventTypeIcon(),
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getEventTypeLabel(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
+
+                  const SizedBox(height: 8),
+
+                  // Description
                   Text(
-                    _getEventTypeLabel(),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    event.description,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+
+                  const SizedBox(height: 12),
+
+                  // Time information
+                  _buildTimeInfo(context),
+
+                  // Submission deadline if exists
+                  if (event.submissionDeadline != null) ...[
+                    const SizedBox(height: 8),
+                    _buildDeadlineInfo(context),
+                  ],
+
+                  // Access information
+                  const SizedBox(height: 8),
+                  _buildAccessInfo(context),
+
+                  // Action buttons if provided
+                  if (onEdit != null || onDelete != null) ...[
+                    const SizedBox(height: 12),
+                    _buildActionButtons(context),
+                  ],
                 ],
               ),
-              
-              const SizedBox(height: 8),
-              
-              // Description
-              Text(
-                event.description,
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Time information
-              _buildTimeInfo(context),
-              
-              // Submission deadline if exists
-              if (event.submissionDeadline != null) ...[
-                const SizedBox(height: 8),
-                _buildDeadlineInfo(context),
-              ],
-              
-              // Access information
-              const SizedBox(height: 8),
-              _buildAccessInfo(context),
-              
-              // Action buttons if provided
-              if (onEdit != null || onDelete != null) ...[
-                const SizedBox(height: 12),
-                _buildActionButtons(context),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -106,7 +122,7 @@ class EventCard extends StatelessWidget {
 
   Widget _buildStatusChip(BuildContext context) {
     final (color, backgroundColor) = _getStatusColors(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -116,9 +132,9 @@ class EventCard extends StatelessWidget {
       child: Text(
         _getStatusLabel(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }
@@ -136,8 +152,8 @@ class EventCard extends StatelessWidget {
           Text(
             'Not scheduled',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
           ),
         ],
       );
@@ -158,8 +174,8 @@ class EventCard extends StatelessWidget {
               Text(
                 'Starts: ${_formatDateTime(event.startTime!)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
               ),
             ],
           ),
@@ -176,8 +192,8 @@ class EventCard extends StatelessWidget {
               Text(
                 'Ends: ${_formatDateTime(event.endTime!)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
               ),
             ],
           ),
@@ -190,11 +206,11 @@ class EventCard extends StatelessWidget {
     final deadline = event.submissionDeadline!;
     final timeUntil = event.timeUntilDeadline;
     final isOverdue = timeUntil == null && DateTime.now().isAfter(deadline);
-    
+
     Color color = Theme.of(context).colorScheme.outline;
     IconData icon = Icons.access_time;
     String text = 'Deadline: ${_formatDateTime(deadline)}';
-    
+
     if (isOverdue) {
       color = Theme.of(context).colorScheme.error;
       icon = Icons.warning;
@@ -207,7 +223,8 @@ class EventCard extends StatelessWidget {
         color = Colors.orange;
         icon = Icons.schedule;
       }
-      text = 'Deadline: ${_formatDateTime(deadline)} (${_formatDuration(timeUntil)} left)';
+      text =
+          'Deadline: ${_formatDateTime(deadline)} (${_formatDuration(timeUntil)} left)';
     }
 
     return Row(
@@ -217,7 +234,8 @@ class EventCard extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+            style:
+                Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -229,10 +247,10 @@ class EventCard extends StatelessWidget {
   Widget _buildAccessInfo(BuildContext context) {
     final isOpen = event.isOpenEvent;
     final icon = isOpen ? Icons.public : Icons.group;
-    final text = isOpen 
-        ? 'Open to all teams' 
+    final text = isOpen
+        ? 'Open to all teams'
         : 'Restricted to ${event.eligibleTeamIds?.length ?? 0} team(s)';
-    
+
     return Row(
       children: [
         Icon(
@@ -244,8 +262,8 @@ class EventCard extends StatelessWidget {
         Text(
           text,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.outline,
-          ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
         ),
       ],
     );
@@ -315,7 +333,7 @@ class EventCard extends StatelessWidget {
 
   (Color, Color) _getStatusColors(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     switch (event.status) {
       case EventStatus.draft:
         return (colorScheme.outline, colorScheme.outline.withOpacity(0.1));
@@ -334,7 +352,7 @@ class EventCard extends StatelessWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final eventDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-    
+
     if (eventDate == today) {
       return 'Today ${_formatTime(dateTime)}';
     } else if (eventDate == today.add(const Duration(days: 1))) {
@@ -351,7 +369,7 @@ class EventCard extends StatelessWidget {
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final period = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    
+
     return '$displayHour:$minute $period';
   }
 

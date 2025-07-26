@@ -118,10 +118,34 @@ class ImageService {
     );
   }
 
+  /// Upload event banner image with optimized settings
+  Future<String> uploadEventBannerImage({
+    required XFile imageFile,
+    required String eventId,
+    required String groupId,
+  }) async {
+    return uploadImage(
+      imageFile: imageFile,
+      path: 'events/$eventId/images',
+      fileName: 'banner_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      metadata: {
+        'eventId': eventId,
+        'groupId': groupId,
+        'type': 'event_banner',
+        'uploadedAt': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
   /// Get optimized image picker settings for group images
   static const int groupImageMaxWidth = 800;
   static const int groupImageMaxHeight = 800;
   static const int groupImageQuality = 85;
+
+  /// Get optimized image picker settings for event banner images
+  static const int eventBannerMaxWidth = 1200;
+  static const int eventBannerMaxHeight = 600;
+  static const int eventBannerQuality = 90;
 
   /// Pick and upload group image in one operation
   Future<String?> pickAndUploadGroupImage({
@@ -148,6 +172,138 @@ class ImageService {
       );
     } catch (e) {
       throw Exception('Failed to pick and upload group image: $e');
+    }
+  }
+
+  /// Pick and upload event banner image in one operation
+  Future<String?> pickAndUploadEventBannerImage({
+    required String eventId,
+    required String groupId,
+    ImageSource source = ImageSource.gallery,
+  }) async {
+    try {
+      // Pick image with optimized settings for banner
+      final XFile? imageFile = await pickImage(
+        source: source,
+        maxWidth: eventBannerMaxWidth,
+        maxHeight: eventBannerMaxHeight,
+        imageQuality: eventBannerQuality,
+      );
+
+      if (imageFile == null) {
+        return null;
+      }
+
+      // Upload the image
+      return await uploadEventBannerImage(
+        imageFile: imageFile,
+        eventId: eventId,
+        groupId: groupId,
+      );
+    } catch (e) {
+      throw Exception('Failed to pick and upload event banner image: $e');
+    }
+  }
+
+  /// Upload temporary event banner image for new events (before event creation)
+  Future<String> uploadTempEventBannerImage({
+    required XFile imageFile,
+    required String groupId,
+  }) async {
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    return uploadImage(
+      imageFile: imageFile,
+      path: 'temp/events/$groupId/banners',
+      fileName: 'banner_$tempId.jpg',
+      metadata: {
+        'groupId': groupId,
+        'type': 'temp_event_banner',
+        'uploadedAt': DateTime.now().toIso8601String(),
+        'tempId': tempId,
+      },
+    );
+  }
+
+  /// Pick and upload temporary event banner image
+  Future<String?> pickAndUploadTempEventBannerImage({
+    required String groupId,
+    ImageSource source = ImageSource.gallery,
+  }) async {
+    try {
+      // Pick image with optimized settings for banner
+      final XFile? imageFile = await pickImage(
+        source: source,
+        maxWidth: eventBannerMaxWidth,
+        maxHeight: eventBannerMaxHeight,
+        imageQuality: eventBannerQuality,
+      );
+
+      if (imageFile == null) {
+        return null;
+      }
+
+      // Upload to temporary location
+      return await uploadTempEventBannerImage(
+        imageFile: imageFile,
+        groupId: groupId,
+      );
+    } catch (e) {
+      throw Exception(
+          'Failed to pick and upload temporary event banner image: $e');
+    }
+  }
+
+  /// Move temporary banner image to final event location
+  Future<String?> moveTempBannerToEvent({
+    required String tempImageUrl,
+    required String eventId,
+    required String groupId,
+  }) async {
+    try {
+      // Get reference to temporary image
+      final tempRef = _storage.refFromURL(tempImageUrl);
+
+      // Download the temporary image data
+      final Uint8List? imageDataNullable = await tempRef.getData();
+      if (imageDataNullable == null) {
+        throw Exception('Failed to download temporary image data');
+      }
+      final Uint8List imageData = imageDataNullable;
+
+      // Create new reference for final location
+      final finalRef = _storage.ref().child(
+          'events/$eventId/images/banner_${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+      // Upload to final location
+      final uploadTask = finalRef.putData(
+        imageData,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {
+            'eventId': eventId,
+            'groupId': groupId,
+            'type': 'event_banner',
+            'uploadedAt': DateTime.now().toIso8601String(),
+          },
+        ),
+      );
+
+      final snapshot = await uploadTask;
+      final finalUrl = await snapshot.ref.getDownloadURL();
+
+      // Delete temporary image
+      try {
+        await tempRef.delete();
+      } catch (e) {
+        // Log but don't fail if temp cleanup fails
+        if (kDebugMode) {
+          print('Warning: Failed to delete temporary image: $e');
+        }
+      }
+
+      return finalUrl;
+    } catch (e) {
+      throw Exception('Failed to move temporary banner to event: $e');
     }
   }
 
@@ -186,5 +342,37 @@ class ImageService {
   Future<bool> isValidImageSize(XFile file, {double maxSizeMB = 5.0}) async {
     final double sizeMB = await getFileSizeInMB(file);
     return sizeMB <= maxSizeMB;
+  }
+
+  /// Clean up temporary banner images older than specified duration
+  Future<void> cleanupTempBannerImages({
+    Duration maxAge = const Duration(hours: 24),
+  }) async {
+    try {
+      final tempRef = _storage.ref().child('temp/events');
+      final result = await tempRef.listAll();
+
+      final cutoffTime = DateTime.now().subtract(maxAge);
+
+      for (final item in result.items) {
+        try {
+          final metadata = await item.getMetadata();
+          final uploadTime = metadata.timeCreated;
+
+          if (uploadTime != null && uploadTime.isBefore(cutoffTime)) {
+            await item.delete();
+          }
+        } catch (e) {
+          // Continue with other items if one fails
+          if (kDebugMode) {
+            print('Failed to process temp image ${item.name}: $e');
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Failed to cleanup temp banner images: $e');
+      }
+    }
   }
 }

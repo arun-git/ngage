@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../services/event_service.dart';
 import '../repositories/event_repository.dart';
+import 'image_providers.dart';
 
 /// Provider for EventRepository
 final eventRepositoryProvider = Provider<EventRepository>((ref) {
@@ -11,79 +12,102 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 /// Provider for EventService
 final eventServiceProvider = Provider<EventService>((ref) {
   final repository = ref.watch(eventRepositoryProvider);
-  return EventService(eventRepository: repository);
+  final imageService = ref.watch(imageServiceProvider);
+  return EventService(
+    eventRepository: repository,
+    imageService: imageService,
+  );
 });
 
 /// Provider for streaming group events
-final groupEventsStreamProvider = StreamProvider.family<List<Event>, String>((ref, groupId) {
+final groupEventsStreamProvider =
+    StreamProvider.family<List<Event>, String>((ref, groupId) {
   final eventService = ref.watch(eventServiceProvider);
   return eventService.streamGroupEvents(groupId);
 });
 
 /// Provider for streaming a single event
-final eventStreamProvider = StreamProvider.family<Event?, String>((ref, eventId) {
+final eventStreamProvider =
+    StreamProvider.family<Event?, String>((ref, eventId) {
   final eventService = ref.watch(eventServiceProvider);
   return eventService.streamEvent(eventId);
 });
 
 /// Provider for getting group events (async)
-final groupEventsProvider = FutureProvider.family<List<Event>, String>((ref, groupId) async {
+final groupEventsProvider =
+    FutureProvider.family<List<Event>, String>((ref, groupId) async {
   final eventService = ref.watch(eventServiceProvider);
   return await eventService.getGroupEvents(groupId);
 });
 
 /// Provider for getting a single event (async)
-final eventProvider = FutureProvider.family<Event?, String>((ref, eventId) async {
+final eventProvider =
+    FutureProvider.family<Event?, String>((ref, eventId) async {
   final eventService = ref.watch(eventServiceProvider);
   return await eventService.getEventById(eventId);
 });
 
 /// Provider for getting active events
-final activeEventsProvider = FutureProvider.family<List<Event>, String>((ref, groupId) async {
+final activeEventsProvider =
+    FutureProvider.family<List<Event>, String>((ref, groupId) async {
   final eventService = ref.watch(eventServiceProvider);
   return await eventService.getActiveEvents(groupId);
 });
 
 /// Provider for getting scheduled events
-final scheduledEventsProvider = FutureProvider.family<List<Event>, String>((ref, groupId) async {
+final scheduledEventsProvider =
+    FutureProvider.family<List<Event>, String>((ref, groupId) async {
   final eventService = ref.watch(eventServiceProvider);
   return await eventService.getScheduledEvents(groupId);
 });
 
 /// Provider for getting events by status
-final eventsByStatusProvider = FutureProvider.family<List<Event>, EventsByStatusParams>((ref, params) async {
+final eventsByStatusProvider =
+    FutureProvider.family<List<Event>, EventsByStatusParams>(
+        (ref, params) async {
   final eventService = ref.watch(eventServiceProvider);
   return await eventService.getEventsByStatus(params.groupId, params.status);
 });
 
 /// Provider for getting team eligible events
-final teamEligibleEventsProvider = FutureProvider.family<List<Event>, TeamEligibleEventsParams>((ref, params) async {
+final teamEligibleEventsProvider =
+    FutureProvider.family<List<Event>, TeamEligibleEventsParams>(
+        (ref, params) async {
   final eventService = ref.watch(eventServiceProvider);
-  return await eventService.getTeamEligibleEvents(params.groupId, params.teamId);
+  return await eventService.getTeamEligibleEvents(
+      params.groupId, params.teamId);
 });
 
 /// Provider for getting events with upcoming deadlines
-final upcomingDeadlineEventsProvider = FutureProvider.family<List<Event>, UpcomingDeadlineParams>((ref, params) async {
+final upcomingDeadlineEventsProvider =
+    FutureProvider.family<List<Event>, UpcomingDeadlineParams>(
+        (ref, params) async {
   final eventService = ref.watch(eventServiceProvider);
-  return await eventService.getEventsWithUpcomingDeadlines(params.groupId, daysAhead: params.daysAhead);
+  return await eventService.getEventsWithUpcomingDeadlines(params.groupId,
+      daysAhead: params.daysAhead);
 });
 
 /// Provider for searching events
-final searchEventsProvider = FutureProvider.family<List<Event>, SearchEventsParams>((ref, params) async {
+final searchEventsProvider =
+    FutureProvider.family<List<Event>, SearchEventsParams>((ref, params) async {
   final eventService = ref.watch(eventServiceProvider);
   return await eventService.searchEvents(params.groupId, params.searchTerm);
 });
 
 /// Provider for getting teams accessible to an event
-final eventAccessibleTeamsProvider = FutureProvider.family<List<String>, String>((ref, eventId) async {
+final eventAccessibleTeamsProvider =
+    FutureProvider.family<List<String>, String>((ref, eventId) async {
   final eventService = ref.watch(eventServiceProvider);
   return await eventService.getEligibleTeams(eventId);
 });
 
 /// Provider for getting accessible events for a team
-final teamAccessibleEventsProvider = FutureProvider.family<List<Event>, TeamAccessibleEventsParams>((ref, params) async {
+final teamAccessibleEventsProvider =
+    FutureProvider.family<List<Event>, TeamAccessibleEventsParams>(
+        (ref, params) async {
   final eventService = ref.watch(eventServiceProvider);
-  return await eventService.getAccessibleEventsForTeam(params.groupId, params.teamId);
+  return await eventService.getAccessibleEventsForTeam(
+      params.groupId, params.teamId);
 });
 
 /// State notifier for event form management
@@ -143,7 +167,8 @@ class EventFormNotifier extends StateNotifier<EventFormState> {
         endTime: state.formData['endTime'] as DateTime?,
         submissionDeadline: state.formData['submissionDeadline'] as DateTime?,
         eligibleTeamIds: state.formData['eligibleTeamIds'] as List<String>?,
-        judgingCriteria: state.formData['judgingCriteria'] as Map<String, dynamic>?,
+        judgingCriteria:
+            state.formData['judgingCriteria'] as Map<String, dynamic>?,
       );
 
       state = state.copyWith(isLoading: false);
@@ -162,7 +187,8 @@ class EventFormNotifier extends StateNotifier<EventFormState> {
     state = state.copyWith(isLoading: true, errors: {});
 
     try {
-      final currentEvent = await _eventService.getEventById(state.editingEventId!);
+      final currentEvent =
+          await _eventService.getEventById(state.editingEventId!);
       if (currentEvent == null) {
         throw Exception('Event not found');
       }
@@ -175,7 +201,8 @@ class EventFormNotifier extends StateNotifier<EventFormState> {
         endTime: state.formData['endTime'] as DateTime?,
         submissionDeadline: state.formData['submissionDeadline'] as DateTime?,
         eligibleTeamIds: state.formData['eligibleTeamIds'] as List<String>?,
-        judgingCriteria: state.formData['judgingCriteria'] as Map<String, dynamic>?,
+        judgingCriteria:
+            state.formData['judgingCriteria'] as Map<String, dynamic>?,
       );
 
       final result = await _eventService.updateEvent(updatedEvent);
@@ -206,13 +233,14 @@ class EventFormNotifier extends StateNotifier<EventFormState> {
       }
       return fieldErrors;
     }
-    
+
     return {'general': error.toString()};
   }
 }
 
 /// Provider for event form state
-final eventFormProvider = StateNotifierProvider<EventFormNotifier, EventFormState>((ref) {
+final eventFormProvider =
+    StateNotifierProvider<EventFormNotifier, EventFormState>((ref) {
   final eventService = ref.watch(eventServiceProvider);
   return EventFormNotifier(eventService);
 });
