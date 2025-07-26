@@ -350,7 +350,7 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
       items.add(
         BreadcrumbItem(
           title: group.name,
-          icon: Icons.group_work,
+          //icon: Icons.group_work,
         ),
       );
     }

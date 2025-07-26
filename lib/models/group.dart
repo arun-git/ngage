@@ -2,7 +2,7 @@ import 'enums.dart';
 import 'validation.dart';
 
 /// Group model
-/// 
+///
 /// Represents a group that contains members and teams. Groups can be of different
 /// types (corporate, educational, community, social) and have various settings
 /// that control their behavior.
@@ -11,6 +11,7 @@ class Group {
   final String name;
   final String description;
   final GroupType groupType;
+  final String? imageUrl; // Group image URL
   final Map<String, dynamic> settings;
   final String createdBy; // Member ID
   final DateTime createdAt;
@@ -21,6 +22,7 @@ class Group {
     required this.name,
     required this.description,
     required this.groupType,
+    this.imageUrl,
     this.settings = const {},
     required this.createdBy,
     required this.createdAt,
@@ -34,6 +36,7 @@ class Group {
       name: json['name'] as String,
       description: json['description'] as String,
       groupType: GroupType.fromString(json['groupType'] as String),
+      imageUrl: json['imageUrl'] as String?,
       settings: Map<String, dynamic>.from(json['settings'] as Map? ?? {}),
       createdBy: json['createdBy'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
@@ -48,6 +51,7 @@ class Group {
       'name': name,
       'description': description,
       'groupType': groupType.value,
+      'imageUrl': imageUrl,
       'settings': settings,
       'createdBy': createdBy,
       'createdAt': createdAt.toIso8601String(),
@@ -61,6 +65,7 @@ class Group {
     String? name,
     String? description,
     GroupType? groupType,
+    String? imageUrl,
     Map<String, dynamic>? settings,
     String? createdBy,
     DateTime? createdAt,
@@ -71,6 +76,7 @@ class Group {
       name: name ?? this.name,
       description: description ?? this.description,
       groupType: groupType ?? this.groupType,
+      imageUrl: imageUrl ?? this.imageUrl,
       settings: settings ?? this.settings,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
@@ -112,34 +118,35 @@ class Group {
 
     // Additional validation for name length
     final additionalErrors = <String>[];
-    
+
     if (name.length > 100) {
       additionalErrors.add('Group name must not exceed 100 characters');
     }
-    
+
     if (description.isEmpty) {
       additionalErrors.add('Group description is required');
     }
 
     final baseValidation = Validators.combine(results);
-    
+
     if (additionalErrors.isNotEmpty) {
       final allErrors = [...baseValidation.errors, ...additionalErrors];
       return ValidationResult.invalid(allErrors);
     }
-    
+
     return baseValidation;
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is Group &&
         other.id == id &&
         other.name == name &&
         other.description == description &&
         other.groupType == groupType &&
+        other.imageUrl == imageUrl &&
         _mapEquals(other.settings, settings) &&
         other.createdBy == createdBy &&
         other.createdAt == createdAt &&
@@ -153,6 +160,7 @@ class Group {
       name,
       description,
       groupType,
+      imageUrl,
       settings.toString(), // Simple hash for map
       createdBy,
       createdAt,
@@ -163,13 +171,13 @@ class Group {
   /// Helper method to compare maps
   bool _mapEquals(Map<String, dynamic> map1, Map<String, dynamic> map2) {
     if (map1.length != map2.length) return false;
-    
+
     for (final key in map1.keys) {
       if (!map2.containsKey(key) || map1[key] != map2[key]) {
         return false;
       }
     }
-    
+
     return true;
   }
 

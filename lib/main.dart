@@ -125,7 +125,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   final List<NavigationItem> _navigationItems = [
     const NavigationItem(
       icon: Icon(Icons.dashboard),
-      label: 'Groups',
+      label: 'Home',
       tooltip: 'Manage groups',
     ),
     const NavigationItem(
