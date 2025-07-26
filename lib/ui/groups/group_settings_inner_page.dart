@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/group.dart';
 import '../../models/enums.dart';
 import '../../providers/group_providers.dart';
-
+import '../widgets/group_image_picker.dart';
+import '../widgets/group_image_picker.dart';
 
 /// Inner page for managing group settings that replaces the group detail content
 class GroupSettingsInnerPage extends ConsumerStatefulWidget {
@@ -17,10 +18,12 @@ class GroupSettingsInnerPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<GroupSettingsInnerPage> createState() => _GroupSettingsInnerPageState();
+  ConsumerState<GroupSettingsInnerPage> createState() =>
+      _GroupSettingsInnerPageState();
 }
 
-class _GroupSettingsInnerPageState extends ConsumerState<GroupSettingsInnerPage> {
+class _GroupSettingsInnerPageState
+    extends ConsumerState<GroupSettingsInnerPage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
@@ -32,7 +35,8 @@ class _GroupSettingsInnerPageState extends ConsumerState<GroupSettingsInnerPage>
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.group.name);
-    _descriptionController = TextEditingController(text: widget.group.description);
+    _descriptionController =
+        TextEditingController(text: widget.group.description);
     _selectedGroupType = widget.group.groupType;
 
     // Listen for changes
@@ -70,7 +74,7 @@ class _GroupSettingsInnerPageState extends ConsumerState<GroupSettingsInnerPage>
 
     try {
       final groupNotifier = ref.read(groupNotifierProvider.notifier);
-      
+
       await groupNotifier.updateGroup(
         groupId: widget.group.id,
         name: _nameController.text.trim(),
@@ -222,7 +226,7 @@ class _GroupSettingsInnerPageState extends ConsumerState<GroupSettingsInnerPage>
               ],
             ),
           ),
-        
+
         // Settings content
         Expanded(
           child: SingleChildScrollView(
@@ -232,6 +236,33 @@ class _GroupSettingsInnerPageState extends ConsumerState<GroupSettingsInnerPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Group Image',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 16),
+                          Center(
+                            child: GroupImagePicker(
+                              group: widget.group,
+                              size: 120,
+                              showEditButton: !_isLoading,
+                              onImageUpdated: () {
+                                // Refresh the group data
+                                ref.invalidate(groupProvider(widget.group.id));
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -296,14 +327,16 @@ class _GroupSettingsInnerPageState extends ConsumerState<GroupSettingsInnerPage>
                                 child: Text(_getGroupTypeDisplayName(type)),
                               );
                             }).toList(),
-                            onChanged: _isLoading ? null : (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _selectedGroupType = value;
-                                });
-                                _onFieldChanged();
-                              }
-                            },
+                            onChanged: _isLoading
+                                ? null
+                                : (value) {
+                                    if (value != null) {
+                                      setState(() {
+                                        _selectedGroupType = value;
+                                      });
+                                      _onFieldChanged();
+                                    }
+                                  },
                           ),
                         ],
                       ),
@@ -359,10 +392,13 @@ class _GroupSettingsInnerPageState extends ConsumerState<GroupSettingsInnerPage>
                               const SizedBox(width: 8),
                               Text(
                                 'Danger Zone',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.red.shade700,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: Colors.red.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
@@ -441,8 +477,8 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
+                  color: Colors.grey.shade600,
+                ),
           ),
         ),
         Expanded(
@@ -450,8 +486,8 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ),
       ],

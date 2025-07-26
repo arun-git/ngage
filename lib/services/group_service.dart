@@ -4,18 +4,20 @@ import '../models/group_member.dart';
 import '../models/enums.dart';
 
 /// Service for managing groups and group memberships
-/// 
+///
 /// Provides CRUD operations for groups and handles group membership
 /// management including role assignments and invitations.
 class GroupService {
   final FirebaseFirestore _firestore;
-  
-  GroupService({FirebaseFirestore? firestore}) 
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  GroupService({
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Collection references
   CollectionReference get _groupsCollection => _firestore.collection('groups');
-  CollectionReference get _groupMembersCollection => _firestore.collection('group_members');
+  CollectionReference get _groupMembersCollection =>
+      _firestore.collection('group_members');
 
   /// Create a new group
   Future<Group> createGroup({
@@ -23,17 +25,19 @@ class GroupService {
     required String description,
     required GroupType groupType,
     required String createdBy,
+    String? imageUrl,
     Map<String, dynamic>? settings,
   }) async {
     try {
       final now = DateTime.now();
       final docRef = _groupsCollection.doc();
-      
+
       final group = Group(
         id: docRef.id,
         name: name.trim(),
         description: description.trim(),
         groupType: groupType,
+        imageUrl: imageUrl,
         settings: settings ?? {},
         createdBy: createdBy,
         createdAt: now,
@@ -43,7 +47,8 @@ class GroupService {
       // Validate the group data
       final validation = group.validate();
       if (!validation.isValid) {
-        throw ArgumentError('Invalid group data: ${validation.errors.join(', ')}');
+        throw ArgumentError(
+            'Invalid group data: ${validation.errors.join(', ')}');
       }
 
       // Create the group document
@@ -66,7 +71,7 @@ class GroupService {
   Future<Group?> getGroup(String groupId) async {
     try {
       final doc = await _groupsCollection.doc(groupId).get();
-      
+
       if (!doc.exists) {
         return null;
       }
@@ -84,6 +89,7 @@ class GroupService {
     String? name,
     String? description,
     GroupType? groupType,
+    String? imageUrl,
     Map<String, dynamic>? settings,
   }) async {
     try {
@@ -96,6 +102,7 @@ class GroupService {
         name: name?.trim(),
         description: description?.trim(),
         groupType: groupType,
+        imageUrl: imageUrl,
         settings: settings,
         updatedAt: DateTime.now(),
       );
@@ -103,13 +110,37 @@ class GroupService {
       // Validate the updated group data
       final validation = updatedGroup.validate();
       if (!validation.isValid) {
-        throw ArgumentError('Invalid group data: ${validation.errors.join(', ')}');
+        throw ArgumentError(
+            'Invalid group data: ${validation.errors.join(', ')}');
       }
 
       await _groupsCollection.doc(groupId).update(updatedGroup.toJson());
       return updatedGroup;
     } catch (e) {
       throw Exception('Failed to update group: $e');
+    }
+  }
+
+  /// Update group image
+  Future<Group> updateGroupImage({
+    required String groupId,
+    String? imageUrl,
+  }) async {
+    try {
+      final existingGroup = await getGroup(groupId);
+      if (existingGroup == null) {
+        throw ArgumentError('Group not found: $groupId');
+      }
+
+      final updatedGroup = existingGroup.copyWith(
+        imageUrl: imageUrl,
+        updatedAt: DateTime.now(),
+      );
+
+      await _groupsCollection.doc(groupId).update(updatedGroup.toJson());
+      return updatedGroup;
+    } catch (e) {
+      throw Exception('Failed to update group image: $e');
     }
   }
 
@@ -151,7 +182,7 @@ class GroupService {
 
       final now = DateTime.now();
       final docRef = _groupMembersCollection.doc();
-      
+
       final groupMember = GroupMember(
         id: docRef.id,
         groupId: groupId,
@@ -164,7 +195,8 @@ class GroupService {
       // Validate the group member data
       final validation = groupMember.validate();
       if (!validation.isValid) {
-        throw ArgumentError('Invalid group member data: ${validation.errors.join(', ')}');
+        throw ArgumentError(
+            'Invalid group member data: ${validation.errors.join(', ')}');
       }
 
       await docRef.set(groupMember.toJson());
@@ -204,14 +236,17 @@ class GroupService {
       }
 
       final updatedMembership = membership.copyWith(role: newRole);
-      
+
       // Validate the updated membership
       final validation = updatedMembership.validate();
       if (!validation.isValid) {
-        throw ArgumentError('Invalid group member data: ${validation.errors.join(', ')}');
+        throw ArgumentError(
+            'Invalid group member data: ${validation.errors.join(', ')}');
       }
 
-      await _groupMembersCollection.doc(membership.id).update(updatedMembership.toJson());
+      await _groupMembersCollection
+          .doc(membership.id)
+          .update(updatedMembership.toJson());
       return updatedMembership;
     } catch (e) {
       throw Exception('Failed to update member role: $e');
@@ -219,7 +254,8 @@ class GroupService {
   }
 
   /// Get a specific group membership
-  Future<GroupMember?> getGroupMembership(String groupId, String memberId) async {
+  Future<GroupMember?> getGroupMembership(
+      String groupId, String memberId) async {
     try {
       final query = await _groupMembersCollection
           .where('groupId', isEqualTo: groupId)
@@ -252,7 +288,8 @@ class GroupService {
 
       // Get all group IDs
       final groupIds = memberships.docs
-          .map((doc) => (doc.data() as Map<String, dynamic>)['groupId'] as String)
+          .map((doc) =>
+              (doc.data() as Map<String, dynamic>)['groupId'] as String)
           .toList();
 
       // Fetch all groups in batches (Firestore 'in' query limit is 10)
@@ -284,7 +321,8 @@ class GroupService {
           .get();
 
       return query.docs
-          .map((doc) => GroupMember.fromJson(doc.data() as Map<String, dynamic>))
+          .map(
+              (doc) => GroupMember.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
     } catch (e) {
       throw Exception('Failed to get group members: $e');
@@ -349,30 +387,31 @@ class GroupService {
           .where('memberId', isEqualTo: memberId)
           .snapshots()
           .asyncMap((memberships) async {
-            if (memberships.docs.isEmpty) {
-              return <Group>[];
-            }
+        if (memberships.docs.isEmpty) {
+          return <Group>[];
+        }
 
-            final groupIds = memberships.docs
-                .map((doc) => (doc.data() as Map<String, dynamic>)['groupId'] as String)
-                .toList();
+        final groupIds = memberships.docs
+            .map((doc) =>
+                (doc.data() as Map<String, dynamic>)['groupId'] as String)
+            .toList();
 
-            // Fetch groups in batches
-            final groups = <Group>[];
-            for (int i = 0; i < groupIds.length; i += 10) {
-              final batch = groupIds.skip(i).take(10).toList();
-              final query = await _groupsCollection
-                  .where(FieldPath.documentId, whereIn: batch)
-                  .get();
+        // Fetch groups in batches
+        final groups = <Group>[];
+        for (int i = 0; i < groupIds.length; i += 10) {
+          final batch = groupIds.skip(i).take(10).toList();
+          final query = await _groupsCollection
+              .where(FieldPath.documentId, whereIn: batch)
+              .get();
 
-              for (final doc in query.docs) {
-                final data = doc.data() as Map<String, dynamic>;
-                groups.add(Group.fromJson(data));
-              }
-            }
+          for (final doc in query.docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            groups.add(Group.fromJson(data));
+          }
+        }
 
-            return groups;
-          });
+        return groups;
+      });
     } catch (e) {
       throw Exception('Failed to stream member groups: $e');
     }
@@ -386,7 +425,8 @@ class GroupService {
           .orderBy('joinedAt')
           .snapshots()
           .map((snapshot) => snapshot.docs
-              .map((doc) => GroupMember.fromJson(doc.data() as Map<String, dynamic>))
+              .map((doc) =>
+                  GroupMember.fromJson(doc.data() as Map<String, dynamic>))
               .toList());
     } catch (e) {
       throw Exception('Failed to stream group members: $e');

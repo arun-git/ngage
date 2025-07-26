@@ -14,13 +14,14 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
+  //TODO - remove hardcoded values before production
+  final _emailController = TextEditingController(text: 'arun.gen.ai@gmail.com');
+  final _phoneController = TextEditingController(text:'1111122222');
   final _emailFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
   bool _isSignUp = false;
   bool _isPhoneMode = false;
-  Country _selectedCountry = CountryService().findByCode('IN')!;
+  Country _selectedCountry = CountryService().findByCode('US')!;
 
   @override
   void dispose() {

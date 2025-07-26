@@ -5,6 +5,7 @@ import '../../models/enums.dart';
 import '../../providers/group_providers.dart';
 import '../../ui/widgets/selectable_error_message.dart';
 import '../../utils/firebase_error_handler.dart';
+import '../widgets/group_avatar.dart';
 
 /// Screen displaying list of groups for a member
 class GroupsListScreen extends ConsumerWidget {
@@ -170,6 +171,12 @@ class _GroupCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
+                  GroupAvatar(
+                    group: group,
+                    radius: 28,
+                    showBorder: true,
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
