@@ -198,17 +198,36 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
       onRefresh: () async {
         _refreshAllProviders();
       },
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: events.length,
-        itemBuilder: (context, index) {
-          final event = events[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: EventCard(
-              event: event,
-              onTap: () => _navigateToEventDetail(event),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate responsive cross axis count
+          int crossAxisCount;
+          if (constraints.maxWidth > 1200) {
+            crossAxisCount = 4;
+          } else if (constraints.maxWidth > 800) {
+            crossAxisCount = 3;
+          } else if (constraints.maxWidth > 600) {
+            crossAxisCount = 2;
+          } else {
+            crossAxisCount = 1;
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.75,
             ),
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return EventCard(
+                event: event,
+                onTap: () => _navigateToEventDetail(event),
+              );
+            },
           );
         },
       ),
