@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
 import '../../models/team.dart';
+import '../widgets/team_avatar.dart';
 import 'create_team_screen.dart';
 import 'team_detail_screen.dart';
 
@@ -94,10 +95,30 @@ class TeamsListScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.groups_outlined,
-            size: 64,
-            color: Colors.grey[400],
+          Stack(
+            children: [
+              Icon(
+                Icons.groups_outlined,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Text(
@@ -106,7 +127,7 @@ class TeamsListScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first team to get started',
+            'Create your first team with a custom logo to get started',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -134,15 +155,24 @@ class TeamsListScreen extends ConsumerWidget {
             children: [
               Row(
                 children: [
+                  // Team Avatar
+                  TeamAvatar(
+                    team: team,
+                    radius: 28,
+                    showBorder: true,
+                    isSquare: true,
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           team.name,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         if (team.teamType != null) ...[
                           const SizedBox(height: 4),
@@ -152,15 +182,20 @@ class TeamsListScreen extends ConsumerWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor.withOpacity(0.1),
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               team.teamType!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                           ),
                         ],
@@ -201,8 +236,8 @@ class TeamsListScreen extends ConsumerWidget {
                   Text(
                     'Lead: ${team.teamLeadId}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                          color: Colors.grey[600],
+                        ),
                   ),
                   const Spacer(),
                   if (!team.isActive) ...[
@@ -218,9 +253,9 @@ class TeamsListScreen extends ConsumerWidget {
                       child: Text(
                         'Inactive',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w500,
-                        ),
+                              color: Colors.red,
+                              fontWeight: FontWeight.w500,
+                            ),
                       ),
                     ),
                   ],
@@ -240,7 +275,7 @@ class TeamsListScreen extends ConsumerWidget {
   Widget _buildMemberCountChip(BuildContext context, Team team) {
     final isAtCapacity = team.isAtCapacity;
     final color = isAtCapacity ? Colors.orange : Theme.of(context).primaryColor;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -260,9 +295,9 @@ class TeamsListScreen extends ConsumerWidget {
           Text(
             '${team.memberCount}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),

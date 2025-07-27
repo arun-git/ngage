@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
 import '../../models/team.dart';
+import '../widgets/team_avatar.dart';
 
 class TeamAnalyticsWidget extends ConsumerWidget {
   final String teamId;
@@ -23,20 +24,60 @@ class TeamAnalyticsWidget extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.analytics,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Team Analytics',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+            teamAsync.when(
+              loading: () => Row(
+                children: [
+                  Icon(
+                    Icons.analytics,
+                    color: Theme.of(context).primaryColor,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    'Team Analytics',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              error: (error, _) => Row(
+                children: [
+                  Icon(
+                    Icons.analytics,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Team Analytics',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              data: (team) => Row(
+                children: [
+                  if (team != null) ...[
+                    TeamAvatar(
+                      team: team,
+                      radius: 16,
+                      showBorder: true,
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                  Icon(
+                    Icons.analytics,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Team Analytics',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             teamAsync.when(
@@ -77,7 +118,8 @@ class TeamAnalyticsWidget extends ConsumerWidget {
         teamMemberDetailsAsync.when(
           loading: () => const CircularProgressIndicator(),
           error: (error, _) => Text('Error loading member details: $error'),
-          data: (memberDetails) => _buildMemberAnalytics(context, memberDetails),
+          data: (memberDetails) =>
+              _buildMemberAnalytics(context, memberDetails),
         ),
       ],
     );
@@ -140,15 +182,15 @@ class TeamAnalyticsWidget extends ConsumerWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
           ),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+                  color: Colors.grey[600],
+                ),
           ),
         ],
       ),
@@ -174,8 +216,8 @@ class TeamAnalyticsWidget extends ConsumerWidget {
           Text(
             'Team Timeline',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -204,7 +246,8 @@ class TeamAnalyticsWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildMemberAnalytics(BuildContext context, List<Map<String, dynamic>> memberDetails) {
+  Widget _buildMemberAnalytics(
+      BuildContext context, List<Map<String, dynamic>> memberDetails) {
     if (memberDetails.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -229,30 +272,30 @@ class TeamAnalyticsWidget extends ConsumerWidget {
           Text(
             'Member Composition',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 8),
           ...roleCount.entries.map((entry) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _getRoleColor(entry.key),
-                    shape: BoxShape.circle,
-                  ),
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _getRoleColor(entry.key),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${entry.key}: ${entry.value}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  '${entry.key}: ${entry.value}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          )),
+              )),
           const SizedBox(height: 8),
           _buildCapacityIndicator(context, memberDetails.length, roleCount),
         ],
@@ -271,8 +314,8 @@ class TeamAnalyticsWidget extends ConsumerWidget {
         Text(
           'Team Health',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 4),
         Row(
@@ -286,9 +329,9 @@ class TeamAnalyticsWidget extends ConsumerWidget {
             Text(
               _getHealthStatus(roleCount),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: _getHealthColor(roleCount),
-                fontWeight: FontWeight.w500,
-              ),
+                    color: _getHealthColor(roleCount),
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ],
         ),
@@ -313,7 +356,8 @@ class TeamAnalyticsWidget extends ConsumerWidget {
 
   Color _getHealthColor(Map<String, int> roleCount) {
     final hasAdmin = roleCount.containsKey('admin') && roleCount['admin']! > 0;
-    final hasTeamLead = roleCount.containsKey('team_lead') && roleCount['team_lead']! > 0;
+    final hasTeamLead =
+        roleCount.containsKey('team_lead') && roleCount['team_lead']! > 0;
     final totalMembers = roleCount.values.fold(0, (sum, count) => sum + count);
 
     if (hasAdmin || hasTeamLead) {
@@ -324,7 +368,8 @@ class TeamAnalyticsWidget extends ConsumerWidget {
 
   String _getHealthStatus(Map<String, int> roleCount) {
     final hasAdmin = roleCount.containsKey('admin') && roleCount['admin']! > 0;
-    final hasTeamLead = roleCount.containsKey('team_lead') && roleCount['team_lead']! > 0;
+    final hasTeamLead =
+        roleCount.containsKey('team_lead') && roleCount['team_lead']! > 0;
     final totalMembers = roleCount.values.fold(0, (sum, count) => sum + count);
 
     if (hasAdmin || hasTeamLead) {

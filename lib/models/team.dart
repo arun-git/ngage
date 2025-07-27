@@ -1,7 +1,7 @@
 import 'validation.dart';
 
 /// Team model
-/// 
+///
 /// Represents a team within a group. Teams contain members and can have
 /// a team lead. Teams can have optional maximum member limits and categorization.
 class Team {
@@ -10,6 +10,7 @@ class Team {
   final String name;
   final String description;
   final String teamLeadId; // Member ID
+  final String? logoUrl; // Team logo URL
   final List<String> memberIds; // List of Member IDs
   final int? maxMembers;
   final String? teamType;
@@ -23,6 +24,7 @@ class Team {
     required this.name,
     required this.description,
     required this.teamLeadId,
+    this.logoUrl,
     this.memberIds = const [],
     this.maxMembers,
     this.teamType,
@@ -39,6 +41,7 @@ class Team {
       name: json['name'] as String,
       description: json['description'] as String,
       teamLeadId: json['teamLeadId'] as String,
+      logoUrl: json['logoUrl'] as String?,
       memberIds: List<String>.from(json['memberIds'] as List? ?? []),
       maxMembers: json['maxMembers'] as int?,
       teamType: json['teamType'] as String?,
@@ -56,6 +59,7 @@ class Team {
       'name': name,
       'description': description,
       'teamLeadId': teamLeadId,
+      'logoUrl': logoUrl,
       'memberIds': memberIds,
       'maxMembers': maxMembers,
       'teamType': teamType,
@@ -72,6 +76,7 @@ class Team {
     String? name,
     String? description,
     String? teamLeadId,
+    String? logoUrl,
     List<String>? memberIds,
     int? maxMembers,
     String? teamType,
@@ -85,6 +90,7 @@ class Team {
       name: name ?? this.name,
       description: description ?? this.description,
       teamLeadId: teamLeadId ?? this.teamLeadId,
+      logoUrl: logoUrl ?? this.logoUrl,
       memberIds: memberIds ?? this.memberIds,
       maxMembers: maxMembers ?? this.maxMembers,
       teamType: teamType ?? this.teamType,
@@ -114,11 +120,11 @@ class Team {
     if (hasMember(memberId)) {
       return this; // Member already in team
     }
-    
+
     if (isAtCapacity) {
       throw StateError('Team is at maximum capacity');
     }
-    
+
     final newMemberIds = [...memberIds, memberId];
     return copyWith(memberIds: newMemberIds);
   }
@@ -128,11 +134,11 @@ class Team {
     if (!hasMember(memberId)) {
       return this; // Member not in team
     }
-    
+
     if (isTeamLead(memberId)) {
       throw StateError('Cannot remove team lead. Assign new team lead first.');
     }
-    
+
     final newMemberIds = memberIds.where((id) => id != memberId).toList();
     return copyWith(memberIds: newMemberIds);
   }
@@ -143,7 +149,7 @@ class Team {
     if (!hasMember(newTeamLeadId)) {
       throw ArgumentError('New team lead must be a member of the team');
     }
-    
+
     return copyWith(teamLeadId: newTeamLeadId);
   }
 
@@ -161,61 +167,62 @@ class Team {
 
     // Additional business logic validation
     final additionalErrors = <String>[];
-    
+
     if (name.length > 100) {
       additionalErrors.add('Team name must not exceed 100 characters');
     }
-    
+
     if (description.isEmpty) {
       additionalErrors.add('Team description is required');
     }
-    
+
     // Team lead must be in member list
     if (!memberIds.contains(teamLeadId)) {
       additionalErrors.add('Team lead must be a member of the team');
     }
-    
+
     // Check max members constraint
     if (maxMembers != null) {
       if (maxMembers! < 1) {
         additionalErrors.add('Maximum members must be at least 1');
       }
-      
+
       if (memberIds.length > maxMembers!) {
         additionalErrors.add('Team has more members than maximum allowed');
       }
     }
-    
+
     // Check for duplicate member IDs
     if (memberIds.length != memberIds.toSet().length) {
       additionalErrors.add('Team cannot have duplicate members');
     }
-    
+
     // Validate team type if provided
     if (teamType != null && teamType!.length > 50) {
       additionalErrors.add('Team type must not exceed 50 characters');
     }
 
     final baseValidation = Validators.combine(results);
-    
+
     if (additionalErrors.isNotEmpty) {
       final allErrors = [...baseValidation.errors, ...additionalErrors];
       return ValidationResult.invalid(allErrors);
     }
-    
+
     return baseValidation;
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is Team &&
         other.id == id &&
         other.groupId == groupId &&
         other.name == name &&
         other.description == description &&
         other.teamLeadId == teamLeadId &&
+        other.logoUrl == logoUrl &&
         _listEquals(other.memberIds, memberIds) &&
         other.maxMembers == maxMembers &&
         other.teamType == teamType &&
@@ -232,6 +239,7 @@ class Team {
       name,
       description,
       teamLeadId,
+      logoUrl,
       memberIds.join(','), // Simple hash for list
       maxMembers,
       teamType,
@@ -244,11 +252,11 @@ class Team {
   /// Helper method to compare lists
   bool _listEquals(List<String> list1, List<String> list2) {
     if (list1.length != list2.length) return false;
-    
+
     for (int i = 0; i < list1.length; i++) {
       if (list1[i] != list2[i]) return false;
     }
-    
+
     return true;
   }
 

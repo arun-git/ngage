@@ -3,18 +3,19 @@ import '../models/team.dart';
 import '../models/group_member.dart';
 
 /// Service for managing teams within groups
-/// 
+///
 /// Provides CRUD operations for teams and handles team membership
 /// management including member assignment and team lead management.
 class TeamService {
   final FirebaseFirestore _firestore;
-  
-  TeamService({FirebaseFirestore? firestore}) 
+
+  TeamService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Collection references
   CollectionReference get _teamsCollection => _firestore.collection('teams');
-  CollectionReference get _groupMembersCollection => _firestore.collection('group_members');
+  CollectionReference get _groupMembersCollection =>
+      _firestore.collection('group_members');
 
   /// Create a new team within a group
   Future<Team> createTeam({
@@ -22,6 +23,7 @@ class TeamService {
     required String name,
     required String description,
     required String teamLeadId,
+    String? logoUrl,
     List<String>? initialMemberIds,
     int? maxMembers,
     String? teamType,
@@ -29,26 +31,27 @@ class TeamService {
     try {
       // Validate that team lead is a member of the group
       await _validateGroupMembership(groupId, teamLeadId);
-      
+
       // Validate initial members are part of the group
       final memberIds = initialMemberIds ?? [];
       if (!memberIds.contains(teamLeadId)) {
         memberIds.add(teamLeadId); // Ensure team lead is in member list
       }
-      
+
       for (final memberId in memberIds) {
         await _validateGroupMembership(groupId, memberId);
       }
 
       final now = DateTime.now();
       final docRef = _teamsCollection.doc();
-      
+
       final team = Team(
         id: docRef.id,
         groupId: groupId,
         name: name.trim(),
         description: description.trim(),
         teamLeadId: teamLeadId,
+        logoUrl: logoUrl,
         memberIds: memberIds,
         maxMembers: maxMembers,
         teamType: teamType?.trim(),
@@ -60,7 +63,8 @@ class TeamService {
       // Validate the team data
       final validation = team.validate();
       if (!validation.isValid) {
-        throw ArgumentError('Invalid team data: ${validation.errors.join(', ')}');
+        throw ArgumentError(
+            'Invalid team data: ${validation.errors.join(', ')}');
       }
 
       // Create the team document
@@ -76,7 +80,7 @@ class TeamService {
   Future<Team?> getTeam(String teamId) async {
     try {
       final doc = await _teamsCollection.doc(teamId).get();
-      
+
       if (!doc.exists) {
         return null;
       }
@@ -94,6 +98,7 @@ class TeamService {
     String? name,
     String? description,
     String? teamLeadId,
+    String? logoUrl,
     int? maxMembers,
     String? teamType,
     bool? isActive,
@@ -116,6 +121,7 @@ class TeamService {
         name: name?.trim(),
         description: description?.trim(),
         teamLeadId: teamLeadId,
+        logoUrl: logoUrl,
         maxMembers: maxMembers,
         teamType: teamType?.trim(),
         isActive: isActive,
@@ -125,13 +131,37 @@ class TeamService {
       // Validate the updated team data
       final validation = updatedTeam.validate();
       if (!validation.isValid) {
-        throw ArgumentError('Invalid team data: ${validation.errors.join(', ')}');
+        throw ArgumentError(
+            'Invalid team data: ${validation.errors.join(', ')}');
       }
 
       await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
       return updatedTeam;
     } catch (e) {
       throw Exception('Failed to update team: $e');
+    }
+  }
+
+  /// Update team logo
+  Future<Team> updateTeamLogo({
+    required String teamId,
+    String? logoUrl,
+  }) async {
+    try {
+      final existingTeam = await getTeam(teamId);
+      if (existingTeam == null) {
+        throw ArgumentError('Team not found: $teamId');
+      }
+
+      final updatedTeam = existingTeam.copyWith(
+        logoUrl: logoUrl,
+        updatedAt: DateTime.now(),
+      );
+
+      await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
+      return updatedTeam;
+    } catch (e) {
+      throw Exception('Failed to update team logo: $e');
     }
   }
 
@@ -165,11 +195,13 @@ class TeamService {
 
       // Check team capacity
       if (team.isAtCapacity) {
-        throw StateError('Team is at maximum capacity (${team.maxMembers} members)');
+        throw StateError(
+            'Team is at maximum capacity (${team.maxMembers} members)');
       }
 
-      final updatedTeam = team.addMember(memberId).copyWith(updatedAt: DateTime.now());
-      
+      final updatedTeam =
+          team.addMember(memberId).copyWith(updatedAt: DateTime.now());
+
       await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
       return updatedTeam;
     } catch (e) {
@@ -194,8 +226,9 @@ class TeamService {
       }
 
       // Filter out members already in team
-      final newMemberIds = memberIds.where((id) => !team.hasMember(id)).toList();
-      
+      final newMemberIds =
+          memberIds.where((id) => !team.hasMember(id)).toList();
+
       if (newMemberIds.isEmpty) {
         throw ArgumentError('All specified members are already in this team');
       }
@@ -203,7 +236,8 @@ class TeamService {
       // Check team capacity
       final totalNewMembers = team.memberCount + newMemberIds.length;
       if (team.maxMembers != null && totalNewMembers > team.maxMembers!) {
-        throw StateError('Adding ${newMemberIds.length} members would exceed team capacity (${team.maxMembers} max)');
+        throw StateError(
+            'Adding ${newMemberIds.length} members would exceed team capacity (${team.maxMembers} max)');
       }
 
       // Add all new members
@@ -212,7 +246,7 @@ class TeamService {
         updatedTeam = updatedTeam.addMember(memberId);
       }
       updatedTeam = updatedTeam.copyWith(updatedAt: DateTime.now());
-      
+
       await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
       return updatedTeam;
     } catch (e) {
@@ -238,11 +272,13 @@ class TeamService {
 
       // Cannot remove team lead directly
       if (team.isTeamLead(memberId)) {
-        throw StateError('Cannot remove team lead. Assign new team lead first.');
+        throw StateError(
+            'Cannot remove team lead. Assign new team lead first.');
       }
 
-      final updatedTeam = team.removeMember(memberId).copyWith(updatedAt: DateTime.now());
-      
+      final updatedTeam =
+          team.removeMember(memberId).copyWith(updatedAt: DateTime.now());
+
       await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
       return updatedTeam;
     } catch (e) {
@@ -265,15 +301,17 @@ class TeamService {
       final membersToRemove = memberIds
           .where((id) => team.hasMember(id) && !team.isTeamLead(id))
           .toList();
-      
+
       if (membersToRemove.isEmpty) {
-        throw ArgumentError('No valid members to remove (members must be in team and not team lead)');
+        throw ArgumentError(
+            'No valid members to remove (members must be in team and not team lead)');
       }
 
       // Check if trying to remove team lead
       final teamLeadInList = memberIds.contains(team.teamLeadId);
       if (teamLeadInList) {
-        throw StateError('Cannot remove team lead. Assign new team lead first.');
+        throw StateError(
+            'Cannot remove team lead. Assign new team lead first.');
       }
 
       // Remove all specified members
@@ -282,7 +320,7 @@ class TeamService {
         updatedTeam = updatedTeam.removeMember(memberId);
       }
       updatedTeam = updatedTeam.copyWith(updatedAt: DateTime.now());
-      
+
       await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
       return updatedTeam;
     } catch (e) {
@@ -309,8 +347,10 @@ class TeamService {
         throw ArgumentError('New team lead must be a member of the team');
       }
 
-      final updatedTeam = team.changeTeamLead(newTeamLeadId).copyWith(updatedAt: DateTime.now());
-      
+      final updatedTeam = team
+          .changeTeamLead(newTeamLeadId)
+          .copyWith(updatedAt: DateTime.now());
+
       await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
       return updatedTeam;
     } catch (e) {
@@ -384,7 +424,8 @@ class TeamService {
 
       // Filter out members already in the team
       final availableMembers = groupMembers.docs
-          .map((doc) => GroupMember.fromJson(doc.data() as Map<String, dynamic>))
+          .map(
+              (doc) => GroupMember.fromJson(doc.data() as Map<String, dynamic>))
           .where((member) => !team.hasMember(member.memberId))
           .toList();
 
@@ -451,7 +492,7 @@ class TeamService {
       }
 
       final memberDetails = <Map<String, dynamic>>[];
-      
+
       for (final memberId in team.memberIds) {
         // Get group membership details
         final groupMembership = await _groupMembersCollection
@@ -461,7 +502,8 @@ class TeamService {
             .get();
 
         if (groupMembership.docs.isNotEmpty) {
-          final memberData = groupMembership.docs.first.data() as Map<String, dynamic>;
+          final memberData =
+              groupMembership.docs.first.data() as Map<String, dynamic>;
           memberDetails.add({
             'memberId': memberId,
             'isTeamLead': team.isTeamLead(memberId),
@@ -476,7 +518,7 @@ class TeamService {
       memberDetails.sort((a, b) {
         if (a['isTeamLead'] && !b['isTeamLead']) return -1;
         if (!a['isTeamLead'] && b['isTeamLead']) return 1;
-        
+
         final aJoined = DateTime.parse(a['joinedAt'] as String);
         final bJoined = DateTime.parse(b['joinedAt'] as String);
         return aJoined.compareTo(bJoined);
@@ -513,13 +555,15 @@ class TeamService {
         throw ArgumentError('Member is already the team lead');
       }
 
-      final updatedTeam = team.changeTeamLead(newTeamLeadId).copyWith(updatedAt: DateTime.now());
-      
+      final updatedTeam = team
+          .changeTeamLead(newTeamLeadId)
+          .copyWith(updatedAt: DateTime.now());
+
       await _teamsCollection.doc(teamId).update(updatedTeam.toJson());
-      
+
       // TODO: Add audit log for leadership transfer
       // await _logLeadershipTransfer(teamId, team.teamLeadId, newTeamLeadId, reason);
-      
+
       return updatedTeam;
     } catch (e) {
       throw Exception('Failed to transfer team leadership: $e');

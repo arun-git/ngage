@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/team.dart';
 import '../../providers/team_providers.dart';
-
 import '../../ui/widgets/selectable_error_message.dart';
 import '../../utils/firebase_error_handler.dart';
 import '../teams/create_team_screen.dart';
 import '../teams/team_detail_screen.dart';
+import '../widgets/team_avatar.dart';
 
 /// Inner page for managing teams within a group that replaces the group detail content
 class ManageTeamsInnerPage extends ConsumerWidget {
@@ -40,8 +40,8 @@ class ManageTeamsInnerPage extends ConsumerWidget {
                 child: Text(
                   'Manage Teams',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ),
               IconButton(
@@ -52,7 +52,7 @@ class ManageTeamsInnerPage extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         // Teams content
         Expanded(
           child: teamsAsync.when(
@@ -65,7 +65,8 @@ class ManageTeamsInnerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildTeamsContent(BuildContext context, WidgetRef ref, List<Team> teams) {
+  Widget _buildTeamsContent(
+      BuildContext context, WidgetRef ref, List<Team> teams) {
     if (teams.isEmpty) {
       return _buildEmptyState(context);
     }
@@ -95,10 +96,30 @@ class ManageTeamsInnerPage extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.groups_outlined,
-            size: 64,
-            color: Colors.grey.shade400,
+          Stack(
+            children: [
+              Icon(
+                Icons.groups_outlined,
+                size: 64,
+                color: Colors.grey.shade400,
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Text(
@@ -107,7 +128,7 @@ class ManageTeamsInnerPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first team to get started',
+            'Create your first team with a custom logo to get started',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -143,9 +164,10 @@ class ManageTeamsInnerPage extends ConsumerWidget {
             SelectableErrorMessage(
               message: error.toString(),
               title: 'Error Details',
-              backgroundColor: FirebaseErrorHandler.isFirebaseIndexError(error.toString()) 
-                  ? Colors.orange 
-                  : Colors.red,
+              backgroundColor:
+                  FirebaseErrorHandler.isFirebaseIndexError(error.toString())
+                      ? Colors.orange
+                      : Colors.red,
               onRetry: () {
                 ref.invalidate(groupTeamsProvider(groupId));
               },
@@ -189,7 +211,8 @@ class ManageTeamsInnerPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _deleteTeam(BuildContext context, WidgetRef ref, Team team) async {
+  Future<void> _deleteTeam(
+      BuildContext context, WidgetRef ref, Team team) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -283,15 +306,24 @@ class _TeamManagementCard extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  // Team Avatar
+                  TeamAvatar(
+                    team: team,
+                    radius: 24,
+                    showBorder: true,
+                    isSquare: true,
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           team.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         if (team.teamType != null) ...[
                           const SizedBox(height: 4),
@@ -301,15 +333,20 @@ class _TeamManagementCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor.withOpacity(0.1),
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               team.teamType!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                           ),
                         ],
@@ -369,8 +406,8 @@ class _TeamManagementCard extends StatelessWidget {
                   Text(
                     'Lead: ${team.teamLeadId}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                          color: Colors.grey.shade600,
+                        ),
                   ),
                   const Spacer(),
                   if (!team.isActive)
@@ -386,9 +423,9 @@ class _TeamManagementCard extends StatelessWidget {
                       child: Text(
                         'Inactive',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w500,
-                        ),
+                              color: Colors.red,
+                              fontWeight: FontWeight.w500,
+                            ),
                       ),
                     ),
                 ],
@@ -403,7 +440,7 @@ class _TeamManagementCard extends StatelessWidget {
   Widget _buildMemberCountChip(BuildContext context) {
     final isAtCapacity = team.isAtCapacity;
     final color = isAtCapacity ? Colors.orange : Theme.of(context).primaryColor;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -423,17 +460,17 @@ class _TeamManagementCard extends StatelessWidget {
           Text(
             '${team.memberCount}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           if (team.maxMembers != null) ...[
             Text(
               '/${team.maxMembers}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           ],
         ],

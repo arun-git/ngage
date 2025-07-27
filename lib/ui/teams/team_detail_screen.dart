@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/team_providers.dart';
 import '../../models/team.dart';
 import '../widgets/breadcrumb_navigation.dart';
+import '../widgets/team_logo_picker.dart';
 import 'manage_team_members_screen.dart';
 import 'team_settings_screen.dart';
 import 'team_analytics_widget.dart';
@@ -200,6 +201,14 @@ class TeamDetailScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
+                // Team Logo
+                TeamLogoPicker(
+                  team: team,
+                  avatarRadius: 40,
+                  showBorder: true,
+                  isSquare: true,
+                ),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

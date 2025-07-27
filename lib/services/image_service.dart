@@ -118,6 +118,25 @@ class ImageService {
     );
   }
 
+  /// Upload team logo with optimized settings
+  Future<String> uploadTeamLogo({
+    required XFile imageFile,
+    required String teamId,
+    required String groupId,
+  }) async {
+    return uploadImage(
+      imageFile: imageFile,
+      path: 'teams/$teamId/images',
+      fileName: 'team_logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      metadata: {
+        'teamId': teamId,
+        'groupId': groupId,
+        'type': 'team_logo',
+        'uploadedAt': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
   /// Upload event banner image with optimized settings
   Future<String> uploadEventBannerImage({
     required XFile imageFile,
@@ -141,6 +160,11 @@ class ImageService {
   static const int groupImageMaxWidth = 800;
   static const int groupImageMaxHeight = 800;
   static const int groupImageQuality = 85;
+
+  /// Get optimized image picker settings for team logos
+  static const int teamLogoMaxWidth = 400;
+  static const int teamLogoMaxHeight = 400;
+  static const int teamLogoQuality = 90;
 
   /// Get optimized image picker settings for event banner images
   static const int eventBannerMaxWidth = 1200;
@@ -172,6 +196,36 @@ class ImageService {
       );
     } catch (e) {
       throw Exception('Failed to pick and upload group image: $e');
+    }
+  }
+
+  /// Pick and upload team logo in one operation
+  Future<String?> pickAndUploadTeamLogo({
+    required String teamId,
+    required String groupId,
+    ImageSource source = ImageSource.gallery,
+  }) async {
+    try {
+      // Pick image with optimized settings for team logo
+      final XFile? imageFile = await pickImage(
+        source: source,
+        maxWidth: teamLogoMaxWidth,
+        maxHeight: teamLogoMaxHeight,
+        imageQuality: teamLogoQuality,
+      );
+
+      if (imageFile == null) {
+        return null;
+      }
+
+      // Upload the logo
+      return await uploadTeamLogo(
+        imageFile: imageFile,
+        teamId: teamId,
+        groupId: groupId,
+      );
+    } catch (e) {
+      throw Exception('Failed to pick and upload team logo: $e');
     }
   }
 
