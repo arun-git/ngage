@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/judging_providers.dart';
+import '../../providers/submission_providers.dart';
 import 'widgets/scoring_form_widget.dart';
 
 /// Screen for judges to evaluate submissions
@@ -18,18 +19,18 @@ class JudgeSubmissionScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<JudgeSubmissionScreen> createState() => _JudgeSubmissionScreenState();
+  ConsumerState<JudgeSubmissionScreen> createState() =>
+      _JudgeSubmissionScreenState();
 }
 
 class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
   @override
   Widget build(BuildContext context) {
-    final submissionAsync = ref.watch(submissionProvider(widget.submissionId));
+    final submissionAsync =
+        ref.watch(submissionStreamProvider(widget.submissionId));
     final eventRubricsAsync = ref.watch(eventRubricsProvider(widget.eventId));
-    final existingScoreAsync = ref.watch(judgeScoreProvider(
-      widget.submissionId, 
-      widget.judgeId,
-    ));
+    final existingScoreAsync =
+        ref.watch(judgeScoreProvider((widget.submissionId, widget.judgeId)));
 
     return Scaffold(
       appBar: AppBar(
@@ -47,7 +48,8 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
               Text('Error loading submission: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.refresh(submissionProvider(widget.submissionId)),
+                onPressed: () =>
+                    ref.refresh(submissionStreamProvider(widget.submissionId)),
                 child: const Text('Retry'),
               ),
             ],
@@ -64,18 +66,21 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
                 Text('Error loading rubrics: $error'),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => ref.refresh(eventRubricsProvider(widget.eventId)),
+                  onPressed: () =>
+                      ref.refresh(eventRubricsProvider(widget.eventId)),
                   child: const Text('Retry'),
                 ),
               ],
             ),
           ),
-          data: (rubrics) => _buildJudgingInterface(
-            context, 
-            submission, 
-            rubrics, 
-            existingScoreAsync.value,
-          ),
+          data: (rubrics) => submission != null
+              ? _buildJudgingInterface(
+                  context,
+                  submission!,
+                  rubrics,
+                  existingScoreAsync.value,
+                )
+              : const Center(child: Text('Submission not found')),
         ),
       ),
     );
@@ -112,30 +117,28 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
         children: [
           // Submission details
           _buildSubmissionCard(submission),
-          
+
           const SizedBox(height: 24),
-          
+
           // Scoring forms for each rubric
           ...rubrics.map((rubric) => Padding(
-            padding: const EdgeInsets.only(bottom: 24.0),
-            child: ScoringFormWidget(
-              submissionId: widget.submissionId,
-              eventId: widget.eventId,
-              judgeId: widget.judgeId,
-              rubric: rubric,
-              existingScore: existingScore,
-              onScoreSubmitted: () {
-                // Refresh the score data
-                ref.refresh(judgeScoreProvider(
-                  widget.submissionId, 
-                  widget.judgeId,
-                ));
-              },
-            ),
-          )),
-          
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: ScoringFormWidget(
+                  submissionId: widget.submissionId,
+                  eventId: widget.eventId,
+                  judgeId: widget.judgeId,
+                  rubric: rubric,
+                  existingScore: existingScore,
+                  onScoreSubmitted: () {
+                    // Refresh the score data
+                    ref.refresh(judgeScoreProvider(
+                        (widget.submissionId, widget.judgeId)));
+                  },
+                ),
+              )),
+
           // Judge comments section (if not already in rubric)
-          if (rubrics.every((r) => r.criteria.isEmpty)) 
+          if (rubrics.every((r) => r.criteria.isEmpty))
             _buildCommentsOnlySection(existingScore),
         ],
       ),
@@ -163,7 +166,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Submission content
             if (submission.content.isNotEmpty) ...[
               Text(
@@ -171,12 +174,11 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              ...submission.content.entries.map((entry) => 
-                _buildContentItem(entry.key, entry.value)
-              ),
+              ...submission.content.entries
+                  .map((entry) => _buildContentItem(entry.key, entry.value)),
               const SizedBox(height: 16),
             ],
-            
+
             // Submission metadata
             Row(
               children: [
@@ -197,7 +199,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
   Widget _buildStatusChip(SubmissionStatus status) {
     Color color;
     String label;
-    
+
     switch (status) {
       case SubmissionStatus.draft:
         color = Colors.grey;
@@ -220,7 +222,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
         label = 'Rejected';
         break;
     }
-    
+
     return Chip(
       label: Text(
         label,
@@ -283,12 +285,12 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
               onPressed: () async {
                 try {
                   await ref.read(judgingServiceProvider).addJudgeComment(
-                    submissionId: widget.submissionId,
-                    judgeId: widget.judgeId,
-                    eventId: widget.eventId,
-                    comment: commentsController.text.trim(),
-                  );
-                  
+                        submissionId: widget.submissionId,
+                        judgeId: widget.judgeId,
+                        eventId: widget.eventId,
+                        comment: commentsController.text.trim(),
+                      );
+
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -318,7 +320,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
-           '${dateTime.hour.toString().padLeft(2, '0')}:'
-           '${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

@@ -15,6 +15,8 @@ import 'create_event_inner_page.dart';
 import 'clone_event_screen.dart';
 import 'event_access_screen.dart';
 import 'event_prerequisites_screen.dart';
+import '../judging/widgets/judge_navigation_widget.dart';
+import '../judging/widgets/group_judges_info_widget.dart';
 
 /// Inner page showing event details that replaces the group content
 class EventDetailInnerPage extends ConsumerWidget {
@@ -112,6 +114,22 @@ class EventDetailInnerPage extends ConsumerWidget {
 
                 // Submissions Section
                 _buildSubmissionsSection(context, ref, event),
+                const SizedBox(height: 24),
+
+                // Judge Navigation (if user is a judge)
+                JudgeNavigationWidget(
+                  eventId: event.id,
+                  currentUserId:
+                      'current_user_id', // This should come from auth state
+                  event: event,
+                ),
+                const SizedBox(height: 16),
+
+                // Group Judges Information (for admins)
+                GroupJudgesInfoWidget(
+                  groupId: event.groupId,
+                  groupName: groupName,
+                ),
                 const SizedBox(height: 24),
 
                 // Action Buttons

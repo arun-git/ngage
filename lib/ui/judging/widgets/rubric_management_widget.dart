@@ -19,16 +19,19 @@ class RubricManagementWidget extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<RubricManagementWidget> createState() => _RubricManagementWidgetState();
+  ConsumerState<RubricManagementWidget> createState() =>
+      _RubricManagementWidgetState();
 }
 
-class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget> {
+class _RubricManagementWidgetState
+    extends ConsumerState<RubricManagementWidget> {
   bool _showCreateForm = false;
   ScoringRubric? _selectedRubric;
 
   @override
   Widget build(BuildContext context) {
-    final availableRubricsAsync = ref.watch(eventRubricsProvider(widget.eventId ?? ''));
+    final availableRubricsAsync =
+        ref.watch(eventRubricsProvider(widget.eventId ?? ''));
     final templateRubricsAsync = ref.watch(templateRubricsProvider);
 
     return Card(
@@ -39,7 +42,8 @@ class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget>
           children: [
             Row(
               children: [
-                Icon(Icons.rule, size: 24, color: Theme.of(context).primaryColor),
+                Icon(Icons.rule,
+                    size: 24, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   'Scoring Rubrics',
@@ -47,40 +51,43 @@ class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget>
                 ),
                 const Spacer(),
                 ElevatedButton.icon(
-                  onPressed: () => setState(() => _showCreateForm = !_showCreateForm),
+                  onPressed: () =>
+                      setState(() => _showCreateForm = !_showCreateForm),
                   icon: Icon(_showCreateForm ? Icons.close : Icons.add),
                   label: Text(_showCreateForm ? 'Cancel' : 'Create New'),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            
+
             if (_showCreateForm) ...[
               _buildCreateRubricForm(),
               const SizedBox(height: 24),
             ],
-            
+
             // Available rubrics
             availableRubricsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Text('Error loading rubrics: $error'),
+              error: (error, stack) =>
+                  SelectableText('Error loading rubrics: $error'),
               data: (rubrics) => _buildRubricsList(
                 'Event Rubrics',
                 rubrics,
                 Icons.event,
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Template rubrics
             templateRubricsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Text('Error loading templates: $error'),
+              error: (error, stack) =>
+                  SelectableText('Error loading templates: $error'),
               data: (templates) => _buildRubricsList(
                 'Template Rubrics',
                 templates,
-                Icons.template_outlined,
+                Icons.description_outlined,
               ),
             ),
           ],
@@ -103,7 +110,8 @@ class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget>
     );
   }
 
-  Widget _buildRubricsList(String title, List<ScoringRubric> rubrics, IconData icon) {
+  Widget _buildRubricsList(
+      String title, List<ScoringRubric> rubrics, IconData icon) {
     if (rubrics.isEmpty) {
       return Column(
         children: [
@@ -115,7 +123,8 @@ class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget>
             ],
           ),
           const SizedBox(height: 8),
-          const Text('No rubrics available', style: TextStyle(color: Colors.grey)),
+          const Text('No rubrics available',
+              style: TextStyle(color: Colors.grey)),
         ],
       );
     }
@@ -138,10 +147,11 @@ class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget>
 
   Widget _buildRubricTile(ScoringRubric rubric) {
     final isSelected = _selectedRubric?.id == rubric.id;
-    
+
     return Card(
       elevation: isSelected ? 4 : 1,
-      color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+      color:
+          isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
       child: ListTile(
         title: Text(rubric.name),
         subtitle: Column(
@@ -165,7 +175,9 @@ class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget>
                 onPressed: () => _cloneRubric(rubric),
               ),
             IconButton(
-              icon: Icon(isSelected ? Icons.check_circle : Icons.radio_button_unchecked),
+              icon: Icon(isSelected
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked),
               onPressed: () {
                 setState(() {
                   _selectedRubric = isSelected ? null : rubric;
@@ -208,7 +220,7 @@ class _RubricManagementWidgetState extends ConsumerState<RubricManagementWidget>
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Refresh the rubrics list
         ref.refresh(eventRubricsProvider(widget.eventId ?? ''));
         widget.onRubricSelected?.call(cloned);
@@ -276,7 +288,7 @@ class _CreateRubricFormState extends ConsumerState<CreateRubricForm> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 16),
-              
+
               // Basic info
               TextFormField(
                 controller: _nameController,
@@ -292,7 +304,7 @@ class _CreateRubricFormState extends ConsumerState<CreateRubricForm> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -308,16 +320,17 @@ class _CreateRubricFormState extends ConsumerState<CreateRubricForm> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Template checkbox
               CheckboxListTile(
                 title: const Text('Save as Template'),
                 subtitle: const Text('Templates can be reused across events'),
                 value: _isTemplate,
-                onChanged: (value) => setState(() => _isTemplate = value ?? false),
+                onChanged: (value) =>
+                    setState(() => _isTemplate = value ?? false),
               ),
               const SizedBox(height: 16),
-              
+
               // Criteria section
               Row(
                 children: [
@@ -334,24 +347,24 @@ class _CreateRubricFormState extends ConsumerState<CreateRubricForm> {
                 ],
               ),
               const SizedBox(height: 8),
-              
+
               if (_criteria.isEmpty)
                 const Text(
                   'No criteria added yet. Add at least one criterion to create the rubric.',
                   style: TextStyle(color: Colors.grey),
                 )
               else
-                ..._criteria.asMap().entries.map((entry) => 
-                  _buildCriterionTile(entry.key, entry.value)
-                ),
-              
+                ..._criteria.asMap().entries.map(
+                    (entry) => _buildCriterionTile(entry.key, entry.value)),
+
               const SizedBox(height: 24),
-              
+
               // Submit button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isSubmitting || _criteria.isEmpty ? null : _submitRubric,
+                  onPressed:
+                      _isSubmitting || _criteria.isEmpty ? null : _submitRubric,
                   child: _isSubmitting
                       ? const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -484,12 +497,15 @@ class _CriterionDialogState extends State<CriterionDialog> {
   void initState() {
     super.initState();
     final criterion = widget.criterion;
-    
+
     _keyController = TextEditingController(text: criterion?.key ?? '');
     _nameController = TextEditingController(text: criterion?.name ?? '');
-    _descriptionController = TextEditingController(text: criterion?.description ?? '');
-    _maxScoreController = TextEditingController(text: criterion?.maxScore.toString() ?? '100');
-    _weightController = TextEditingController(text: criterion?.weight.toString() ?? '1.0');
+    _descriptionController =
+        TextEditingController(text: criterion?.description ?? '');
+    _maxScoreController =
+        TextEditingController(text: criterion?.maxScore.toString() ?? '100');
+    _weightController =
+        TextEditingController(text: criterion?.weight.toString() ?? '1.0');
     _type = criterion?.type ?? ScoringType.numeric;
     _required = criterion?.required ?? true;
   }
@@ -507,7 +523,8 @@ class _CriterionDialogState extends State<CriterionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.criterion == null ? 'Add Criterion' : 'Edit Criterion'),
+      title:
+          Text(widget.criterion == null ? 'Add Criterion' : 'Edit Criterion'),
       content: SizedBox(
         width: 400,
         child: Form(
@@ -530,7 +547,6 @@ class _CriterionDialogState extends State<CriterionDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -545,7 +561,6 @@ class _CriterionDialogState extends State<CriterionDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(
@@ -561,21 +576,21 @@ class _CriterionDialogState extends State<CriterionDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
                 DropdownButtonFormField<ScoringType>(
                   value: _type,
                   decoration: const InputDecoration(
                     labelText: 'Scoring Type',
                     border: OutlineInputBorder(),
                   ),
-                  items: ScoringType.values.map((type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type.value),
-                  )).toList(),
+                  items: ScoringType.values
+                      .map((type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(type.value),
+                          ))
+                      .toList(),
                   onChanged: (value) => setState(() => _type = value!),
                 ),
                 const SizedBox(height: 16),
-                
                 Row(
                   children: [
                     Expanded(
@@ -622,11 +637,11 @@ class _CriterionDialogState extends State<CriterionDialog> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
                 CheckboxListTile(
                   title: const Text('Required'),
                   value: _required,
-                  onChanged: (value) => setState(() => _required = value ?? true),
+                  onChanged: (value) =>
+                      setState(() => _required = value ?? true),
                 ),
               ],
             ),
@@ -686,7 +701,6 @@ class RubricDetailsDialog extends StatelessWidget {
             children: [
               Text(rubric.description),
               const SizedBox(height: 16),
-              
               Row(
                 children: [
                   if (rubric.isTemplate)
@@ -705,24 +719,22 @@ class RubricDetailsDialog extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              
               Text(
                 'Scoring Criteria',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              
               ...rubric.criteria.map((criterion) => Card(
-                child: ListTile(
-                  title: Text(criterion.name),
-                  subtitle: Text(
-                    '${criterion.description}\n'
-                    'Max: ${criterion.maxScore} pts • Weight: ${criterion.weight} • '
-                    'Type: ${criterion.type.value} • '
-                    '${criterion.required ? 'Required' : 'Optional'}',
-                  ),
-                ),
-              )),
+                    child: ListTile(
+                      title: Text(criterion.name),
+                      subtitle: Text(
+                        '${criterion.description}\n'
+                        'Max: ${criterion.maxScore} pts • Weight: ${criterion.weight} • '
+                        'Type: ${criterion.type.value} • '
+                        '${criterion.required ? 'Required' : 'Optional'}',
+                      ),
+                    ),
+                  )),
             ],
           ),
         ),

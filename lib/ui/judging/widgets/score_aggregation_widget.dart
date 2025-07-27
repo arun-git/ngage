@@ -17,7 +17,8 @@ class ScoreAggregationWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final aggregationAsync = ref.watch(submissionAggregationProvider(submissionId));
+    final aggregationAsync =
+        ref.watch(submissionAggregationProvider(submissionId));
 
     return Card(
       child: Padding(
@@ -36,11 +37,11 @@ class ScoreAggregationWidget extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            
             aggregationAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => _buildErrorWidget(error),
-              data: (aggregation) => _buildAggregationContent(context, aggregation),
+              data: (aggregation) =>
+                  _buildAggregationContent(context, aggregation),
             ),
           ],
         ),
@@ -53,12 +54,13 @@ class ScoreAggregationWidget extends ConsumerWidget {
       children: [
         const Icon(Icons.error, size: 48, color: Colors.red),
         const SizedBox(height: 8),
-        Text('Error loading score analysis: $error'),
+        SelectableText('Error loading score analysis: $error'),
       ],
     );
   }
 
-  Widget _buildAggregationContent(BuildContext context, AggregatedScore aggregation) {
+  Widget _buildAggregationContent(
+      BuildContext context, AggregatedScore aggregation) {
     if (aggregation.judgeCount == 0) {
       return const Column(
         children: [
@@ -79,19 +81,20 @@ class ScoreAggregationWidget extends ConsumerWidget {
       children: [
         // Summary statistics
         _buildSummaryStats(context, aggregation),
-        
+
         const SizedBox(height: 24),
-        
+
         // Criteria breakdown
         if (aggregation.criteriaAverages.isNotEmpty) ...[
           _buildCriteriaBreakdown(context, aggregation),
           const SizedBox(height: 24),
         ],
-        
+
         // Score distribution
         _buildScoreDistribution(context, aggregation),
-        
-        if (showIndividualScores && aggregation.individualScores.isNotEmpty) ...[
+
+        if (showIndividualScores &&
+            aggregation.individualScores.isNotEmpty) ...[
           const SizedBox(height: 24),
           _buildIndividualScores(context, aggregation),
         ],
@@ -135,7 +138,8 @@ class ScoreAggregationWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(BuildContext context, String title, String value,
+      IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -150,9 +154,9 @@ class ScoreAggregationWidget extends ConsumerWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           Text(
             title,
@@ -164,7 +168,8 @@ class ScoreAggregationWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildCriteriaBreakdown(BuildContext context, AggregatedScore aggregation) {
+  Widget _buildCriteriaBreakdown(
+      BuildContext context, AggregatedScore aggregation) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -173,18 +178,17 @@ class ScoreAggregationWidget extends ConsumerWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        
-        ...aggregation.criteriaAverages.entries.map((entry) => 
-          _buildCriteriaBar(context, entry.key, entry.value)
-        ),
+        ...aggregation.criteriaAverages.entries
+            .map((entry) => _buildCriteriaBar(context, entry.key, entry.value)),
       ],
     );
   }
 
-  Widget _buildCriteriaBar(BuildContext context, String criterion, double score) {
+  Widget _buildCriteriaBar(
+      BuildContext context, String criterion, double score) {
     final percentage = score / 100.0; // Assuming max score is 100
     final color = _getScoreColor(score);
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
@@ -200,9 +204,9 @@ class ScoreAggregationWidget extends ConsumerWidget {
               Text(
                 score.toStringAsFixed(1),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
               ),
             ],
           ),
@@ -218,7 +222,8 @@ class ScoreAggregationWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildScoreDistribution(BuildContext context, AggregatedScore aggregation) {
+  Widget _buildScoreDistribution(
+      BuildContext context, AggregatedScore aggregation) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -227,7 +232,6 @@ class ScoreAggregationWidget extends ConsumerWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -246,9 +250,9 @@ class ScoreAggregationWidget extends ConsumerWidget {
                     Text(
                       aggregation.scoreRange.min.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -263,9 +267,9 @@ class ScoreAggregationWidget extends ConsumerWidget {
                     Text(
                       aggregation.averageScore.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: _getScoreColor(aggregation.averageScore),
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: _getScoreColor(aggregation.averageScore),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -280,9 +284,9 @@ class ScoreAggregationWidget extends ConsumerWidget {
                     Text(
                       aggregation.scoreRange.max.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -297,8 +301,8 @@ class ScoreAggregationWidget extends ConsumerWidget {
                     Text(
                       aggregation.scoreRange.range.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -310,7 +314,8 @@ class ScoreAggregationWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildIndividualScores(BuildContext context, AggregatedScore aggregation) {
+  Widget _buildIndividualScores(
+      BuildContext context, AggregatedScore aggregation) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -319,10 +324,8 @@ class ScoreAggregationWidget extends ConsumerWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        
-        ...aggregation.individualScores.map((score) => 
-          _buildIndividualScoreCard(context, score)
-        ),
+        ...aggregation.individualScores
+            .map((score) => _buildIndividualScoreCard(context, score)),
       ],
     );
   }
@@ -342,13 +345,14 @@ class ScoreAggregationWidget extends ConsumerWidget {
                 Text(
                   'Judge ${score.judgeId.substring(0, 8)}...',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 const Spacer(),
                 if (score.totalScore != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _getScoreColor(score.totalScore!).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -363,24 +367,22 @@ class ScoreAggregationWidget extends ConsumerWidget {
                   ),
               ],
             ),
-            
             if (score.scores.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
-                children: score.scores.entries.map((entry) => 
-                  Chip(
-                    label: Text(
-                      '${_formatCriterionName(entry.key)}: ${entry.value}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    backgroundColor: Colors.grey.withOpacity(0.1),
-                  )
-                ).toList(),
+                children: score.scores.entries
+                    .map((entry) => Chip(
+                          label: Text(
+                            '${_formatCriterionName(entry.key)}: ${entry.value}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          backgroundColor: Colors.grey.withOpacity(0.1),
+                        ))
+                    .toList(),
               ),
             ],
-            
             if (score.comments != null && score.comments!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
@@ -421,10 +423,13 @@ class ScoreAggregationWidget extends ConsumerWidget {
   String _formatCriterionName(String criterion) {
     // Convert camelCase or snake_case to Title Case
     return criterion
-        .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
+        .replaceAllMapped(
+            RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
         .replaceAll('_', ' ')
         .split(' ')
-        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .map((word) => word.isEmpty
+            ? ''
+            : word[0].toUpperCase() + word.substring(1).toLowerCase())
         .join(' ');
   }
 }

@@ -1,5 +1,5 @@
 /// Barrel file for all data models
-/// 
+///
 /// This file exports all the data models and related utilities
 /// for easy importing throughout the application.
 
@@ -8,6 +8,7 @@ export 'validation.dart';
 export 'user.dart';
 export 'member.dart';
 export 'group.dart';
+export 'group_member.dart';
 export 'team.dart';
 export 'event.dart';
 export 'submission.dart';

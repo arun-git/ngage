@@ -21,7 +21,8 @@ class JudgingDashboardScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<JudgingDashboardScreen> createState() => _JudgingDashboardScreenState();
+  ConsumerState<JudgingDashboardScreen> createState() =>
+      _JudgingDashboardScreenState();
 }
 
 class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
@@ -44,7 +45,8 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final eventAsync = ref.watch(eventProvider(widget.eventId));
-    final eventStatsAsync = ref.watch(eventScoringStatsProvider(widget.eventId));
+    final eventStatsAsync =
+        ref.watch(eventScoringStatsProvider(widget.eventId));
 
     return Scaffold(
       appBar: AppBar(
@@ -69,8 +71,9 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
               padding: const EdgeInsets.only(right: 16.0),
               child: Chip(
                 avatar: const Icon(Icons.score, size: 16),
-                label: Text('${stats.totalScores} scores'),
-                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                label: Text('${stats['totalScores'] ?? 0} scores'),
+                backgroundColor:
+                    Theme.of(context).primaryColor.withOpacity(0.1),
               ),
             ),
             loading: () => const SizedBox.shrink(),
@@ -103,7 +106,6 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
               setState(() => _selectedRubric = rubric);
             },
           ),
-          
           if (_selectedRubric != null) ...[
             const SizedBox(height: 24),
             _buildSelectedRubricCard(),
@@ -130,16 +132,15 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
                 Text(
                   'Selected Rubric: ${_selectedRubric!.name}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(_selectedRubric!.description),
             const SizedBox(height: 12),
-            
             Wrap(
               spacing: 8,
               children: [
@@ -148,7 +149,8 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
                   backgroundColor: Colors.blue.withOpacity(0.1),
                 ),
                 Chip(
-                  label: Text('Max: ${_selectedRubric!.maxPossibleScore.toInt()} pts'),
+                  label: Text(
+                      'Max: ${_selectedRubric!.maxPossibleScore.toInt()} pts'),
                   backgroundColor: Colors.green.withOpacity(0.1),
                 ),
                 if (_selectedRubric!.isTemplate)
@@ -165,7 +167,8 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
   }
 
   Widget _buildSubmissionsTab() {
-    final submissionsAsync = ref.watch(eventSubmissionsProvider(widget.eventId));
+    final submissionsAsync =
+        ref.watch(eventSubmissionsProvider(widget.eventId));
 
     return submissionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -178,7 +181,8 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
             Text('Error loading submissions: $error'),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => ref.refresh(eventSubmissionsProvider(widget.eventId)),
+              onPressed: () =>
+                  ref.refresh(eventSubmissionsProvider(widget.eventId)),
               child: const Text('Retry'),
             ),
           ],
@@ -190,7 +194,9 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
 
   Widget _buildSubmissionsList(List<Submission> submissions) {
     final submittedSubmissions = submissions
-        .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.approved)
+        .where((s) =>
+            s.status == SubmissionStatus.submitted ||
+            s.status == SubmissionStatus.approved)
         .toList();
 
     if (submittedSubmissions.isEmpty) {
@@ -222,7 +228,8 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
   }
 
   Widget _buildSubmissionCard(Submission submission) {
-    final hasJudgeScoredAsync = ref.watch(hasJudgeScoredProvider((submission.id, widget.currentUserId)));
+    final hasJudgeScoredAsync = ref
+        .watch(hasJudgeScoredProvider((submission.id, widget.currentUserId)));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -239,9 +246,10 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
                     children: [
                       Text(
                         'Team ${submission.teamId}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -254,34 +262,34 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
                 _buildSubmissionStatusChip(submission.status),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Submission content preview
             if (submission.content.isNotEmpty) ...[
               Text(
                 'Content:',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
               const SizedBox(height: 4),
-              ...submission.content.entries.take(3).map((entry) => 
-                Text(
-                  '${entry.key}: ${entry.value.toString()}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              ),
+              ...submission.content.entries
+                  .take(3)
+                  .map((entry) => SelectableText(
+                        '${entry.key}: ${entry.value.toString()}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      )),
               if (submission.content.length > 3)
-                Text(
+                SelectableText(
                   '... and ${submission.content.length - 3} more items',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                  ),
+                        fontStyle: FontStyle.italic,
+                      ),
                 ),
               const SizedBox(height: 12),
             ],
-            
+
             // Judge status and actions
             hasJudgeScoredAsync.when(
               data: (hasScored) => Row(
@@ -298,9 +306,7 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
                       label: Text('Pending your score'),
                       backgroundColor: Colors.orange,
                     ),
-                  
                   const Spacer(),
-                  
                   ElevatedButton.icon(
                     onPressed: () => _navigateToJudgeSubmission(submission),
                     icon: Icon(hasScored ? Icons.edit : Icons.score),
@@ -320,7 +326,7 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
   Widget _buildSubmissionStatusChip(SubmissionStatus status) {
     Color color;
     String label;
-    
+
     switch (status) {
       case SubmissionStatus.draft:
         color = Colors.grey;
@@ -343,7 +349,7 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
         label = 'Rejected';
         break;
     }
-    
+
     return Chip(
       label: Text(
         label,
@@ -355,14 +361,17 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
   }
 
   Widget _buildAnalyticsTab() {
-    final submissionsAsync = ref.watch(eventSubmissionsProvider(widget.eventId));
+    final submissionsAsync =
+        ref.watch(eventSubmissionsProvider(widget.eventId));
 
     return submissionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(child: Text('Error: $error')),
       data: (submissions) {
         final submittedSubmissions = submissions
-            .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.approved)
+            .where((s) =>
+                s.status == SubmissionStatus.submitted ||
+                s.status == SubmissionStatus.approved)
             .toList();
 
         if (submittedSubmissions.isEmpty) {
@@ -395,8 +404,8 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
                   Text(
                     'Team ${submission.teamId}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   ScoreAggregationWidget(
@@ -436,7 +445,7 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
-           '${dateTime.hour.toString().padLeft(2, '0')}:'
-           '${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }
