@@ -82,6 +82,8 @@ class GroupsListScreen extends ConsumerWidget {
               return RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(memberGroupsStreamProvider(memberId));
+                  // Add a small delay to allow the stream to refresh
+                  await Future.delayed(const Duration(milliseconds: 300));
                 },
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16),

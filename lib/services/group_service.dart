@@ -137,7 +137,12 @@ class GroupService {
         updatedAt: DateTime.now(),
       );
 
-      await _groupsCollection.doc(groupId).update(updatedGroup.toJson());
+      // Use a transaction to ensure atomic update
+      await _firestore.runTransaction((transaction) async {
+        transaction.update(
+            _groupsCollection.doc(groupId), updatedGroup.toJson());
+      });
+
       return updatedGroup;
     } catch (e) {
       throw Exception('Failed to update group image: $e');

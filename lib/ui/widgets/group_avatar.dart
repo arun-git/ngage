@@ -55,12 +55,15 @@ class GroupAvatar extends StatelessWidget {
   }
 
   Widget _buildImageAvatar(BuildContext context) {
+    // Add cache-busting parameter to ensure fresh images after updates
+    final imageUrl = _getCacheBustedImageUrl(group.imageUrl!);
+
     return CircleAvatar(
       radius: radius,
       backgroundColor: _getBackgroundColor(context),
       child: ClipOval(
         child: RobustNetworkImage(
-          imageUrl: group.imageUrl!,
+          imageUrl: imageUrl,
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
@@ -162,6 +165,19 @@ class GroupAvatar extends StatelessWidget {
         return Colors.purple;
       default:
         return theme.colorScheme.onPrimaryContainer;
+    }
+  }
+
+  /// Add cache-busting parameter to image URL to ensure fresh images
+  String _getCacheBustedImageUrl(String imageUrl) {
+    // Use the group's updatedAt timestamp as cache buster
+    final cacheBuster = group.updatedAt.millisecondsSinceEpoch.toString();
+
+    // Check if URL already has query parameters
+    if (imageUrl.contains('?')) {
+      return '$imageUrl&cb=$cacheBuster';
+    } else {
+      return '$imageUrl?cb=$cacheBuster';
     }
   }
 }

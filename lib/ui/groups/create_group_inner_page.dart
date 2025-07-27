@@ -188,6 +188,15 @@ class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
         }
       }
 
+      // Force refresh of the member groups stream to ensure the UI updates
+      ref.invalidate(memberGroupsStreamProvider(currentMember.id));
+
+      // Add a small delay to ensure Firestore has propagated the changes
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Invalidate again to ensure the stream picks up the latest data
+      ref.invalidate(memberGroupsStreamProvider(currentMember.id));
+
       if (mounted) {
         widget.onGroupCreated();
       }

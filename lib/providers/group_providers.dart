@@ -83,8 +83,10 @@ final groupMembersStreamProvider =
 /// State notifier for managing group creation and updates
 class GroupNotifier extends StateNotifier<AsyncValue<Group?>> {
   final GroupService _groupService;
+  final Ref _ref;
 
-  GroupNotifier(this._groupService) : super(const AsyncValue.data(null));
+  GroupNotifier(this._groupService, this._ref)
+      : super(const AsyncValue.data(null));
 
   /// Create a new group
   Future<Group> createGroup({
@@ -108,6 +110,10 @@ class GroupNotifier extends StateNotifier<AsyncValue<Group?>> {
       );
 
       state = AsyncValue.data(group);
+
+      // Invalidate related providers to refresh the UI
+      _invalidateGroupProviders(createdBy);
+
       return group;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -137,6 +143,10 @@ class GroupNotifier extends StateNotifier<AsyncValue<Group?>> {
       );
 
       state = AsyncValue.data(group);
+
+      // Invalidate related providers to refresh the UI
+      _invalidateGroupProviders(group.createdBy);
+
       return group;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -158,6 +168,10 @@ class GroupNotifier extends StateNotifier<AsyncValue<Group?>> {
       );
 
       state = AsyncValue.data(group);
+
+      // Invalidate related providers to refresh the UI
+      _invalidateGroupProviders(group.createdBy);
+
       return group;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -193,13 +207,22 @@ class GroupNotifier extends StateNotifier<AsyncValue<Group?>> {
   void clear() {
     state = const AsyncValue.data(null);
   }
+
+  /// Invalidate related providers to refresh the UI after group changes
+  void _invalidateGroupProviders(String memberId) {
+    // Invalidate the stream provider for member groups to refresh the list
+    _ref.invalidate(memberGroupsStreamProvider(memberId));
+
+    // Also invalidate the future provider in case it's being used elsewhere
+    _ref.invalidate(memberGroupsProvider(memberId));
+  }
 }
 
 /// Provider for GroupNotifier
 final groupNotifierProvider =
     StateNotifierProvider<GroupNotifier, AsyncValue<Group?>>((ref) {
   final groupService = ref.read(groupServiceProvider);
-  return GroupNotifier(groupService);
+  return GroupNotifier(groupService, ref);
 });
 
 /// State notifier for managing group memberships
