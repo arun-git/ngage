@@ -281,10 +281,25 @@ class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
                                 Stack(
                                   children: [
                                     _selectedImageBytes != null
-                                        ? CircleAvatar(
-                                            radius: 60,
-                                            backgroundImage: MemoryImage(
-                                                _selectedImageBytes!),
+                                        ? Container(
+                                            width: 120,
+                                            height: 120,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .outline
+                                                    .withOpacity(0.3),
+                                                width: 2,
+                                              ),
+                                              image: DecorationImage(
+                                                image: MemoryImage(
+                                                    _selectedImageBytes!),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
                                           )
                                         : GroupAvatar(
                                             group: Group(
@@ -301,6 +316,7 @@ class _CreateGroupInnerPageState extends ConsumerState<CreateGroupInnerPage> {
                                             ),
                                             radius: 60,
                                             showBorder: true,
+                                            isSquare: true,
                                           ),
                                     Positioned(
                                       bottom: 0,

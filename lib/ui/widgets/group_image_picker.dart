@@ -11,6 +11,7 @@ class GroupImagePicker extends ConsumerStatefulWidget {
   final Group group;
   final double size;
   final bool showEditButton;
+  final bool isSquare;
   final VoidCallback? onImageUpdated;
 
   const GroupImagePicker({
@@ -18,6 +19,7 @@ class GroupImagePicker extends ConsumerStatefulWidget {
     required this.group,
     this.size = 120,
     this.showEditButton = true,
+    this.isSquare = false,
     this.onImageUpdated,
   });
 
@@ -39,6 +41,7 @@ class _GroupImagePickerState extends ConsumerState<GroupImagePicker> {
               group: widget.group,
               radius: widget.size / 2,
               showBorder: true,
+              isSquare: widget.isSquare,
             ),
             if (widget.showEditButton)
               Positioned(
@@ -233,12 +236,14 @@ class _GroupImagePickerState extends ConsumerState<GroupImagePicker> {
 class GroupImageDisplay extends StatelessWidget {
   final Group group;
   final double size;
+  final bool isSquare;
   final VoidCallback? onTap;
 
   const GroupImageDisplay({
     super.key,
     required this.group,
     this.size = 80,
+    this.isSquare = false,
     this.onTap,
   });
 
@@ -249,6 +254,7 @@ class GroupImageDisplay extends StatelessWidget {
       radius: size / 2,
       onTap: onTap,
       showBorder: true,
+      isSquare: isSquare,
     );
   }
 }

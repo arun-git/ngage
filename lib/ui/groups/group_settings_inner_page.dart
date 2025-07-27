@@ -4,7 +4,6 @@ import '../../models/group.dart';
 import '../../models/enums.dart';
 import '../../providers/group_providers.dart';
 import '../widgets/group_image_picker.dart';
-import '../widgets/group_image_picker.dart';
 
 /// Inner page for managing group settings that replaces the group detail content
 class GroupSettingsInnerPage extends ConsumerStatefulWidget {
@@ -252,6 +251,7 @@ class _GroupSettingsInnerPageState
                               group: widget.group,
                               size: 120,
                               showEditButton: !_isLoading,
+                              isSquare: true,
                               onImageUpdated: () {
                                 // Refresh the group data
                                 ref.invalidate(groupProvider(widget.group.id));

@@ -8,6 +8,7 @@ class GroupAvatar extends StatelessWidget {
   final double radius;
   final VoidCallback? onTap;
   final bool showBorder;
+  final bool isSquare;
 
   const GroupAvatar({
     super.key,
@@ -15,6 +16,7 @@ class GroupAvatar extends StatelessWidget {
     this.radius = 24,
     this.onTap,
     this.showBorder = false,
+    this.isSquare = false,
   });
 
   @override
@@ -39,7 +41,8 @@ class GroupAvatar extends StatelessWidget {
       return Container(
         decoration: showBorder
             ? BoxDecoration(
-                shape: BoxShape.circle,
+                shape: isSquare ? BoxShape.rectangle : BoxShape.circle,
+                borderRadius: isSquare ? BorderRadius.circular(8) : null,
                 border: Border.all(
                   color: theme.colorScheme.outline.withOpacity(0.3),
                   width: 2,
@@ -57,6 +60,47 @@ class GroupAvatar extends StatelessWidget {
   Widget _buildImageAvatar(BuildContext context) {
     // Add cache-busting parameter to ensure fresh images after updates
     final imageUrl = _getCacheBustedImageUrl(group.imageUrl!);
+
+    if (isSquare) {
+      return Container(
+        width: radius * 2,
+        height: radius * 2,
+        decoration: BoxDecoration(
+          color: _getBackgroundColor(context),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: RobustNetworkImage(
+            imageUrl: imageUrl,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return SizedBox(
+                width: radius * 2,
+                height: radius * 2,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _getIconColor(context),
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context) {
+              // Fallback to icon avatar if image fails to load
+              return _buildIconContent(context);
+            },
+          ),
+        ),
+      );
+    }
 
     return CircleAvatar(
       radius: radius,
@@ -95,6 +139,25 @@ class GroupAvatar extends StatelessWidget {
 
   Widget _buildIconAvatar(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (isSquare) {
+      return Container(
+        width: radius * 2,
+        height: radius * 2,
+        decoration: BoxDecoration(
+          color: _getBackgroundColor(context),
+          borderRadius: BorderRadius.circular(8),
+          border: showBorder
+              ? Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  width: 2,
+                )
+              : null,
+        ),
+        child: Center(child: _buildIconContent(context)),
+      );
+    }
+
     return Container(
       decoration: showBorder
           ? BoxDecoration(

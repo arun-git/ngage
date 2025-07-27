@@ -177,6 +177,7 @@ class _GroupCard extends ConsumerWidget {
                     group: group,
                     radius: 28,
                     showBorder: true,
+                    isSquare: true,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
