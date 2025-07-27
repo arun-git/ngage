@@ -28,56 +28,24 @@ class PlatformNavigation extends StatefulWidget {
   State<PlatformNavigation> createState() => _PlatformNavigationState();
 }
 
-class _PlatformNavigationState extends State<PlatformNavigation>
-    with KeyboardNavigationMixin {
-  late Map<ShortcutActivator, Intent> _shortcuts;
-  late Map<Type, Action<Intent>> _actions;
-
-  @override
-  void initState() {
-    super.initState();
-    _setupKeyboardShortcuts();
-  }
-
-  void _setupKeyboardShortcuts() {
-    _shortcuts = {
-      ...AccessibilityUtils.getCommonShortcuts(),
-      // Add number key shortcuts for navigation (1-9)
-      for (int i = 0; i < widget.items.length && i < 9; i++)
-        SingleActivator(
-                LogicalKeyboardKey(LogicalKeyboardKey.digit1.keyId + i)):
-            NavigateToIndexIntent(i),
-    };
-
-    _actions = {
-      NavigateToIndexIntent: CallbackAction<NavigateToIndexIntent>(
-        onInvoke: (intent) {
-          if (intent.index < widget.items.length) {
-            widget.onItemSelected(intent.index);
-          }
-          return null;
-        },
-      ),
-      CustomDismissIntent: CustomDismissAction(() {
-        // Handle escape key - could close drawer or navigate back
-        if (Scaffold.of(context).isDrawerOpen) {
-          Navigator.of(context).pop();
-        }
-      }),
-    };
-  }
+class _PlatformNavigationState extends State<PlatformNavigation> {
+  // Keyboard navigation completely disabled to prevent interference with form fields
+  // All keyboard shortcuts and focus management removed to allow proper form navigation
 
   @override
   Widget build(BuildContext context) {
+    // Use Shortcuts widget with empty map to completely disable all keyboard shortcuts
+    // This prevents Tab navigation from interfering with form fields
     return Shortcuts(
-      shortcuts: _shortcuts,
+      shortcuts: const <ShortcutActivator, Intent>{
+        // Empty shortcuts map - this overrides all default Flutter shortcuts
+        // including Tab navigation for NavigationRail and BottomNavigationBar
+      },
       child: Actions(
-        actions: _actions,
-        child: Focus(
-          focusNode: focusNode,
-          autofocus: true,
-          child: _buildPlatformSpecificNavigation(context),
-        ),
+        actions: const <Type, Action<Intent>>{
+          // Empty actions map to ensure no keyboard actions are processed
+        },
+        child: _buildPlatformSpecificNavigation(context),
       ),
     );
   }
@@ -122,22 +90,24 @@ class _PlatformNavigationState extends State<PlatformNavigation>
               children: [
                 if (!extended) const SizedBox(height: 8),
                 Expanded(
-                  child: NavigationRail(
-                    selectedIndex: widget.selectedIndex,
-                    onDestinationSelected: widget.onItemSelected,
-                    extended: extended,
-                    minWidth: extended ? 200 : 72,
-                    backgroundColor: Colors.transparent,
-                    destinations: widget.items
-                        .map((item) => NavigationRailDestination(
-                              icon: Tooltip(
-                                message: item.tooltip ?? item.label,
-                                child: item.icon,
-                              ),
-                              selectedIcon: item.selectedIcon ?? item.icon,
-                              label: Text(item.label),
-                            ))
-                        .toList(),
+                  child: ExcludeFocus(
+                    child: NavigationRail(
+                      selectedIndex: widget.selectedIndex,
+                      onDestinationSelected: widget.onItemSelected,
+                      extended: extended,
+                      minWidth: extended ? 200 : 72,
+                      backgroundColor: Colors.transparent,
+                      destinations: widget.items
+                          .map((item) => NavigationRailDestination(
+                                icon: Tooltip(
+                                  message: item.tooltip ?? item.label,
+                                  child: item.icon,
+                                ),
+                                selectedIcon: item.selectedIcon ?? item.icon,
+                                label: Text(item.label),
+                              ))
+                          .toList(),
+                    ),
                   ),
                 ),
                 if (extended) ...[
@@ -188,21 +158,23 @@ class _PlatformNavigationState extends State<PlatformNavigation>
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: widget.selectedIndex,
-      onTap: widget.onItemSelected,
-      type: widget.items.length > 3
-          ? BottomNavigationBarType.fixed
-          : BottomNavigationBarType.shifting,
-      items: widget.items
-          .take(5)
-          .map((item) => BottomNavigationBarItem(
-                icon: item.icon,
-                activeIcon: item.selectedIcon ?? item.icon,
-                label: item.label,
-                tooltip: item.tooltip,
-              ))
-          .toList(),
+    return ExcludeFocus(
+      child: BottomNavigationBar(
+        currentIndex: widget.selectedIndex,
+        onTap: widget.onItemSelected,
+        type: widget.items.length > 3
+            ? BottomNavigationBarType.fixed
+            : BottomNavigationBarType.shifting,
+        items: widget.items
+            .take(5)
+            .map((item) => BottomNavigationBarItem(
+                  icon: item.icon,
+                  activeIcon: item.selectedIcon ?? item.icon,
+                  label: item.label,
+                  tooltip: item.tooltip,
+                ))
+            .toList(),
+      ),
     );
   }
 
