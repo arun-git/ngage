@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/submission.dart';
 import '../services/submission_service.dart';
@@ -15,43 +15,51 @@ final submissionRepositoryProvider = Provider((ref) {
 });
 
 /// Provider for streaming submissions by event ID
-final eventSubmissionsStreamProvider = StreamProvider.family<List<Submission>, String>((ref, eventId) {
+final eventSubmissionsStreamProvider =
+    StreamProvider.family<List<Submission>, String>((ref, eventId) {
   final submissionService = ref.watch(submissionServiceProvider);
   return submissionService.streamEventSubmissions(eventId);
 });
 
 /// Provider for streaming a specific submission
-final submissionStreamProvider = StreamProvider.family<Submission?, String>((ref, submissionId) {
+final submissionStreamProvider =
+    StreamProvider.family<Submission?, String>((ref, submissionId) {
   final submissionService = ref.watch(submissionServiceProvider);
   return submissionService.streamSubmission(submissionId);
 });
 
 /// Provider for getting submissions by event ID
-final eventSubmissionsProvider = FutureProvider.family<List<Submission>, String>((ref, eventId) async {
+final eventSubmissionsProvider =
+    FutureProvider.family<List<Submission>, String>((ref, eventId) async {
   final submissionService = ref.watch(submissionServiceProvider);
   return submissionService.getEventSubmissions(eventId);
 });
 
 /// Provider for getting submissions by team ID
-final teamSubmissionsProvider = FutureProvider.family<List<Submission>, String>((ref, teamId) async {
+final teamSubmissionsProvider =
+    FutureProvider.family<List<Submission>, String>((ref, teamId) async {
   final submissionService = ref.watch(submissionServiceProvider);
   return submissionService.getTeamSubmissions(teamId);
 });
 
 /// Provider for getting submissions by member ID
-final memberSubmissionsProvider = FutureProvider.family<List<Submission>, String>((ref, memberId) async {
+final memberSubmissionsProvider =
+    FutureProvider.family<List<Submission>, String>((ref, memberId) async {
   final submissionService = ref.watch(submissionServiceProvider);
   return submissionService.getMemberSubmissions(memberId);
 });
 
 /// Provider for checking if a team has submitted for an event
-final hasTeamSubmittedProvider = FutureProvider.family<bool, ({String eventId, String teamId})>((ref, params) async {
+final hasTeamSubmittedProvider =
+    FutureProvider.family<bool, ({String eventId, String teamId})>(
+        (ref, params) async {
   final submissionService = ref.watch(submissionServiceProvider);
   return submissionService.hasTeamSubmitted(params.eventId, params.teamId);
 });
 
 /// Provider for getting submission count for an event
-final submissionCountProvider = FutureProvider.family<int, String>((ref, eventId) async {
+final submissionCountProvider =
+    FutureProvider.family<int, String>((ref, eventId) async {
   final submissionService = ref.watch(submissionServiceProvider);
   return submissionService.getSubmissionCount(eventId);
 });
@@ -60,7 +68,8 @@ final submissionCountProvider = FutureProvider.family<int, String>((ref, eventId
 class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
   final SubmissionService _submissionService;
 
-  SubmissionFormNotifier(this._submissionService) : super(SubmissionFormState.initial());
+  SubmissionFormNotifier(this._submissionService)
+      : super(SubmissionFormState.initial());
 
   /// Create a new submission
   Future<void> createSubmission({
@@ -70,7 +79,7 @@ class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
     Map<String, dynamic>? initialContent,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final submission = await _submissionService.createSubmission(
         eventId: eventId,
@@ -78,7 +87,7 @@ class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
         submittedBy: submittedBy,
         initialContent: initialContent,
       );
-      
+
       state = state.copyWith(
         isLoading: false,
         submission: submission,
@@ -98,13 +107,13 @@ class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
     required Map<String, dynamic> content,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final submission = await _submissionService.updateSubmissionContent(
         submissionId: submissionId,
         content: content,
       );
-      
+
       state = state.copyWith(
         isLoading: false,
         submission: submission,
@@ -118,28 +127,26 @@ class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
     }
   }
 
-  /// Upload files
-  Future<void> uploadFiles({
+  /// Upload platform files
+  Future<void> uploadPlatformFiles({
     required String submissionId,
-    required List<File> files,
-    required List<String> fileNames,
+    required List<PlatformFile> files,
     required String fileType,
     void Function(double progress)? onProgress,
   }) async {
     state = state.copyWith(isUploading: true, uploadProgress: 0.0, error: null);
-    
+
     try {
-      final submission = await _submissionService.uploadFiles(
+      final submission = await _submissionService.uploadPlatformFiles(
         submissionId: submissionId,
         files: files,
-        fileNames: fileNames,
         fileType: fileType,
         onProgress: (progress) {
           state = state.copyWith(uploadProgress: progress);
           onProgress?.call(progress);
         },
       );
-      
+
       state = state.copyWith(
         isUploading: false,
         uploadProgress: 0.0,
@@ -158,10 +165,11 @@ class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
   /// Submit the submission
   Future<void> submitSubmission(String submissionId) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
-      final submission = await _submissionService.submitSubmission(submissionId);
-      
+      final submission =
+          await _submissionService.submitSubmission(submissionId);
+
       state = state.copyWith(
         isLoading: false,
         submission: submission,
@@ -238,7 +246,8 @@ class SubmissionFormState {
 }
 
 /// Provider for submission form state notifier
-final submissionFormProvider = StateNotifierProvider<SubmissionFormNotifier, SubmissionFormState>((ref) {
+final submissionFormProvider =
+    StateNotifierProvider<SubmissionFormNotifier, SubmissionFormState>((ref) {
   final submissionService = ref.watch(submissionServiceProvider);
   return SubmissionFormNotifier(submissionService);
 });

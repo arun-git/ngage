@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import '../models/submission.dart';
 import '../models/enums.dart';
 import '../repositories/submission_repository.dart';
@@ -76,11 +76,10 @@ class SubmissionService {
     return await _repository.update(updatedSubmission);
   }
 
-  /// Upload files and add to submission
-  Future<Submission> uploadFiles({
+  /// Upload platform files and add to submission
+  Future<Submission> uploadPlatformFiles({
     required String submissionId,
-    required List<File> files,
-    required List<String> fileNames,
+    required List<PlatformFile> files,
     required String fileType, // 'photos', 'videos', 'documents'
     void Function(double progress)? onProgress,
   }) async {
@@ -99,32 +98,30 @@ class SubmissionService {
     }
 
     // Upload files to storage
-    final urls = await _repository.uploadFiles(
+    final urls = await _repository.uploadPlatformFiles(
       submissionId,
       files,
-      fileNames,
       onProgress,
     );
 
     // Update submission with new file URLs
-    final currentFiles = submission.getContent<List>(fileType, [])?.cast<String>() ?? [];
+    final currentFiles =
+        submission.getContent<List>(fileType, [])?.cast<String>() ?? [];
     final updatedFiles = [...currentFiles, ...urls];
-    
+
     final updatedSubmission = submission.updateContent(fileType, updatedFiles);
     return await _repository.update(updatedSubmission);
   }
 
-  /// Upload single file and add to submission
-  Future<Submission> uploadFile({
+  /// Upload single platform file and add to submission
+  Future<Submission> uploadPlatformFile({
     required String submissionId,
-    required File file,
-    required String fileName,
+    required PlatformFile file,
     required String fileType,
   }) async {
-    return await uploadFiles(
+    return await uploadPlatformFiles(
       submissionId: submissionId,
       files: [file],
-      fileNames: [fileName],
       fileType: fileType,
     );
   }
@@ -144,15 +141,15 @@ class SubmissionService {
       throw Exception('Cannot edit submission that is not in draft status');
     }
 
-    final currentFiles = submission.getContent<List>(fileType, [])?.cast<String>() ?? [];
+    final currentFiles =
+        submission.getContent<List>(fileType, [])?.cast<String>() ?? [];
     final updatedFiles = currentFiles.where((url) => url != fileUrl).toList();
-    
+
     final updatedSubmission = submission.updateContent(fileType, updatedFiles);
-    
-    // Delete file from storage (extract filename from URL)
+
+    // Delete file from storage using download URL
     try {
-      final fileName = _extractFileNameFromUrl(fileUrl);
-      await _repository.deleteFile(submissionId, fileName);
+      await _repository.deleteFile(fileUrl);
     } catch (e) {
       // Log error but don't fail the operation
       print('Warning: Could not delete file from storage: $e');
@@ -264,7 +261,8 @@ class SubmissionService {
   String _generateRandomString(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final random = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(length, (index) => chars[random % chars.length]).join();
+    return List.generate(length, (index) => chars[random % chars.length])
+        .join();
   }
 
   /// Extract filename from Firebase Storage URL
@@ -277,4 +275,3 @@ class SubmissionService {
     throw Exception('Could not extract filename from URL: $url');
   }
 }
-

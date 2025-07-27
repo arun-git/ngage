@@ -1,18 +1,22 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/submission.dart';
+import '../services/file_upload_service.dart';
 
 /// Repository for managing submission data in Firestore and file storage
 class SubmissionRepository {
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
+  final FileUploadService _fileUploadService;
 
   SubmissionRepository({
     FirebaseFirestore? firestore,
     FirebaseStorage? storage,
+    FileUploadService? fileUploadService,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _storage = storage ?? FirebaseStorage.instance;
+        _storage = storage ?? FirebaseStorage.instance,
+        _fileUploadService = fileUploadService ?? FileUploadService();
 
   /// Collection reference for submissions
   CollectionReference<Map<String, dynamic>> get _collection =>
@@ -32,7 +36,7 @@ class SubmissionRepository {
   Future<Submission?> getById(String id) async {
     final doc = await _collection.doc(id).get();
     if (!doc.exists) return null;
-    
+
     final data = doc.data()!;
     return Submission.fromJson(data);
   }
@@ -48,7 +52,7 @@ class SubmissionRepository {
   Future<void> delete(String id) async {
     // First delete all associated files
     await _deleteSubmissionFiles(id);
-    
+
     // Then delete the document
     await _collection.doc(id).delete();
   }
@@ -60,9 +64,7 @@ class SubmissionRepository {
         .orderBy('createdAt', descending: true)
         .get();
 
-    return query.docs
-        .map((doc) => Submission.fromJson(doc.data()))
-        .toList();
+    return query.docs.map((doc) => Submission.fromJson(doc.data())).toList();
   }
 
   /// Get submissions for a specific team
@@ -72,9 +74,7 @@ class SubmissionRepository {
         .orderBy('createdAt', descending: true)
         .get();
 
-    return query.docs
-        .map((doc) => Submission.fromJson(doc.data()))
-        .toList();
+    return query.docs.map((doc) => Submission.fromJson(doc.data())).toList();
   }
 
   /// Get submissions by a specific member
@@ -84,56 +84,27 @@ class SubmissionRepository {
         .orderBy('createdAt', descending: true)
         .get();
 
-    return query.docs
-        .map((doc) => Submission.fromJson(doc.data()))
-        .toList();
+    return query.docs.map((doc) => Submission.fromJson(doc.data())).toList();
   }
 
-  /// Upload a file and return the download URL
-  Future<String> uploadFile(String submissionId, File file, String fileName) async {
-    final fileRef = _storageRef.child(submissionId).child(fileName);
-    
-    final uploadTask = fileRef.putFile(file);
-    final snapshot = await uploadTask;
-    
-    return await snapshot.ref.getDownloadURL();
-  }
-
-  /// Upload multiple files with progress tracking
-  Future<List<String>> uploadFiles(
+  /// Upload multiple platform files with progress tracking
+  Future<List<String>> uploadPlatformFiles(
     String submissionId,
-    List<File> files,
-    List<String> fileNames,
+    List<PlatformFile> files,
     void Function(double progress)? onProgress,
   ) async {
-    if (files.length != fileNames.length) {
-      throw ArgumentError('Files and fileNames lists must have the same length');
-    }
+    final baseStoragePath = 'submissions/$submissionId';
 
-    final urls = <String>[];
-    final totalFiles = files.length;
-    
-    for (int i = 0; i < files.length; i++) {
-      final file = files[i];
-      final fileName = fileNames[i];
-      
-      final url = await uploadFile(submissionId, file, fileName);
-      urls.add(url);
-      
-      // Report progress
-      if (onProgress != null) {
-        final progress = (i + 1) / totalFiles;
-        onProgress(progress);
-      }
-    }
-    
-    return urls;
+    return await _fileUploadService.uploadMultiplePlatformFiles(
+      files: files,
+      baseStoragePath: baseStoragePath,
+      onProgress: onProgress,
+    );
   }
 
-  /// Delete a specific file from storage
-  Future<void> deleteFile(String submissionId, String fileName) async {
-    final fileRef = _storageRef.child(submissionId).child(fileName);
-    await fileRef.delete();
+  /// Delete a specific file from storage using download URL
+  Future<void> deleteFile(String downloadUrl) async {
+    await _fileUploadService.deleteFile(downloadUrl);
   }
 
   /// Delete all files for a submission
@@ -141,7 +112,7 @@ class SubmissionRepository {
     try {
       final submissionRef = _storageRef.child(submissionId);
       final listResult = await submissionRef.listAll();
-      
+
       // Delete all files in the submission folder
       for (final item in listResult.items) {
         await item.delete();
@@ -183,7 +154,7 @@ class SubmissionRepository {
     if (eventId != null) {
       query = query.where('eventId', isEqualTo: eventId);
     }
-    
+
     if (teamId != null) {
       query = query.where('teamId', isEqualTo: teamId);
     }
@@ -197,9 +168,7 @@ class SubmissionRepository {
     query = query.limit(limit);
 
     final snapshot = await query.get();
-    return snapshot.docs
-        .map((doc) => Submission.fromJson(doc.data()))
-        .toList();
+    return snapshot.docs.map((doc) => Submission.fromJson(doc.data())).toList();
   }
 
   /// Check if a team has already submitted for an event
@@ -218,8 +187,7 @@ class SubmissionRepository {
   Future<int> getSubmissionCount(String eventId) async {
     final query = await _collection
         .where('eventId', isEqualTo: eventId)
-        .where('status', whereNotIn: ['draft'])
-        .get();
+        .where('status', whereNotIn: ['draft']).get();
 
     return query.docs.length;
   }
@@ -231,8 +199,6 @@ class SubmissionRepository {
         .where('status', isEqualTo: 'draft')
         .get();
 
-    return query.docs
-        .map((doc) => Submission.fromJson(doc.data()))
-        .toList();
+    return query.docs.map((doc) => Submission.fromJson(doc.data())).toList();
   }
 }

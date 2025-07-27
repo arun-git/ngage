@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -196,38 +195,44 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     try {
       final submissionService = ref.read(submissionServiceProvider);
-      final files = result.files.map((file) => File(file.path!)).toList();
-      final fileNames = result.files.map((file) => file.name).toList();
+      final files = result.files;
 
-      final updatedSubmission = await submissionService.uploadFiles(
+      final updatedSubmission = await submissionService.uploadPlatformFiles(
         submissionId: _submission!.id,
         files: files,
-        fileNames: fileNames,
         fileType: fileType,
         onProgress: (progress) {
-          setState(() {
-            _uploadProgress = progress;
-          });
+          if (mounted) {
+            setState(() {
+              _uploadProgress = progress;
+            });
+          }
         },
       );
 
-      setState(() {
-        _submission = updatedSubmission;
-      });
+      if (mounted) {
+        setState(() {
+          _submission = updatedSubmission;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('${files.length} file(s) uploaded successfully')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('${files.length} file(s) uploaded successfully')),
+        );
+      }
     } catch (e) {
-      setState(() {
-        _error = 'Failed to upload files: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to upload files: $e';
+        });
+      }
     } finally {
-      setState(() {
-        _isUploading = false;
-        _uploadProgress = 0.0;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadProgress = 0.0;
+        });
+      }
     }
   }
 

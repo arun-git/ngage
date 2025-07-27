@@ -9,6 +9,7 @@ import '../widgets/robust_network_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
 import '../submissions/widgets/deadline_status_widget.dart';
 import '../submissions/submissions_list_screen.dart';
+import '../../services/submission_navigation_service.dart';
 
 import 'create_event_inner_page.dart';
 import 'clone_event_screen.dart';
@@ -508,10 +509,10 @@ class EventDetailInnerPage extends ConsumerWidget {
                 const SizedBox(width: 8),
                 if (event.status == EventStatus.active)
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _manageSubmissions(context, event),
-                      icon: const Icon(Icons.settings, size: 16),
-                      label: const Text('Manage'),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _createSubmission(context, event),
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Submit Entry'),
                     ),
                   ),
               ],
@@ -675,6 +676,16 @@ class EventDetailInnerPage extends ConsumerWidget {
           isJudgeView: true,
         ),
       ),
+    );
+  }
+
+  void _createSubmission(BuildContext context, Event event) {
+    // In a real app, you'd get the current user's team ID and member ID from auth state
+    SubmissionNavigationService.showSubmissionActionDialog(
+      context,
+      event: event,
+      teamId: 'current_team_id', // This should come from current user's team
+      memberId: 'current_member_id', // This should come from auth state
     );
   }
 
