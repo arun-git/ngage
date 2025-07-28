@@ -296,6 +296,11 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
       final submittedSubmission =
           await submissionService.submitSubmission(_submission!.id);
 
+      // Invalidate relevant providers to refresh data across the app
+      ref.invalidate(eventSubmissionsProvider(submittedSubmission.eventId));
+      ref.invalidate(
+          eventSubmissionsStreamProvider(submittedSubmission.eventId));
+
       setState(() {
         _submission = submittedSubmission;
       });

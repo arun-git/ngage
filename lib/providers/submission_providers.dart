@@ -67,8 +67,9 @@ final submissionCountProvider =
 /// State notifier for managing submission form state
 class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
   final SubmissionService _submissionService;
+  final Ref _ref;
 
-  SubmissionFormNotifier(this._submissionService)
+  SubmissionFormNotifier(this._submissionService, this._ref)
       : super(SubmissionFormState.initial());
 
   /// Create a new submission
@@ -170,6 +171,10 @@ class SubmissionFormNotifier extends StateNotifier<SubmissionFormState> {
       final submission =
           await _submissionService.submitSubmission(submissionId);
 
+      // Invalidate relevant providers to refresh data
+      _ref.invalidate(eventSubmissionsProvider(submission.eventId));
+      _ref.invalidate(eventSubmissionsStreamProvider(submission.eventId));
+
       state = state.copyWith(
         isLoading: false,
         submission: submission,
@@ -249,5 +254,5 @@ class SubmissionFormState {
 final submissionFormProvider =
     StateNotifierProvider<SubmissionFormNotifier, SubmissionFormState>((ref) {
   final submissionService = ref.watch(submissionServiceProvider);
-  return SubmissionFormNotifier(submissionService);
+  return SubmissionFormNotifier(submissionService, ref);
 });

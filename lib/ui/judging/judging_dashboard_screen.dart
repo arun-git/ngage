@@ -65,6 +65,15 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
           ],
         ),
         actions: [
+          // Refresh button
+          IconButton(
+            onPressed: () {
+              ref.refresh(eventSubmissionsStreamProvider(widget.eventId));
+              ref.refresh(eventScoringStatsProvider(widget.eventId));
+            },
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh submissions',
+          ),
           // Event statistics chip
           eventStatsAsync.when(
             data: (stats) => Padding(
@@ -168,7 +177,7 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
 
   Widget _buildSubmissionsTab() {
     final submissionsAsync =
-        ref.watch(eventSubmissionsProvider(widget.eventId));
+        ref.watch(eventSubmissionsStreamProvider(widget.eventId));
 
     return submissionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -182,7 +191,7 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () =>
-                  ref.refresh(eventSubmissionsProvider(widget.eventId)),
+                  ref.refresh(eventSubmissionsStreamProvider(widget.eventId)),
               child: const Text('Retry'),
             ),
           ],
@@ -362,7 +371,7 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
 
   Widget _buildAnalyticsTab() {
     final submissionsAsync =
-        ref.watch(eventSubmissionsProvider(widget.eventId));
+        ref.watch(eventSubmissionsStreamProvider(widget.eventId));
 
     return submissionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),

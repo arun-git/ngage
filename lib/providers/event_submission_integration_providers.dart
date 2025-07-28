@@ -92,8 +92,9 @@ final eventSubmissionExportProvider =
 class EventSubmissionOperationsNotifier
     extends StateNotifier<EventSubmissionOperationsState> {
   final EventSubmissionIntegrationService _integrationService;
+  final Ref _ref;
 
-  EventSubmissionOperationsNotifier(this._integrationService)
+  EventSubmissionOperationsNotifier(this._integrationService, this._ref)
       : super(EventSubmissionOperationsState.initial());
 
   /// Create submission for team in event
@@ -112,6 +113,12 @@ class EventSubmissionOperationsNotifier
         submittedBy: submittedBy,
         initialContent: initialContent,
       );
+
+      // Invalidate relevant providers to refresh data
+      _ref.invalidate(eventSubmissionsProvider(eventId));
+      _ref.invalidate(eventSubmissionsStreamProvider(eventId));
+      _ref.invalidate(
+          teamSubmissionForEventProvider((eventId: eventId, teamId: teamId)));
 
       state = state.copyWith(
         isLoading: false,
@@ -139,6 +146,10 @@ class EventSubmissionOperationsNotifier
     try {
       await _integrationService.bulkUpdateSubmissionStatuses(
           eventId, submissionStatusUpdates);
+
+      // Invalidate relevant providers to refresh data
+      _ref.invalidate(eventSubmissionsProvider(eventId));
+      _ref.invalidate(eventSubmissionsStreamProvider(eventId));
 
       state = state.copyWith(
         isLoading: false,
@@ -210,5 +221,5 @@ final eventSubmissionOperationsProvider = StateNotifierProvider<
     EventSubmissionOperationsNotifier, EventSubmissionOperationsState>((ref) {
   final integrationService =
       ref.watch(eventSubmissionIntegrationServiceProvider);
-  return EventSubmissionOperationsNotifier(integrationService);
+  return EventSubmissionOperationsNotifier(integrationService, ref);
 });
