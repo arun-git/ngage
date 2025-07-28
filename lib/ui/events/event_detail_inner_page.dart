@@ -5,13 +5,11 @@ import '../../providers/event_providers.dart';
 import '../../providers/event_submission_integration_providers.dart';
 import '../../services/event_submission_integration_service.dart';
 import '../widgets/event_banner_image.dart';
-import '../widgets/robust_network_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
 import '../submissions/widgets/deadline_status_widget.dart';
 import '../submissions/submissions_list_screen.dart';
 import '../../services/submission_navigation_service.dart';
 
-import 'create_event_inner_page.dart';
 import 'clone_event_screen.dart';
 import 'event_access_screen.dart';
 import 'event_prerequisites_screen.dart';
@@ -1441,7 +1439,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
         InkWell(
           onTap: () {
             if (value != null) {
-              _selectDateTime(context, value!, onChanged);
+              _selectDateTime(context, value, onChanged);
             } else {
               // Set default to end time if not set
               _selectDateTime(context, endTime, onChanged);
@@ -1455,7 +1453,7 @@ class _ScheduleEventDialogState extends ConsumerState<_ScheduleEventDialog> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              value != null ? _formatDateTime(value!) : 'Tap to set deadline',
+              value != null ? _formatDateTime(value) : 'Tap to set deadline',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: value != null ? null : Colors.grey.shade600,
                     fontStyle: value != null ? null : FontStyle.italic,

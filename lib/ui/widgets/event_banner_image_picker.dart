@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../services/image_service.dart';
 import '../../providers/image_providers.dart';
 import 'robust_network_image.dart';
 

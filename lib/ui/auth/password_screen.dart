@@ -324,7 +324,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                   Center(
                     child: GestureDetector(
                       onTap: isLoading ? null : _handleForgotPassword,
-                      child: Text(
+                      child: const Text(
                         'Forgot your password?',
                         style: TextStyle(
                           color: Colors.blue,

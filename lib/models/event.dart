@@ -166,8 +166,9 @@ class Event {
     if (endTime != null && now.isAfter(endTime!)) return false;
 
     // Check if submission deadline has passed
-    if (submissionDeadline != null && now.isAfter(submissionDeadline!))
+    if (submissionDeadline != null && now.isAfter(submissionDeadline!)) {
       return false;
+    }
 
     return true;
   }

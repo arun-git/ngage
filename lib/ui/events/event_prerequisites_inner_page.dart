@@ -64,7 +64,7 @@ class _EventPrerequisitesInnerPageState
                       title: widget.event.title,
                       onTap: widget.onBack,
                     ),
-                    BreadcrumbItem(
+                    const BreadcrumbItem(
                       title: 'Prerequisites',
                     ),
                   ],
@@ -365,7 +365,7 @@ class _EventPrerequisitesInnerPageState
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle,
                     size: 16,
                     color: Colors.green,

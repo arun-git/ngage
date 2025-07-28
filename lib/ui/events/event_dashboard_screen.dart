@@ -30,7 +30,7 @@ class EventDashboardScreen extends ConsumerStatefulWidget {
 class _EventDashboardScreenState extends ConsumerState<EventDashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  EventStatus _selectedStatus = EventStatus.active;
+  final EventStatus _selectedStatus = EventStatus.active;
 
   @override
   void initState() {
@@ -96,8 +96,8 @@ class _EventDashboardScreenState extends ConsumerState<EventDashboardScreen>
       floatingActionButton: widget.isAdminView
           ? FloatingActionButton(
               onPressed: () => _createNewEvent(context),
-              child: const Icon(Icons.add),
               tooltip: 'Create Event',
+              child: const Icon(Icons.add),
             )
           : null,
     );
@@ -228,7 +228,7 @@ class _EventDashboardScreenState extends ConsumerState<EventDashboardScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.check_circle,
               size: 64,
               color: Colors.green,
@@ -280,7 +280,7 @@ class _EventDashboardScreenState extends ConsumerState<EventDashboardScreen>
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.warning,
                   color: Colors.orange,
                 ),

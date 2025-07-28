@@ -76,7 +76,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
           data: (rubrics) => submission != null
               ? _buildJudgingInterface(
                   context,
-                  submission!,
+                  submission,
                   rubrics,
                   existingScoreAsync.value,
                 )

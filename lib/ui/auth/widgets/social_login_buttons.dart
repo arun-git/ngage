@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_providers.dart';
 import '../../../services/auth_config_service.dart';
 import '../../../services/slack_oauth_service.dart';
-import '../../../services/teams_oauth_service.dart';
 
 class SocialLoginButtons extends ConsumerWidget {
   final bool isEnabled;

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
-import '../../providers/team_providers.dart';
-import '../../providers/member_providers.dart';
 import '../../providers/auth_providers.dart';
 import '../widgets/breadcrumb_navigation.dart';
 
@@ -73,7 +71,7 @@ class _CloneEventInnerPageState extends ConsumerState<CloneEventInnerPage> {
                 title: 'Events',
                 onTap: widget.onBack,
               ),
-              BreadcrumbItem(
+              const BreadcrumbItem(
                 title: 'Clone Event',
               ),
             ],

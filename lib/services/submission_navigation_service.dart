@@ -132,7 +132,7 @@ class SubmissionNavigationService {
               Text('Deadline: ${_formatDateTime(event.submissionDeadline!)}'),
               const SizedBox(height: 8),
             ],
-            Text('What would you like to do?'),
+            const Text('What would you like to do?'),
           ],
         ),
         actions: [

@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/submission.dart';
 import '../models/enums.dart';
 import '../services/event_submission_integration_service.dart';
-import '../services/event_service.dart';
-import '../services/submission_service.dart';
 import 'event_providers.dart';
 import 'submission_providers.dart';
 

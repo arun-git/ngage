@@ -395,7 +395,7 @@ class EventCardWithSubmissions extends ConsumerWidget {
         ),
         if (stats.hasPendingReviews) ...[
           const SizedBox(width: 16),
-          Icon(
+          const Icon(
             Icons.pending,
             size: 16,
             color: Colors.orange,

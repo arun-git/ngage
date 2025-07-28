@@ -154,7 +154,7 @@ class _TeamLeadManagementScreenState extends ConsumerState<TeamLeadManagementScr
           children: [
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.star,
                   color: Colors.amber,
                   size: 24,
@@ -178,10 +178,10 @@ class _TeamLeadManagementScreenState extends ConsumerState<TeamLeadManagementScr
               ),
               child: Row(
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     radius: 24,
                     backgroundColor: Colors.amber,
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
                       color: Colors.white,
                       size: 24,
@@ -261,7 +261,7 @@ class _TeamLeadManagementScreenState extends ConsumerState<TeamLeadManagementScr
               error: (error, _) => Text('Error loading team members: $error'),
               data: (memberDetails) {
                 final eligibleMembers = memberDetails
-                    .where((member) => !member['isTeamLead'] as bool)
+                    .where((member) => !member['isTeamLead'])
                     .toList();
 
                 if (eligibleMembers.isEmpty) {

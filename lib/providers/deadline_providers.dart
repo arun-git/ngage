@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/deadline_enforcement_service.dart';
 import '../services/notification_service.dart';
 import '../repositories/repository_providers.dart';
-import '../models/event.dart';
 
 /// Provider for the notification service
 final notificationServiceProvider = Provider<NotificationService>((ref) {

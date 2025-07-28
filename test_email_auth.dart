@@ -1,8 +1,6 @@
 // Simple test to demonstrate email authentication flow
 // This file shows how the email authentication works
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Mock demonstration of the email authentication flow
 void main() {

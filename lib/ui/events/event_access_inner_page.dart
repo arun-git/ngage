@@ -65,7 +65,7 @@ class _EventAccessInnerPageState extends ConsumerState<EventAccessInnerPage> {
                       title: widget.event.title,
                       onTap: widget.onBack,
                     ),
-                    BreadcrumbItem(
+                    const BreadcrumbItem(
                       title: 'Access Control',
                     ),
                   ],
@@ -365,7 +365,7 @@ class _EventAccessInnerPageState extends ConsumerState<EventAccessInnerPage> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle,
                       size: 16,
                       color: Colors.green,
