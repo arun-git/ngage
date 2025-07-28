@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/event_submission_integration_providers.dart';
-import '../../providers/auth_providers.dart';
+
 import '../../providers/member_providers.dart';
 import '../../providers/group_providers.dart';
 import '../../services/event_submission_integration_service.dart';
@@ -41,6 +41,12 @@ class EventDetailInnerPage extends ConsumerWidget {
         if (event == null) {
           return _buildNotFoundContent(context);
         }
+
+        // Check if event is draft and user has admin access
+        if (event.isDraft) {
+          return _buildDraftEventWithAdminCheck(context, ref, event);
+        }
+
         return _buildEventDetailContent(context, ref, event);
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -1370,6 +1376,95 @@ class EventDetailInnerPage extends ConsumerWidget {
     } else {
       return '${duration.inMinutes}m';
     }
+  }
+
+  /// Build draft event with admin access check
+  Widget _buildDraftEventWithAdminCheck(
+      BuildContext context, WidgetRef ref, Event event) {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) {
+          return _buildAccessDeniedContent(context);
+        }
+
+        // Check if current member is an admin in this group
+        final isAdminAsync = ref.watch(isGroupAdminProvider((
+          groupId: event.groupId,
+          memberId: member.id,
+        )));
+
+        return isAdminAsync.when(
+          data: (isAdmin) {
+            if (isAdmin) {
+              // Admin can see draft events
+              return _buildEventDetailContent(context, ref, event);
+            } else {
+              // Non-admin cannot see draft events
+              return _buildAccessDeniedContent(context);
+            }
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => _buildAccessDeniedContent(context),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => _buildAccessDeniedContent(context),
+    );
+  }
+
+  /// Build access denied content for non-admin users trying to view draft events
+  Widget _buildAccessDeniedContent(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.admin_panel_settings,
+                size: 80,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Admin Access Required',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                      fontWeight: FontWeight.bold,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'This event is currently in draft status and is only visible to group administrators.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please contact a group administrator if you need access to this event.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Go Back'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

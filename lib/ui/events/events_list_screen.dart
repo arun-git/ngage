@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/group_providers.dart';
-import '../../providers/auth_providers.dart';
+
 import '../../providers/member_providers.dart';
 import '../../utils/firebase_error_handler.dart';
 import '../widgets/selectable_error_message.dart';
@@ -31,8 +31,9 @@ class EventsListScreen extends ConsumerStatefulWidget {
 }
 
 class _EventsListScreenState extends ConsumerState<EventsListScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  TabController? _nonAdminTabController;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
@@ -63,6 +64,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _nonAdminTabController?.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -112,31 +114,8 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
               ],
             ),
           ),
-          // Tabs
-          TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabs: const [
-              Tab(text: 'All'),
-              Tab(text: 'Active'),
-              Tab(text: 'Scheduled'),
-              Tab(text: 'Completed'),
-              Tab(text: 'Draft'),
-            ],
-          ),
-          // Tab content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildAllEventsTab(),
-                _buildStatusEventsTab(EventStatus.active),
-                _buildStatusEventsTab(EventStatus.scheduled),
-                _buildStatusEventsTab(EventStatus.completed),
-                _buildStatusEventsTab(EventStatus.draft),
-              ],
-            ),
-          ),
+          // Tabs with admin check for Draft tab
+          _buildTabsWithAdminCheck(),
         ],
       ),
     );
@@ -150,7 +129,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
     final eventsAsync = ref.watch(groupEventsStreamProvider(widget.groupId));
 
     return eventsAsync.when(
-      data: (events) => _buildEventsList(events),
+      data: (events) => _buildAllEventsWithAdminCheck(events),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => _buildErrorWidget(error),
     );
@@ -166,8 +145,14 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
     return eventsAsync.when(
       data: (allEvents) {
         // Filter events by status
-        final filteredEvents =
+        var filteredEvents =
             allEvents.where((event) => event.status == status).toList();
+
+        // If showing draft events, filter to admin-only
+        if (status == EventStatus.draft) {
+          return _buildDraftEventsWithAdminCheck(filteredEvents);
+        }
+
         return _buildEventsList(filteredEvents);
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -181,9 +166,59 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
     final eventsAsync = ref.watch(searchEventsProvider(params));
 
     return eventsAsync.when(
-      data: (events) => _buildEventsList(events),
+      data: (events) => _buildSearchResultsWithAdminCheck(events),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => _buildErrorWidget(error),
+    );
+  }
+
+  /// Build search results with admin check for draft events
+  Widget _buildSearchResultsWithAdminCheck(List<Event> events) {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) {
+          // If no member, filter out draft events
+          final filteredEvents =
+              events.where((event) => !event.isDraft).toList();
+          return _buildEventsList(filteredEvents);
+        }
+
+        // Check if current member is an admin in this group
+        final isAdminAsync = ref.watch(isGroupAdminProvider((
+          groupId: widget.groupId,
+          memberId: member.id,
+        )));
+
+        return isAdminAsync.when(
+          data: (isAdmin) {
+            List<Event> filteredEvents;
+            if (isAdmin) {
+              // Admin can see all events including drafts in search
+              filteredEvents = events;
+            } else {
+              // Non-admin cannot see draft events in search
+              filteredEvents = events.where((event) => !event.isDraft).toList();
+            }
+            return _buildEventsList(filteredEvents);
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) {
+            // On error, filter out draft events for safety
+            final filteredEvents =
+                events.where((event) => !event.isDraft).toList();
+            return _buildEventsList(filteredEvents);
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) {
+        // On error, filter out draft events for safety
+        final filteredEvents = events.where((event) => !event.isDraft).toList();
+        return _buildEventsList(filteredEvents);
+      },
     );
   }
 
@@ -397,6 +432,235 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
         searchTerm: _searchQuery,
       )));
     }
+  }
+
+  /// Build events list with admin check for draft events
+  Widget _buildAllEventsWithAdminCheck(List<Event> events) {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) {
+          // If no member, filter out draft events
+          final filteredEvents =
+              events.where((event) => !event.isDraft).toList();
+          return _buildEventsList(filteredEvents);
+        }
+
+        // Check if current member is an admin in this group
+        final isAdminAsync = ref.watch(isGroupAdminProvider((
+          groupId: widget.groupId,
+          memberId: member.id,
+        )));
+
+        return isAdminAsync.when(
+          data: (isAdmin) {
+            List<Event> filteredEvents;
+            if (isAdmin) {
+              // Admin can see all events including drafts
+              filteredEvents = events;
+            } else {
+              // Non-admin cannot see draft events
+              filteredEvents = events.where((event) => !event.isDraft).toList();
+            }
+            return _buildEventsList(filteredEvents);
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) {
+            // On error, filter out draft events for safety
+            final filteredEvents =
+                events.where((event) => !event.isDraft).toList();
+            return _buildEventsList(filteredEvents);
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) {
+        // On error, filter out draft events for safety
+        final filteredEvents = events.where((event) => !event.isDraft).toList();
+        return _buildEventsList(filteredEvents);
+      },
+    );
+  }
+
+  /// Build draft events with admin check
+  Widget _buildDraftEventsWithAdminCheck(List<Event> draftEvents) {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) {
+          // If no member, show empty state
+          return _buildEmptyState();
+        }
+
+        // Check if current member is an admin in this group
+        final isAdminAsync = ref.watch(isGroupAdminProvider((
+          groupId: widget.groupId,
+          memberId: member.id,
+        )));
+
+        return isAdminAsync.when(
+          data: (isAdmin) {
+            if (isAdmin) {
+              // Admin can see draft events
+              return _buildEventsList(draftEvents);
+            } else {
+              // Non-admin cannot see draft events - show empty state
+              return _buildNonAdminDraftMessage();
+            }
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => _buildNonAdminDraftMessage(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => _buildNonAdminDraftMessage(),
+    );
+  }
+
+  /// Build message for non-admin users trying to view draft events
+  Widget _buildNonAdminDraftMessage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.admin_panel_settings,
+            size: 64,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Admin Access Required',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Draft events are only visible to group administrators',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build tabs with admin check for Draft tab visibility
+  Widget _buildTabsWithAdminCheck() {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) {
+          // If no member, show tabs without Draft tab
+          return _buildTabsWithoutDraft();
+        }
+
+        // Check if current member is an admin in this group
+        final isAdminAsync = ref.watch(isGroupAdminProvider((
+          groupId: widget.groupId,
+          memberId: member.id,
+        )));
+
+        return isAdminAsync.when(
+          data: (isAdmin) {
+            if (isAdmin) {
+              // Admin can see all tabs including Draft
+              return _buildAllTabs();
+            } else {
+              // Non-admin cannot see Draft tab
+              return _buildTabsWithoutDraft();
+            }
+          },
+          loading: () => _buildTabsWithoutDraft(),
+          error: (_, __) => _buildTabsWithoutDraft(),
+        );
+      },
+      loading: () => _buildTabsWithoutDraft(),
+      error: (_, __) => _buildTabsWithoutDraft(),
+    );
+  }
+
+  /// Build all tabs including Draft (for admins)
+  Widget _buildAllTabs() {
+    return Expanded(
+      child: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabs: const [
+              Tab(text: 'All'),
+              Tab(text: 'Active'),
+              Tab(text: 'Scheduled'),
+              Tab(text: 'Completed'),
+              Tab(text: 'Draft'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAllEventsTab(),
+                _buildStatusEventsTab(EventStatus.active),
+                _buildStatusEventsTab(EventStatus.scheduled),
+                _buildStatusEventsTab(EventStatus.completed),
+                _buildStatusEventsTab(EventStatus.draft),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build tabs without Draft tab (for non-admins)
+  Widget _buildTabsWithoutDraft() {
+    // Create TabController for non-admin if not exists
+    _nonAdminTabController ??= TabController(length: 4, vsync: this);
+
+    // Adjust initial tab index if it was pointing to Draft tab
+    if (_tabController.index == 4) {
+      _nonAdminTabController!.index = 0; // Default to All tab
+    } else if (_tabController.index < 4) {
+      _nonAdminTabController!.index = _tabController.index;
+    }
+
+    return Expanded(
+      child: Column(
+        children: [
+          TabBar(
+            controller: _nonAdminTabController,
+            isScrollable: true,
+            tabs: const [
+              Tab(text: 'All'),
+              Tab(text: 'Active'),
+              Tab(text: 'Scheduled'),
+              Tab(text: 'Completed'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _nonAdminTabController,
+              children: [
+                _buildAllEventsTab(),
+                _buildStatusEventsTab(EventStatus.active),
+                _buildStatusEventsTab(EventStatus.scheduled),
+                _buildStatusEventsTab(EventStatus.completed),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
