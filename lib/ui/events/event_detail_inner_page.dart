@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/event_submission_integration_providers.dart';
+import '../../providers/submission_providers.dart';
 
 import '../../providers/member_providers.dart';
 import '../../providers/group_providers.dart';
@@ -10,6 +11,7 @@ import '../../services/event_submission_integration_service.dart';
 import '../widgets/event_banner_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
 import '../submissions/widgets/deadline_status_widget.dart';
+import '../submissions/widgets/submission_card.dart';
 import '../submissions/submissions_list_screen.dart';
 import '../../services/submission_navigation_service.dart';
 
@@ -150,46 +152,8 @@ class EventDetailInnerPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner image if available
-            if (event.bannerImageUrl != null) ...[
-              Container(
-                width: double.infinity,
-                height: 200,
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: EventBannerImage(
-                    imageUrl: event.bannerImageUrl!,
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ],
-
-            // Status and Type Header
-            // _buildHeaderSection(context, event),
-
-            // const SizedBox(height: 24),
-
-            // Description
-            _buildDescriptionSection(context, event),
-
-            const SizedBox(height: 24),
-
-            // Scheduling Information
-            _buildSchedulingSection(context, event),
+            // Compact header with banner image on left and info on right
+            _buildCompactHeader(context, event),
 
             const SizedBox(height: 24),
 
@@ -286,145 +250,166 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }*/
 
-  Widget _buildDescriptionSection(BuildContext context, Event event) {
+  Widget _buildCompactHeader(BuildContext context, Event event) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              event.title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Banner image on the left
+              if (event.bannerImageUrl != null) ...[
+                Container(
+                  width: 200,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              event.description,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSchedulingSection(BuildContext context, Event event) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Scheduling',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            if (event.startTime != null) ...[
-              _buildScheduleItem(
-                context,
-                icon: Icons.play_arrow,
-                label: 'Start Time',
-                value: _formatDateTime(event.startTime!),
-                color: Colors.green,
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (event.endTime != null) ...[
-              _buildScheduleItem(
-                context,
-                icon: Icons.stop,
-                label: 'End Time',
-                value: _formatDateTime(event.endTime!),
-                color: Colors.red,
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (event.submissionDeadline != null) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildScheduleItem(
-                      context,
-                      icon: Icons.access_time,
-                      label: 'Submission Deadline',
-                      value: _formatDateTime(event.submissionDeadline!),
-                      color: Colors.orange,
-                      subtitle: _getDeadlineStatus(event),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: EventBannerImage(
+                      imageUrl: event.bannerImageUrl!,
+                      width: 200,
+                      height: 150,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  DeadlineStatusWidget(
-                    event: event,
-                    showTime: false,
-                  ),
-                ],
+                ),
+                const SizedBox(width: 16),
+              ],
+
+              // Event info on the right
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title and description
+                    Text(
+                      event.title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      event.description,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Scheduling information
+                    _buildCompactScheduling(context, event),
+                  ],
+                ),
               ),
             ],
-            if (event.startTime == null && event.endTime == null) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.schedule,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Event not scheduled yet',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                  ),
-                ],
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildScheduleItem(
+  Widget _buildCompactScheduling(BuildContext context, Event event) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (event.startTime != null) ...[
+          _buildCompactScheduleItem(
+            context,
+            icon: Icons.play_arrow,
+            label: 'Start',
+            value: _formatDateTime(event.startTime!),
+            color: Colors.green,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (event.endTime != null) ...[
+          _buildCompactScheduleItem(
+            context,
+            icon: Icons.stop,
+            label: 'End',
+            value: _formatDateTime(event.endTime!),
+            color: Colors.red,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (event.submissionDeadline != null) ...[
+          Row(
+            children: [
+              Expanded(
+                child: _buildCompactScheduleItem(
+                  context,
+                  icon: Icons.access_time,
+                  label: 'Deadline',
+                  value: _formatDateTime(event.submissionDeadline!),
+                  color: Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 8),
+              DeadlineStatusWidget(
+                event: event,
+                showTime: false,
+              ),
+            ],
+          ),
+        ],
+        if (event.startTime == null && event.endTime == null) ...[
+          Row(
+            children: [
+              Icon(
+                Icons.schedule,
+                color: Theme.of(context).colorScheme.outline,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Not scheduled',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCompactScheduleItem(
     BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
     required Color color,
-    String? subtitle,
   }) {
     return Row(
       children: [
-        Icon(icon, color: color),
-        const SizedBox(width: 8),
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 4),
+        Text(
+          '$label: ',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-              ),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-              if (subtitle != null)
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w500,
-                      ),
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w500,
                 ),
-            ],
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -524,8 +509,8 @@ class EventDetailInnerPage extends ConsumerWidget {
 
   Widget _buildSubmissionsSection(
       BuildContext context, WidgetRef ref, Event event) {
-    final eventStatsAsync =
-        ref.watch(eventWithSubmissionStatsProvider(event.id));
+    final submissionsAsync =
+        ref.watch(eventSubmissionsStreamProvider(event.id));
 
     return Card(
       child: Padding(
@@ -547,11 +532,12 @@ class EventDetailInnerPage extends ConsumerWidget {
                       ),
                 ),
                 const Spacer(),
-                TextButton.icon(
-                  onPressed: () => _viewAllSubmissions(context, event),
-                  icon: const Icon(Icons.list, size: 16),
-                  label: const Text('View All'),
-                ),
+                if (event.status == EventStatus.active)
+                  ElevatedButton.icon(
+                    onPressed: () => _createSubmission(context, event),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Submit Entry'),
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -566,9 +552,10 @@ class EventDetailInnerPage extends ConsumerWidget {
               const SizedBox(height: 16),
             ],
 
-            // Submission statistics
-            eventStatsAsync.when(
-              data: (stats) => _buildSubmissionStatistics(context, stats),
+            // Submissions list
+            submissionsAsync.when(
+              data: (submissions) =>
+                  _buildSubmissionsList(context, submissions),
               loading: () => const Center(
                 child: Padding(
                   padding: EdgeInsets.all(16),
@@ -601,176 +588,128 @@ class EventDetailInnerPage extends ConsumerWidget {
                 ),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Quick actions
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _viewAllSubmissions(context, event),
-                    icon: const Icon(Icons.visibility, size: 16),
-                    label: const Text('View Submissions'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (event.status == EventStatus.active)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _createSubmission(context, event),
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Submit Entry'),
-                    ),
-                  ),
-              ],
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSubmissionStatistics(
-      BuildContext context, EventWithSubmissionStats stats) {
-    return Column(
-      children: [
-        // Overview row
-        Row(
+  Widget _buildSubmissionsList(
+      BuildContext context, List<Submission> submissions) {
+    // Filter to show only submitted submissions (not drafts)
+    final submittedSubmissions =
+        submissions.where((s) => s.isSubmitted).toList();
+
+    if (submittedSubmissions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
           children: [
-            _buildStatItem(
-              context,
-              'Total',
-              stats.totalSubmissions.toString(),
-              Icons.assignment,
-              Colors.blue,
+            Icon(
+              Icons.assignment_outlined,
+              size: 48,
+              color: Theme.of(context).colorScheme.outline,
             ),
-            const SizedBox(width: 16),
-            _buildStatItem(
-              context,
-              'Submitted',
-              stats.submittedSubmissions.toString(),
-              Icons.send,
-              Colors.green,
+            const SizedBox(height: 16),
+            Text(
+              'No submissions yet',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
             ),
-            const SizedBox(width: 16),
-            _buildStatItem(
-              context,
-              'Draft',
-              stats.draftSubmissions.toString(),
-              Icons.edit,
-              Colors.orange,
+            const SizedBox(height: 8),
+            Text(
+              'Be the first to submit an entry for this event!',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
+      );
+    }
 
-        // Review status row (if there are submissions under review)
-        if (stats.underReviewSubmissions > 0 ||
-            stats.approvedSubmissions > 0 ||
-            stats.rejectedSubmissions > 0) ...[
-          const SizedBox(height: 12),
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Summary info
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
             children: [
-              _buildStatItem(
-                context,
-                'Under Review',
-                stats.underReviewSubmissions.toString(),
-                Icons.hourglass_empty,
-                Colors.purple,
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(width: 16),
-              _buildStatItem(
-                context,
-                'Approved',
-                stats.approvedSubmissions.toString(),
-                Icons.check_circle,
-                Colors.green,
-              ),
-              const SizedBox(width: 16),
-              _buildStatItem(
-                context,
-                'Rejected',
-                stats.rejectedSubmissions.toString(),
-                Icons.cancel,
-                Colors.red,
+              const SizedBox(width: 8),
+              Text(
+                '${submittedSubmissions.length} submission${submittedSubmissions.length == 1 ? '' : 's'} received',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ],
           ),
-        ],
+        ),
+        const SizedBox(height: 16),
 
-        // Progress indicator
-        if (stats.totalSubmissions > 0) ...[
-          const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Submission Progress',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+        // Submissions list (show first 3 submissions)
+        ...submittedSubmissions
+            .take(3)
+            .map((submission) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: SubmissionCard(
+                    submission: submission,
+                    compact: true,
+                    showTeamInfo: true,
+                    onTap: () => _viewSubmissionDetails(context, submission),
                   ),
-                  Text(
-                    '${(stats.submissionRate * 100).toInt()}%',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              LinearProgressIndicator(
-                value: stats.submissionRate,
-                backgroundColor:
-                    Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  stats.submissionRate > 0.7 ? Colors.green : Colors.orange,
-                ),
-              ),
-            ],
+                ))
+            .toList(),
+
+        // Show more button if there are more submissions
+        if (submittedSubmissions.length > 3) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => _viewAllSubmissions(
+                  context,
+                  Event(
+                    id: submittedSubmissions.first.eventId,
+                    title: '',
+                    description: '',
+                    groupId: '',
+                    eventType: EventType.competition,
+                    status: EventStatus.active,
+                    createdBy: '',
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  )),
+              icon: const Icon(Icons.expand_more, size: 16),
+              label:
+                  Text('View All ${submittedSubmissions.length} Submissions'),
+            ),
           ),
         ],
       ],
     );
   }
 
-  Widget _buildStatItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: color,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+  void _viewSubmissionDetails(BuildContext context, Submission submission) {
+    // Navigate to submissions list and highlight the specific submission
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SubmissionsListScreen(
+          eventId: submission.eventId,
+          isJudgeView: true,
         ),
       ),
     );
