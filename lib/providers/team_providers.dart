@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/team_service.dart';
+import '../services/image_service.dart';
 import '../repositories/team_repository.dart';
 import '../models/team.dart';
 import '../models/group_member.dart';
+import 'image_providers.dart';
 
 /// Provider for TeamRepository
 final teamRepositoryProvider = Provider<TeamRepository>((ref) {
@@ -57,9 +60,11 @@ final teamsLedByMemberProvider =
 
 /// State notifier for team creation
 class TeamCreationNotifier extends StateNotifier<AsyncValue<Team?>> {
-  TeamCreationNotifier(this._teamService) : super(const AsyncValue.data(null));
+  TeamCreationNotifier(this._teamService, this._imageService)
+      : super(const AsyncValue.data(null));
 
   final TeamService _teamService;
+  final ImageService _imageService;
 
   Future<void> createTeam({
     required String groupId,
@@ -91,6 +96,83 @@ class TeamCreationNotifier extends StateNotifier<AsyncValue<Team?>> {
     }
   }
 
+  /// Create team with logo file - handles logo upload before team creation
+  Future<void> createTeamWithLogo({
+    required String groupId,
+    required String name,
+    required String description,
+    required String teamLeadId,
+    XFile? logoFile,
+    List<String>? initialMemberIds,
+    int? maxMembers,
+    String? teamType,
+  }) async {
+    state = const AsyncValue.loading();
+
+    String? logoUrl;
+    String? tempLogoUrl;
+
+    try {
+      // Step 1: Upload logo to temporary location if provided
+      if (logoFile != null) {
+        tempLogoUrl = await _imageService.uploadTempTeamLogo(
+          imageFile: logoFile,
+          groupId: groupId,
+        );
+        logoUrl = tempLogoUrl;
+      }
+
+      // Step 2: Create team with logo URL
+      final team = await _teamService.createTeam(
+        groupId: groupId,
+        name: name,
+        description: description,
+        teamLeadId: teamLeadId,
+        logoUrl: logoUrl,
+        initialMemberIds: initialMemberIds,
+        maxMembers: maxMembers,
+        teamType: teamType,
+      );
+
+      // Step 3: Move logo from temp to final location
+      if (tempLogoUrl != null) {
+        try {
+          final finalLogoUrl = await _imageService.moveTempLogoToTeam(
+            tempLogoUrl: tempLogoUrl,
+            teamId: team.id,
+            groupId: groupId,
+          );
+
+          // Update team with final logo URL if it changed
+          if (finalLogoUrl != null && finalLogoUrl != tempLogoUrl) {
+            await _teamService.updateTeamLogo(
+              teamId: team.id,
+              logoUrl: finalLogoUrl,
+            );
+          }
+        } catch (moveError) {
+          // Logo move failed, but team was created successfully
+          // Log the error but don't fail the entire operation
+          print('Warning: Failed to move logo to final location: $moveError');
+        }
+      }
+
+      state = AsyncValue.data(team);
+    } catch (error, stackTrace) {
+      // Clean up temporary logo on failure
+      if (tempLogoUrl != null) {
+        try {
+          await _imageService.cleanupTempLogo(tempLogoUrl);
+        } catch (cleanupError) {
+          // Log cleanup error but don't fail the main error
+          print('Warning: Failed to cleanup temporary logo: $cleanupError');
+        }
+      }
+
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
   void reset() {
     state = const AsyncValue.data(null);
   }
@@ -100,7 +182,8 @@ class TeamCreationNotifier extends StateNotifier<AsyncValue<Team?>> {
 final teamCreationProvider =
     StateNotifierProvider<TeamCreationNotifier, AsyncValue<Team?>>((ref) {
   final teamService = ref.watch(teamServiceProvider);
-  return TeamCreationNotifier(teamService);
+  final imageService = ref.watch(imageServiceProvider);
+  return TeamCreationNotifier(teamService, imageService);
 });
 
 /// State notifier for team management operations

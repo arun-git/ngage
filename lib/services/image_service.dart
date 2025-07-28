@@ -398,6 +398,91 @@ class ImageService {
     return sizeMB <= maxSizeMB;
   }
 
+  /// Upload temporary team logo for new teams (before team creation)
+  Future<String> uploadTempTeamLogo({
+    required XFile imageFile,
+    required String groupId,
+  }) async {
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    return uploadImage(
+      imageFile: imageFile,
+      path: 'temp/teams/$groupId/logos',
+      fileName: 'logo_$tempId.jpg',
+      metadata: {
+        'groupId': groupId,
+        'type': 'temp_team_logo',
+        'uploadedAt': DateTime.now().toIso8601String(),
+        'tempId': tempId,
+      },
+    );
+  }
+
+  /// Move temporary team logo to final team location
+  Future<String?> moveTempLogoToTeam({
+    required String tempLogoUrl,
+    required String teamId,
+    required String groupId,
+  }) async {
+    try {
+      // Get reference to temporary logo
+      final tempRef = _storage.refFromURL(tempLogoUrl);
+
+      // Download the temporary logo data
+      final Uint8List? logoDataNullable = await tempRef.getData();
+      if (logoDataNullable == null) {
+        throw Exception('Failed to download temporary logo data');
+      }
+      final Uint8List logoData = logoDataNullable;
+
+      // Create new reference for final location
+      final finalRef = _storage.ref().child(
+          'teams/$teamId/images/team_logo_${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+      // Upload to final location
+      final uploadTask = finalRef.putData(
+        logoData,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {
+            'teamId': teamId,
+            'groupId': groupId,
+            'type': 'team_logo',
+            'uploadedAt': DateTime.now().toIso8601String(),
+          },
+        ),
+      );
+
+      final snapshot = await uploadTask;
+      final finalUrl = await snapshot.ref.getDownloadURL();
+
+      // Delete temporary logo
+      try {
+        await tempRef.delete();
+      } catch (e) {
+        // Log but don't fail if temp cleanup fails
+        if (kDebugMode) {
+          print('Warning: Failed to delete temporary logo: $e');
+        }
+      }
+
+      return finalUrl;
+    } catch (e) {
+      throw Exception('Failed to move temporary logo to team: $e');
+    }
+  }
+
+  /// Clean up temporary logo if team creation fails
+  Future<void> cleanupTempLogo(String tempLogoUrl) async {
+    try {
+      final tempRef = _storage.refFromURL(tempLogoUrl);
+      await tempRef.delete();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Warning: Failed to cleanup temporary logo: $e');
+      }
+    }
+  }
+
   /// Clean up temporary banner images older than specified duration
   Future<void> cleanupTempBannerImages({
     Duration maxAge = const Duration(hours: 24),
@@ -426,6 +511,38 @@ class ImageService {
     } catch (e) {
       if (kDebugMode) {
         print('Failed to cleanup temp banner images: $e');
+      }
+    }
+  }
+
+  /// Clean up temporary team logos older than specified duration
+  Future<void> cleanupTempTeamLogos({
+    Duration maxAge = const Duration(hours: 24),
+  }) async {
+    try {
+      final tempRef = _storage.ref().child('temp/teams');
+      final result = await tempRef.listAll();
+
+      final cutoffTime = DateTime.now().subtract(maxAge);
+
+      for (final item in result.items) {
+        try {
+          final metadata = await item.getMetadata();
+          final uploadTime = metadata.timeCreated;
+
+          if (uploadTime != null && uploadTime.isBefore(cutoffTime)) {
+            await item.delete();
+          }
+        } catch (e) {
+          // Continue with other items if one fails
+          if (kDebugMode) {
+            print('Failed to process temp logo ${item.name}: $e');
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Failed to cleanup temp team logos: $e');
       }
     }
   }

@@ -592,51 +592,17 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
         : null;
 
     try {
-      // First create the team without logo
-      await ref.read(teamCreationProvider.notifier).createTeam(
+      // Create team with logo in single atomic operation
+      await ref.read(teamCreationProvider.notifier).createTeamWithLogo(
             groupId: widget.groupId,
             name: _nameController.text.trim(),
             description: _descriptionController.text.trim(),
             teamLeadId: _selectedTeamLeadId!,
+            logoFile: _selectedLogoFile, // Pass file directly
             initialMemberIds: _selectedMemberIds.toList(),
             maxMembers: maxMembers,
             teamType: teamType,
           );
-
-      // Get the created team
-      final createdTeamAsync = ref.read(teamCreationProvider);
-      final createdTeam = createdTeamAsync.value;
-
-      // If logo was selected, upload it and update the team
-      if (createdTeam != null && _selectedLogoFile != null) {
-        try {
-          final imageService = ref.read(imageServiceProvider);
-          final logoUrl = await imageService.uploadTeamLogo(
-            imageFile: _selectedLogoFile!,
-            teamId: createdTeam.id,
-            groupId: createdTeam.groupId,
-          );
-
-          // Update team with logo URL
-          final teamManagement = ref.read(teamManagementProvider.notifier);
-          await teamManagement.updateTeamLogo(
-            teamId: createdTeam.id,
-            logoUrl: logoUrl,
-          );
-        } catch (logoError) {
-          // Team was created successfully, but logo upload failed
-          // Show warning but don't fail the entire operation
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content:
-                    Text('Team created but logo upload failed: $logoError'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-          }
-        }
-      }
     } catch (e) {
       // Error handling is already done in the provider listener
       // This catch block is just for safety
