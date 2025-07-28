@@ -13,9 +13,6 @@ import '../submissions/widgets/deadline_status_widget.dart';
 import '../submissions/submissions_list_screen.dart';
 import '../../services/submission_navigation_service.dart';
 
-import 'clone_event_screen.dart';
-import 'event_access_screen.dart';
-import 'event_prerequisites_screen.dart';
 import '../judging/widgets/judge_navigation_widget.dart';
 import '../judging/widgets/group_judges_info_widget.dart';
 
@@ -182,9 +179,9 @@ class EventDetailInnerPage extends ConsumerWidget {
             ],
 
             // Status and Type Header
-            _buildHeaderSection(context, event),
+            // _buildHeaderSection(context, event),
 
-            const SizedBox(height: 24),
+            // const SizedBox(height: 24),
 
             // Description
             _buildDescriptionSection(context, event),
@@ -197,9 +194,9 @@ class EventDetailInnerPage extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Access Control
-            _buildAccessSection(context, event),
+            //_buildAccessSection(context, event),
 
-            const SizedBox(height: 24),
+            //const SizedBox(height: 24),
 
             // Judging Criteria (if any)
             if (event.judgingCriteria.isNotEmpty) ...[
@@ -235,7 +232,7 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeaderSection(BuildContext context, Event event) {
+  /*Widget _buildHeaderSection(BuildContext context, Event event) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -287,7 +284,7 @@ class EventDetailInnerPage extends ConsumerWidget {
         ),
       ),
     );
-  }
+  }*/
 
   Widget _buildDescriptionSection(BuildContext context, Event event) {
     return Card(
@@ -297,7 +294,7 @@ class EventDetailInnerPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Description',
+              event.title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -434,7 +431,7 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAccessSection(BuildContext context, Event event) {
+  /* Widget _buildAccessSection(BuildContext context, Event event) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -483,7 +480,7 @@ class EventDetailInnerPage extends ConsumerWidget {
       ),
     );
   }
-
+*/
   Widget _buildJudgingSection(BuildContext context, Event event) {
     return Card(
       child: Padding(
@@ -800,11 +797,11 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  void _manageSubmissions(BuildContext context, Event event) {
+  /*void _manageSubmissions(BuildContext context, Event event) {
     // Navigate to submission management screen
     // This could be a more advanced management interface
     _viewAllSubmissions(context, event);
-  }
+  }*/
 
   Widget _buildActionButtons(BuildContext context, WidgetRef ref, Event event) {
     // Get current member from auth state
@@ -1065,7 +1062,7 @@ class EventDetailInnerPage extends ConsumerWidget {
         break;
     }
   }
-*/
+
   void _editEvent(BuildContext context, Event event) {
     // Navigate to event edit screen
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1076,7 +1073,7 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  /*void _cloneEvent(BuildContext context, WidgetRef ref, Event event) {
+  void _cloneEvent(BuildContext context, WidgetRef ref, Event event) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CloneEventScreen(
@@ -1107,7 +1104,7 @@ class EventDetailInnerPage extends ConsumerWidget {
         ),
       ),
     );
-  }*/
+  }
 
   Future<void> _deleteEvent(
       BuildContext context, WidgetRef ref, Event event) async {
@@ -1134,7 +1131,7 @@ class EventDetailInnerPage extends ConsumerWidget {
         }
       }
     }
-  }
+  }*/
 
   void _scheduleEvent(BuildContext context, WidgetRef ref, Event event) {
     showDialog(
