@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/models.dart';
 import '../../../providers/group_providers.dart';
+import '../../../providers/auth_providers.dart';
+import '../../../providers/member_providers.dart';
 
-/// Widget that shows group-level judges who can judge events
+/// Widget that shows group-level judges who can judge events (Admin only)
 class GroupJudgesInfoWidget extends ConsumerWidget {
   final String groupId;
   final String groupName;
@@ -16,9 +18,41 @@ class GroupJudgesInfoWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) return const SizedBox.shrink();
+
+        // Check if current member is an admin in this group
+        final membershipAsync = ref.watch(groupMembershipProvider((
+          groupId: groupId,
+          memberId: member.id,
+        )));
+
+        return membershipAsync.when(
+          data: (membership) {
+            if (membership == null || !membership.isAdmin) {
+              return const SizedBox.shrink();
+            }
+
+            return _buildGroupJudgesCard(context, ref);
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildGroupJudgesCard(BuildContext context, WidgetRef ref) {
     final groupMembersAsync = ref.watch(groupMembersProvider(groupId));
 
     return Card(
+      color: Colors.red.withOpacity(0.05),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -27,14 +61,15 @@ class GroupJudgesInfoWidget extends ConsumerWidget {
             Row(
               children: [
                 const Icon(
-                  Icons.people,
-                  color: Colors.purple,
+                  Icons.admin_panel_settings,
+                  color: Colors.red,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Group Judges',
+                  'Group Judges Management',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: Colors.red,
                       ),
                 ),
                 const Spacer(),
@@ -47,7 +82,7 @@ class GroupJudgesInfoWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Members with judge permissions can score submissions for all events in this group.',
+              'As an admin, you can manage judge permissions. Members with judge permissions can score submissions for all events in this group.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),

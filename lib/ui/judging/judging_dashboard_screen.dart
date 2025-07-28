@@ -4,6 +4,9 @@ import '../../models/models.dart';
 import '../../providers/judging_providers.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/submission_providers.dart';
+import '../../providers/auth_providers.dart';
+import '../../providers/member_providers.dart';
+import '../../providers/group_providers.dart';
 import 'widgets/rubric_management_widget.dart';
 import 'widgets/score_aggregation_widget.dart';
 import 'widgets/leaderboard_widget.dart';
@@ -45,16 +48,58 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final eventAsync = ref.watch(eventProvider(widget.eventId));
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return eventAsync.when(
+      data: (event) {
+        if (event == null) {
+          return _buildErrorScaffold(context, 'Event not found');
+        }
+
+        return activeMemberAsync.when(
+          data: (member) {
+            if (member == null) {
+              return _buildErrorScaffold(context, 'Authentication required');
+            }
+
+            // Check if current member has judge or admin permissions
+            final membershipAsync = ref.watch(groupMembershipProvider((
+              groupId: event.groupId,
+              memberId: member.id,
+            )));
+
+            return membershipAsync.when(
+              data: (membership) {
+                if (membership == null || !membership.canJudge) {
+                  return _buildAccessDeniedScaffold(context);
+                }
+
+                return _buildJudgingDashboard(context, event, membership.role);
+              },
+              loading: () => _buildLoadingScaffold(context),
+              error: (error, _) => _buildErrorScaffold(
+                  context, 'Error checking permissions: $error'),
+            );
+          },
+          loading: () => _buildLoadingScaffold(context),
+          error: (error, _) =>
+              _buildErrorScaffold(context, 'Authentication error: $error'),
+        );
+      },
+      loading: () => _buildLoadingScaffold(context),
+      error: (error, _) =>
+          _buildErrorScaffold(context, 'Error loading event: $error'),
+    );
+  }
+
+  Widget _buildJudgingDashboard(
+      BuildContext context, Event event, GroupRole userRole) {
     final eventStatsAsync =
         ref.watch(eventScoringStatsProvider(widget.eventId));
 
     return Scaffold(
       appBar: AppBar(
-        title: eventAsync.when(
-          data: (event) => Text('Judging: ${event?.title ?? 'Event'}'),
-          loading: () => const Text('Judging Dashboard'),
-          error: (_, __) => const Text('Judging Dashboard'),
-        ),
+        title: Text('Judging: ${event.title}'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -456,5 +501,96 @@ class _JudgingDashboardScreenState extends ConsumerState<JudgingDashboardScreen>
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
         '${dateTime.hour.toString().padLeft(2, '0')}:'
         '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildLoadingScaffold(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Judging Dashboard'),
+      ),
+      body: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildErrorScaffold(BuildContext context, String message) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Judging Dashboard'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Go Back'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccessDeniedScaffold(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Judging Dashboard'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.block,
+              size: 64,
+              color: Colors.orange,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Access Denied',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You need admin or judge permissions to access the judging dashboard.',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Contact your group administrator to request judge permissions.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Go Back'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

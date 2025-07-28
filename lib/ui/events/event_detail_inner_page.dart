@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/event_submission_integration_providers.dart';
+import '../../providers/auth_providers.dart';
+import '../../providers/member_providers.dart';
+import '../../providers/group_providers.dart';
 import '../../services/event_submission_integration_service.dart';
 import '../widgets/event_banner_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
@@ -45,98 +48,184 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEventDetailContent(
+  /*PreferredSizeWidget _buildEventAppBar(
       BuildContext context, WidgetRef ref, Event event) {
-    return Column(
-      children: [
-        // Event content
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Banner image if available
-                if (event.bannerImageUrl != null) ...[
-                  Container(
-                    width: double.infinity,
-                    height: 200,
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: EventBannerImage(
-                        imageUrl: event.bannerImageUrl!,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return AppBar(
+      title: Text(event.title),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: onBack,
+      ),
+      actions: [
+        activeMemberAsync.when(
+          data: (member) {
+            if (member == null) return const SizedBox.shrink();
+
+            // Check if current member is an admin in this group
+            final membershipAsync = ref.watch(groupMembershipProvider((
+              groupId: event.groupId,
+              memberId: member.id,
+            )));
+
+            return membershipAsync.when(
+              data: (membership) {
+                // Only show menu actions to admin users
+                if (membership == null || !membership.isAdmin) {
+                  return const SizedBox.shrink();
+                }
+
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'Event Actions (Admin)',
+                  onSelected: (action) =>
+                      _handleMenuAction(context, ref, event, action),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: ListTile(
+                        leading: Icon(Icons.edit, color: Colors.red),
+                        title: Text('Edit Event'),
+                        contentPadding: EdgeInsets.zero,
                       ),
                     ),
-                  ),
-                ],
-
-                // Status and Type Header
-                _buildHeaderSection(context, event),
-
-                const SizedBox(height: 24),
-
-                // Description
-                _buildDescriptionSection(context, event),
-
-                const SizedBox(height: 24),
-
-                // Scheduling Information
-                _buildSchedulingSection(context, event),
-
-                const SizedBox(height: 24),
-
-                // Access Control
-                _buildAccessSection(context, event),
-
-                const SizedBox(height: 24),
-
-                // Judging Criteria (if any)
-                if (event.judgingCriteria.isNotEmpty) ...[
-                  _buildJudgingSection(context, event),
-                  const SizedBox(height: 24),
-                ],
-
-                // Submissions Section
-                _buildSubmissionsSection(context, ref, event),
-                const SizedBox(height: 24),
-
-                // Judge Navigation (if user is a judge)
-                JudgeNavigationWidget(
-                  eventId: event.id,
-                  currentUserId:
-                      'current_user_id', // This should come from auth state
-                  event: event,
-                ),
-                const SizedBox(height: 16),
-
-                // Group Judges Information (for admins)
-                GroupJudgesInfoWidget(
-                  groupId: event.groupId,
-                  groupName: groupName,
-                ),
-                const SizedBox(height: 24),
-
-                // Action Buttons
-                _buildActionButtons(context, ref, event),
-              ],
-            ),
-          ),
+                    const PopupMenuItem(
+                      value: 'clone',
+                      child: ListTile(
+                        leading: Icon(Icons.copy, color: Colors.blue),
+                        title: Text('Clone Event'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'access',
+                      child: ListTile(
+                        leading: Icon(Icons.security, color: Colors.orange),
+                        title: Text('Manage Access'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'prerequisites',
+                      child: ListTile(
+                        leading: Icon(Icons.checklist, color: Colors.purple),
+                        title: Text('Prerequisites'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        leading: Icon(Icons.delete, color: Colors.red),
+                        title: Text('Delete Event'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
         ),
       ],
+    );
+  }*/
+
+  Widget _buildEventDetailContent(
+      BuildContext context, WidgetRef ref, Event event) {
+    return Scaffold(
+      //appBar: _buildEventAppBar(context, ref, event),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Banner image if available
+            if (event.bannerImageUrl != null) ...[
+              Container(
+                width: double.infinity,
+                height: 200,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: EventBannerImage(
+                    imageUrl: event.bannerImageUrl!,
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ],
+
+            // Status and Type Header
+            _buildHeaderSection(context, event),
+
+            const SizedBox(height: 24),
+
+            // Description
+            _buildDescriptionSection(context, event),
+
+            const SizedBox(height: 24),
+
+            // Scheduling Information
+            _buildSchedulingSection(context, event),
+
+            const SizedBox(height: 24),
+
+            // Access Control
+            _buildAccessSection(context, event),
+
+            const SizedBox(height: 24),
+
+            // Judging Criteria (if any)
+            if (event.judgingCriteria.isNotEmpty) ...[
+              _buildJudgingSection(context, event),
+              const SizedBox(height: 24),
+            ],
+
+            // Submissions Section
+            _buildSubmissionsSection(context, ref, event),
+            const SizedBox(height: 24),
+
+            // Judge Navigation (if user is a judge)
+            JudgeNavigationWidget(
+              eventId: event.id,
+              currentUserId:
+                  'current_user_id', // Note: This is used for dashboard navigation
+              event: event,
+            ),
+            const SizedBox(height: 16),
+
+            // Group Judges Information (for admins)
+            GroupJudgesInfoWidget(
+              groupId: event.groupId,
+              groupName: groupName,
+            ),
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            _buildActionButtons(context, ref, event),
+          ],
+        ),
+      ),
     );
   }
 
@@ -712,50 +801,173 @@ class EventDetailInnerPage extends ConsumerWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, WidgetRef ref, Event event) {
-    return Column(
-      children: [
-        if (event.status == EventStatus.draft) ...[
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => _scheduleEvent(context, ref, event),
-              icon: const Icon(Icons.schedule),
-              label: const Text('Schedule Event'),
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) return const SizedBox.shrink();
+
+        // Check if current member has admin or judge permissions in this group
+        final membershipAsync = ref.watch(groupMembershipProvider((
+          groupId: event.groupId,
+          memberId: member.id,
+        )));
+
+        return membershipAsync.when(
+          data: (membership) {
+            // Only show action buttons to users who can judge (admin or judge roles)
+            if (membership == null || !membership.canJudge) {
+              return const SizedBox.shrink();
+            }
+
+            return _buildEventManagementActions(
+                context, ref, event, membership.role);
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildEventManagementActions(
+      BuildContext context, WidgetRef ref, Event event, GroupRole userRole) {
+    final isAdmin = userRole == GroupRole.admin;
+
+    return Card(
+      color: (isAdmin ? Colors.red : Colors.purple).withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isAdmin ? Icons.admin_panel_settings : Icons.gavel,
+                  color: isAdmin ? Colors.red : Colors.purple,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Event Management',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: isAdmin ? Colors.red : Colors.purple,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color:
+                        (isAdmin ? Colors.red : Colors.purple).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: (isAdmin ? Colors.red : Colors.purple)
+                            .withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    isAdmin ? 'Admin' : 'Judge',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isAdmin ? Colors.red : Colors.purple,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-        ],
-        if (event.status == EventStatus.scheduled) ...[
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => _activateEvent(context, ref, event),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Activate Event'),
+            const SizedBox(height: 8),
+            Text(
+              isAdmin
+                  ? 'As an admin, you can manage event lifecycle and scheduling.'
+                  : 'As a judge, you can help manage event progression.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
             ),
-          ),
-          const SizedBox(height: 8),
-        ],
-        if (event.status == EventStatus.active) ...[
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => _completeEvent(context, ref, event),
-              icon: const Icon(Icons.check_circle),
-              label: const Text('Complete Event'),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-        /*SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _editEvent(context, event),
-            icon: const Icon(Icons.edit),
-            label: const Text('Edit Event'),
-          ),
-        ),*/
-      ],
+            const SizedBox(height: 16),
+
+            // Event status-based action buttons
+            if (event.status == EventStatus.draft) ...[
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => _scheduleEvent(context, ref, event),
+                  icon: const Icon(Icons.schedule),
+                  label: const Text('Schedule Event'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isAdmin ? Colors.red : Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (event.status == EventStatus.scheduled) ...[
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => _activateEvent(context, ref, event),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Activate Event'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isAdmin ? Colors.red : Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (event.status == EventStatus.active) ...[
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => _completeEvent(context, ref, event),
+                  icon: const Icon(Icons.check_circle),
+                  label: const Text('Complete Event'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isAdmin ? Colors.red : Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // Additional info for regular members
+            if (event.status == EventStatus.completed) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle,
+                        color: Colors.green, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Event Completed',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -833,15 +1045,6 @@ class EventDetailInnerPage extends ConsumerWidget {
       case 'edit':
         _editEvent(context, event);
         break;
-      case 'schedule':
-        _scheduleEvent(context, ref, event);
-        break;
-      case 'activate':
-        _activateEvent(context, ref, event);
-        break;
-      case 'complete':
-        _completeEvent(context, ref, event);
-        break;
       case 'clone':
         _cloneEvent(context, ref, event);
         break;
@@ -856,19 +1059,76 @@ class EventDetailInnerPage extends ConsumerWidget {
         break;
     }
   }
-
+*/
   void _editEvent(BuildContext context, Event event) {
+    // Navigate to event edit screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Edit Event functionality - Navigate to edit screen'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  /*void _cloneEvent(BuildContext context, WidgetRef ref, Event event) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => CreateEventInnerPage(
-          groupId: event.groupId,
+        builder: (context) => CloneEventScreen(
+          originalEvent: event,
           groupName: groupName,
-          eventToEdit: event,
-          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
+  void _manageAccess(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EventAccessScreen(
+          event: event,
+          groupName: groupName,
+        ),
+      ),
+    );
+  }
+
+  void _managePrerequisites(BuildContext context, Event event) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EventPrerequisitesScreen(
+          event: event,
+          groupName: groupName,
         ),
       ),
     );
   }*/
+
+  Future<void> _deleteEvent(
+      BuildContext context, WidgetRef ref, Event event) async {
+    final confirmed = await _showConfirmationDialog(
+      context,
+      'Delete Event',
+      'Are you sure you want to delete "${event.title}"? This action cannot be undone.',
+    );
+
+    if (confirmed && context.mounted) {
+      try {
+        await ref.read(eventServiceProvider).deleteEvent(event.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event deleted successfully')),
+          );
+          onBack(); // Navigate back after deletion
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete event: $e')),
+          );
+        }
+      }
+    }
+  }
 
   void _scheduleEvent(BuildContext context, WidgetRef ref, Event event) {
     showDialog(
@@ -935,7 +1195,7 @@ class EventDetailInnerPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _cloneEvent(
+  /*Future<void> _cloneEvent(
       BuildContext context, WidgetRef ref, Event event) async {
     final result = await Navigator.of(context).push<Event>(
       MaterialPageRoute(
@@ -995,7 +1255,7 @@ class EventDetailInnerPage extends ConsumerWidget {
       }
     }
   }
-
+*/
   Future<bool> _showConfirmationDialog(
     BuildContext context,
     String title,

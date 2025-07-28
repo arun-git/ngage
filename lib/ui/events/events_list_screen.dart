@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/group_providers.dart';
+import '../../providers/auth_providers.dart';
+import '../../providers/member_providers.dart';
 import '../../utils/firebase_error_handler.dart';
 import '../widgets/selectable_error_message.dart';
 import 'event_card.dart';
@@ -106,11 +108,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
                   ),
                 ),
                 const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: _navigateToCreateEvent,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create'),
-                ),
+                _buildCreateEventButton(),
               ],
             ),
           ),
@@ -262,11 +260,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
           ),
           if (_searchQuery.isEmpty) ...[
             const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _navigateToCreateEvent,
-              icon: const Icon(Icons.add),
-              label: const Text('Create Event'),
-            ),
+            _buildCreateEventButton(),
           ],
         ],
       ),
@@ -317,6 +311,44 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
           ),*/
         ],
       ),
+    );
+  }
+
+  Widget _buildCreateEventButton() {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) return const SizedBox.shrink();
+
+        // Check if current member is an admin in this group
+        final isAdminAsync = ref.watch(isGroupAdminProvider((
+          groupId: widget.groupId,
+          memberId: member.id,
+        )));
+
+        return isAdminAsync.when(
+          data: (isAdmin) {
+            // Only show create event button to admin users
+            if (!isAdmin) return const SizedBox.shrink();
+
+            return FilledButton.icon(
+              onPressed: _navigateToCreateEvent,
+              icon: const Icon(Icons.add),
+              label: const Text('Create Event'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 

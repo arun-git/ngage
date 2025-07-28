@@ -390,85 +390,101 @@ class _GroupDetailInnerPageState extends ConsumerState<GroupDetailInnerPage>
 
   Widget _buildEventPopupMenu(Group group) {
     final eventAsync = ref.watch(eventStreamProvider(_selectedEventId!));
+    final isAdminAsync = ref.watch(isGroupAdminProvider((
+      groupId: widget.groupId,
+      memberId: widget.memberId,
+    )));
 
     return eventAsync.when(
       data: (event) {
         if (event == null) return const SizedBox.shrink();
 
-        return PopupMenuButton<String>(
-          onSelected: (value) =>
-              _handleEventMenuAction(context, ref, event, value),
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: ListTile(
-                leading: Icon(Icons.edit),
-                title: Text('Edit Event'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            if (event.status == EventStatus.draft)
-              const PopupMenuItem(
-                value: 'schedule',
-                child: ListTile(
-                  leading: Icon(Icons.schedule),
-                  title: Text('Schedule Event'),
-                  contentPadding: EdgeInsets.zero,
+        return isAdminAsync.when(
+          data: (isAdmin) {
+            // Only show event menu to admin users
+            if (!isAdmin) return const SizedBox.shrink();
+
+            return PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              tooltip: 'Event Actions (Admin)',
+              onSelected: (value) =>
+                  _handleEventMenuAction(context, ref, event, value),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: ListTile(
+                    leading: Icon(Icons.edit, color: Colors.red),
+                    title: Text('Edit Event'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
-            if (event.status == EventStatus.scheduled)
-              const PopupMenuItem(
-                value: 'activate',
-                child: ListTile(
-                  leading: Icon(Icons.play_arrow),
-                  title: Text('Activate Event'),
-                  contentPadding: EdgeInsets.zero,
+                if (event.status == EventStatus.draft)
+                  const PopupMenuItem(
+                    value: 'schedule',
+                    child: ListTile(
+                      leading: Icon(Icons.schedule, color: Colors.blue),
+                      title: Text('Schedule Event'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                if (event.status == EventStatus.scheduled)
+                  const PopupMenuItem(
+                    value: 'activate',
+                    child: ListTile(
+                      leading: Icon(Icons.play_arrow, color: Colors.green),
+                      title: Text('Activate Event'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                if (event.status == EventStatus.active)
+                  const PopupMenuItem(
+                    value: 'complete',
+                    child: ListTile(
+                      leading: Icon(Icons.check_circle, color: Colors.green),
+                      title: Text('Complete Event'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                const PopupMenuItem(
+                  value: 'clone',
+                  child: ListTile(
+                    leading: Icon(Icons.copy, color: Colors.blue),
+                    title: Text('Clone Event'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
-            if (event.status == EventStatus.active)
-              const PopupMenuItem(
-                value: 'complete',
-                child: ListTile(
-                  leading: Icon(Icons.check_circle),
-                  title: Text('Complete Event'),
-                  contentPadding: EdgeInsets.zero,
+                const PopupMenuItem(
+                  value: 'access',
+                  child: ListTile(
+                    leading: Icon(Icons.security, color: Colors.orange),
+                    title: Text('Manage Access'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
-            const PopupMenuItem(
-              value: 'clone',
-              child: ListTile(
-                leading: Icon(Icons.copy),
-                title: Text('Clone Event'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'access',
-              child: ListTile(
-                leading: Icon(Icons.security),
-                title: Text('Manage Access'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'prerequisites',
-              child: ListTile(
-                leading: Icon(Icons.lock_outline),
-                title: Text('Prerequisites'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            if (event.status == EventStatus.draft)
-              const PopupMenuItem(
-                value: 'delete',
-                child: ListTile(
-                  leading: Icon(Icons.delete, color: Colors.red),
-                  title:
-                      Text('Delete Event', style: TextStyle(color: Colors.red)),
-                  contentPadding: EdgeInsets.zero,
+                const PopupMenuItem(
+                  value: 'prerequisites',
+                  child: ListTile(
+                    leading: Icon(Icons.lock_outline, color: Colors.purple),
+                    title: Text('Prerequisites'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
-          ],
+                if (event.status == EventStatus.draft) const PopupMenuDivider(),
+                if (event.status == EventStatus.draft)
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: ListTile(
+                      leading: Icon(Icons.delete, color: Colors.red),
+                      title: Text('Delete Event',
+                          style: TextStyle(color: Colors.red)),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+              ],
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
         );
       },
       loading: () => const SizedBox.shrink(),

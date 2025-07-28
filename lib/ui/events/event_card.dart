@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
+import '../../providers/auth_providers.dart';
+import '../../providers/member_providers.dart';
+import '../../providers/group_providers.dart';
 import '../widgets/event_banner_image.dart';
 
-/// Card widget displaying event information
-class EventCard extends StatelessWidget {
+/// Card widget displaying event information with role-based action controls
+class EventCard extends ConsumerWidget {
   final Event event;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
@@ -18,7 +22,7 @@ class EventCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       elevation: 2,
       clipBehavior: Clip.antiAlias,
@@ -111,7 +115,7 @@ class EventCard extends StatelessWidget {
                     // Action buttons if provided
                     if (onEdit != null || onDelete != null) ...[
                       const SizedBox(height: 8),
-                      _buildCompactActionButtons(context),
+                      _buildCompactActionButtons(context, ref),
                     ],
                   ],
                 ),
@@ -317,26 +321,73 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactActionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        if (onEdit != null)
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit, size: 16),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-          ),
-        if (onDelete != null)
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete, size: 16),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-            color: Theme.of(context).colorScheme.error,
-          ),
-      ],
+  Widget _buildCompactActionButtons(BuildContext context, WidgetRef ref) {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) return const SizedBox.shrink();
+
+        // Check if current member is an admin in this group
+        final membershipAsync = ref.watch(groupMembershipProvider((
+          groupId: event.groupId,
+          memberId: member.id,
+        )));
+
+        return membershipAsync.when(
+          data: (membership) {
+            // Only show action buttons to admin users
+            if (membership == null || !membership.isAdmin) {
+              return const SizedBox.shrink();
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (onEdit != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: IconButton(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 24, minHeight: 24),
+                      color: Colors.red,
+                      tooltip: 'Edit Event (Admin)',
+                    ),
+                  ),
+                if (onEdit != null && onDelete != null)
+                  const SizedBox(width: 4),
+                if (onDelete != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: IconButton(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 24, minHeight: 24),
+                      color: Colors.red,
+                      tooltip: 'Delete Event (Admin)',
+                    ),
+                  ),
+              ],
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 
