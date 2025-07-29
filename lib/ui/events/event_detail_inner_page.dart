@@ -177,76 +177,22 @@ class EventDetailInnerPage extends ConsumerWidget {
                   'current_user_id', // Note: This is used for dashboard navigation
               event: event,
             ),
-            const SizedBox(height: 16),
+            // const SizedBox(height: 16),
 
             // Group Judges Information (for admins)
-            GroupJudgesInfoWidget(
+            /* GroupJudgesInfoWidget(
               groupId: event.groupId,
               groupName: groupName,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 24),*/
 
             // Action Buttons
-            _buildActionButtons(context, ref, event),
+            // _buildActionButtons(context, ref, event),
           ],
         ),
       ),
     );
   }
-
-  /*Widget _buildHeaderSection(BuildContext context, Event event) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  _getEventTypeIcon(event.eventType),
-                  size: 32,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getEventTypeLabel(event.eventType),
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                      ),
-                      const SizedBox(height: 4),
-                      _buildStatusChip(context, event),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Created: ${_formatDateTime(event.createdAt)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-            ),
-            if (event.updatedAt != event.createdAt)
-              Text(
-                'Updated: ${_formatDateTime(event.updatedAt)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }*/
 
   Widget _buildCompactHeader(BuildContext context, Event event) {
     return Card(
