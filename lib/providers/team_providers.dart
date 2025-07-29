@@ -188,16 +188,21 @@ final teamCreationProvider =
 
 /// State notifier for team management operations
 class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
-  TeamManagementNotifier(this._teamService)
+  TeamManagementNotifier(this._teamService, this._ref)
       : super(const AsyncValue.data(null));
 
   final TeamService _teamService;
+  final Ref _ref;
 
   Future<void> addMemberToTeam(String teamId, String memberId) async {
     state = const AsyncValue.loading();
 
     try {
       await _teamService.addMemberToTeam(teamId: teamId, memberId: memberId);
+
+      // Invalidate available members provider to refresh the list
+      _ref.invalidate(availableMembersProvider(teamId));
+
       state = const AsyncValue.data('Member added successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -209,6 +214,10 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
 
     try {
       await _teamService.addMembersToTeam(teamId: teamId, memberIds: memberIds);
+
+      // Invalidate available members provider to refresh the list
+      _ref.invalidate(availableMembersProvider(teamId));
+
       final count = memberIds.length;
       state = AsyncValue.data(
           '$count member${count == 1 ? '' : 's'} added successfully');
@@ -223,6 +232,10 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     try {
       await _teamService.removeMemberFromTeam(
           teamId: teamId, memberId: memberId);
+
+      // Invalidate available members provider to refresh the list
+      _ref.invalidate(availableMembersProvider(teamId));
+
       state = const AsyncValue.data('Member removed successfully');
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -236,6 +249,10 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
     try {
       await _teamService.removeMembersFromTeam(
           teamId: teamId, memberIds: memberIds);
+
+      // Invalidate available members provider to refresh the list
+      _ref.invalidate(availableMembersProvider(teamId));
+
       final count = memberIds.length;
       state = AsyncValue.data(
           '$count member${count == 1 ? '' : 's'} removed successfully');
@@ -338,7 +355,7 @@ class TeamManagementNotifier extends StateNotifier<AsyncValue<String?>> {
 final teamManagementProvider =
     StateNotifierProvider<TeamManagementNotifier, AsyncValue<String?>>((ref) {
   final teamService = ref.watch(teamServiceProvider);
-  return TeamManagementNotifier(teamService);
+  return TeamManagementNotifier(teamService, ref);
 });
 
 /// Provider to check if a member can be added to a team

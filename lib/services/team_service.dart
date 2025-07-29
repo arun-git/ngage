@@ -40,6 +40,13 @@ class TeamService {
 
       for (final memberId in memberIds) {
         await _validateGroupMembership(groupId, memberId);
+        // Check if member is already assigned to another team in the group
+        final isAssigned = await isMemberAssignedToTeam(groupId, memberId);
+        if (isAssigned) {
+          final existingTeam = await getMemberTeamInGroup(groupId, memberId);
+          throw ArgumentError(
+              'Member $memberId is already assigned to team "${existingTeam?.name}" in this group. A member can only be assigned to one team per group.');
+        }
       }
 
       final now = DateTime.now();
@@ -193,6 +200,9 @@ class TeamService {
         throw ArgumentError('Member is already in this team');
       }
 
+      // Check if member is already assigned to another team in the same group
+      await _validateMemberNotInOtherTeams(team.groupId, memberId, teamId);
+
       // Check team capacity
       if (team.isAtCapacity) {
         throw StateError(
@@ -231,6 +241,11 @@ class TeamService {
 
       if (newMemberIds.isEmpty) {
         throw ArgumentError('All specified members are already in this team');
+      }
+
+      // Check if any members are already assigned to other teams in the same group
+      for (final memberId in newMemberIds) {
+        await _validateMemberNotInOtherTeams(team.groupId, memberId, teamId);
       }
 
       // Check team capacity
@@ -409,7 +424,7 @@ class TeamService {
     }
   }
 
-  /// Get available members for a team (group members not in the team)
+  /// Get available members for a team (group members not assigned to any team in the group)
   Future<List<GroupMember>> getAvailableMembersForTeam(String teamId) async {
     try {
       final team = await getTeam(teamId);
@@ -422,11 +437,20 @@ class TeamService {
           .where('groupId', isEqualTo: team.groupId)
           .get();
 
-      // Filter out members already in the team
+      // Get all teams in the group to check for existing assignments
+      final groupTeams = await getGroupTeams(team.groupId);
+
+      // Create a set of all member IDs already assigned to teams in this group
+      final assignedMemberIds = <String>{};
+      for (final groupTeam in groupTeams) {
+        assignedMemberIds.addAll(groupTeam.memberIds);
+      }
+
+      // Filter out members already assigned to any team in the group
       final availableMembers = groupMembers.docs
           .map(
               (doc) => GroupMember.fromJson(doc.data() as Map<String, dynamic>))
-          .where((member) => !team.hasMember(member.memberId))
+          .where((member) => !assignedMemberIds.contains(member.memberId))
           .toList();
 
       return availableMembers;
@@ -454,7 +478,15 @@ class TeamService {
           .limit(1)
           .get();
 
-      return groupMembership.docs.isNotEmpty;
+      if (groupMembership.docs.isEmpty) return false;
+
+      // Check if member is already assigned to another team in the same group
+      try {
+        await _validateMemberNotInOtherTeams(team.groupId, memberId, teamId);
+        return true;
+      } catch (e) {
+        return false;
+      }
     } catch (e) {
       return false;
     }
@@ -602,6 +634,73 @@ class TeamService {
     }
   }
 
+  /// Get unassigned members in a group (members not assigned to any team)
+  Future<List<GroupMember>> getUnassignedMembersInGroup(String groupId) async {
+    try {
+      // Get all group members
+      final groupMembers = await _groupMembersCollection
+          .where('groupId', isEqualTo: groupId)
+          .get();
+
+      // Get all teams in the group
+      final groupTeams = await getGroupTeams(groupId);
+
+      // Create a set of all member IDs already assigned to teams
+      final assignedMemberIds = <String>{};
+      for (final team in groupTeams) {
+        assignedMemberIds.addAll(team.memberIds);
+      }
+
+      // Filter out members already assigned to any team
+      final unassignedMembers = groupMembers.docs
+          .map(
+              (doc) => GroupMember.fromJson(doc.data() as Map<String, dynamic>))
+          .where((member) => !assignedMemberIds.contains(member.memberId))
+          .toList();
+
+      return unassignedMembers;
+    } catch (e) {
+      throw Exception('Failed to get unassigned members in group: $e');
+    }
+  }
+
+  /// Check if a member is already assigned to any team in a group
+  Future<bool> isMemberAssignedToTeam(String groupId, String memberId) async {
+    try {
+      final memberTeams = await _teamsCollection
+          .where('groupId', isEqualTo: groupId)
+          .where('memberIds', arrayContains: memberId)
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      return memberTeams.docs.isNotEmpty;
+    } catch (e) {
+      throw Exception('Failed to check member team assignment: $e');
+    }
+  }
+
+  /// Get the team a member is assigned to in a specific group (if any)
+  Future<Team?> getMemberTeamInGroup(String groupId, String memberId) async {
+    try {
+      final memberTeams = await _teamsCollection
+          .where('groupId', isEqualTo: groupId)
+          .where('memberIds', arrayContains: memberId)
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (memberTeams.docs.isEmpty) {
+        return null;
+      }
+
+      final data = memberTeams.docs.first.data() as Map<String, dynamic>;
+      return Team.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to get member team in group: $e');
+    }
+  }
+
   /// Private helper to validate group membership
   Future<void> _validateGroupMembership(String groupId, String memberId) async {
     final membership = await _groupMembersCollection
@@ -612,6 +711,26 @@ class TeamService {
 
     if (membership.docs.isEmpty) {
       throw ArgumentError('Member $memberId is not part of group $groupId');
+    }
+  }
+
+  /// Private helper to validate member is not assigned to other teams in the group
+  Future<void> _validateMemberNotInOtherTeams(
+      String groupId, String memberId, String excludeTeamId) async {
+    final memberTeams = await _teamsCollection
+        .where('groupId', isEqualTo: groupId)
+        .where('memberIds', arrayContains: memberId)
+        .where('isActive', isEqualTo: true)
+        .get();
+
+    // Check if member is in any other team (excluding the current team)
+    for (final doc in memberTeams.docs) {
+      if (doc.id != excludeTeamId) {
+        final teamData = doc.data() as Map<String, dynamic>;
+        final teamName = teamData['name'] as String;
+        throw ArgumentError(
+            'Member $memberId is already assigned to team "$teamName" in this group. A member can only be assigned to one team per group.');
+      }
     }
   }
 }
