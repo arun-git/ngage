@@ -145,22 +145,57 @@ class _HomePageState extends ConsumerState<HomePage> {
     ),
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
-    final currentMember = ref.watch(currentMemberProvider);
-    final memberProfiles = ref.watch(memberProfilesProvider);
+  List<Widget> _buildAppBarActions(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 400;
 
-    return PlatformNavigation(
-      title: 'Ngage',
-      items: _navigationItems,
-      selectedIndex: _selectedIndex,
-      onItemSelected: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      actions: [
+    if (isNarrowScreen) {
+      // On very narrow screens, combine everything into a single menu
+      return [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert),
+          tooltip: 'Menu',
+          onSelected: (value) {
+            switch (value) {
+              case 'notifications':
+                // TODO: Show notifications
+                break;
+              case 'logout':
+                ref.read(authStateProvider.notifier).signOut();
+                break;
+              case 'settings':
+                // TODO: Navigate to settings
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'notifications',
+              child: ListTile(
+                leading: Icon(Icons.notifications),
+                title: Text('Notifications'),
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'settings',
+              child: ListTile(
+                leading: Icon(Icons.settings),
+                title: Text('Settings'),
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'logout',
+              child: ListTile(
+                leading: Icon(Icons.logout),
+                title: Text('Logout'),
+              ),
+            ),
+          ],
+        ),
+      ];
+    } else {
+      // On wider screens, show separate buttons
+      return [
         IconButton(
           icon: const Icon(Icons.notifications),
           onPressed: () {
@@ -198,7 +233,26 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ],
         ),
-      ],
+      ];
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = ref.watch(currentUserProvider);
+    final currentMember = ref.watch(currentMemberProvider);
+    final memberProfiles = ref.watch(memberProfilesProvider);
+
+    return PlatformNavigation(
+      title: 'Ngage',
+      items: _navigationItems,
+      selectedIndex: _selectedIndex,
+      onItemSelected: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
+      actions: _buildAppBarActions(context),
       body: _buildBody(context, currentUser, currentMember, memberProfiles),
       floatingActionButton: _selectedIndex == 0 &&
               !_showCreateGroup &&

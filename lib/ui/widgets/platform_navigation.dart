@@ -131,8 +131,14 @@ class _PlatformNavigationState extends State<PlatformNavigation> {
   Widget _buildTabletNavigation(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Flexible(
+          child: Text(
+            widget.title,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         actions: widget.actions,
+        titleSpacing: 0, // Reduce title spacing to give more room for actions
       ),
       drawer: _buildNavigationDrawer(context),
       body: widget.body,
@@ -145,8 +151,14 @@ class _PlatformNavigationState extends State<PlatformNavigation> {
   Widget _buildMobileNavigation(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Flexible(
+          child: Text(
+            widget.title,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         actions: widget.actions,
+        titleSpacing: 0, // Reduce title spacing to give more room for actions
       ),
       drawer: widget.items.length > 5 ? _buildNavigationDrawer(context) : null,
       body: widget.body,
