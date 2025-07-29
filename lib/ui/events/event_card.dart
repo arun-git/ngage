@@ -49,25 +49,30 @@ class EventCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Status chip at the top
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: _buildCompactStatusChip(context),
+                    // Status chip and title row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event.title,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildCompactStatusChip(context),
+                      ],
                     ),
 
                     const SizedBox(height: 4),
-
-                    // Title
-                    Text(
-                      event.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 6),
 
                     // Event type
                     Row(
@@ -100,13 +105,13 @@ class EventCard extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         event.description,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 3,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 11,
+                            ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-
-                    const SizedBox(height: 6),
 
                     // Compact time information
                     _buildCompactTimeInfo(context),
@@ -122,25 +127,6 @@ class EventCard extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(BuildContext context) {
-    final (color, backgroundColor) = _getStatusColors(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        _getStatusLabel(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
       ),
     );
   }
@@ -162,161 +148,6 @@ class EventCard extends ConsumerWidget {
               fontSize: 10,
             ),
       ),
-    );
-  }
-
-  Widget _buildTimeInfo(BuildContext context) {
-    if (event.startTime == null && event.endTime == null) {
-      return Row(
-        children: [
-          Icon(
-            Icons.schedule,
-            size: 16,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'Not scheduled',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (event.startTime != null)
-          Row(
-            children: [
-              Icon(
-                Icons.play_arrow,
-                size: 16,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Starts: ${_formatDateTime(event.startTime!)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-              ),
-            ],
-          ),
-        if (event.endTime != null) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                Icons.stop,
-                size: 16,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Ends: ${_formatDateTime(event.endTime!)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDeadlineInfo(BuildContext context) {
-    final deadline = event.submissionDeadline!;
-    final timeUntil = event.timeUntilDeadline;
-    final isOverdue = timeUntil == null && DateTime.now().isAfter(deadline);
-
-    Color color = Theme.of(context).colorScheme.outline;
-    IconData icon = Icons.access_time;
-    String text = 'Deadline: ${_formatDateTime(deadline)}';
-
-    if (isOverdue) {
-      color = Theme.of(context).colorScheme.error;
-      icon = Icons.warning;
-      text = 'Deadline passed: ${_formatDateTime(deadline)}';
-    } else if (timeUntil != null) {
-      if (timeUntil.inHours < 24) {
-        color = Theme.of(context).colorScheme.error;
-        icon = Icons.warning;
-      } else if (timeUntil.inDays < 3) {
-        color = Colors.orange;
-        icon = Icons.schedule;
-      }
-      text =
-          'Deadline: ${_formatDateTime(deadline)} (${_formatDuration(timeUntil)} left)';
-    }
-
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            text,
-            style:
-                Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccessInfo(BuildContext context) {
-    final isOpen = event.isOpenEvent;
-    final icon = isOpen ? Icons.public : Icons.group;
-    final text = isOpen
-        ? 'Open to all teams'
-        : 'Restricted to ${event.eligibleTeamIds?.length ?? 0} team(s)';
-
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Theme.of(context).colorScheme.outline,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        if (onEdit != null)
-          TextButton.icon(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit, size: 16),
-            label: const Text('Edit'),
-          ),
-        if (onDelete != null) ...[
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete, size: 16),
-            label: const Text('Delete'),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-          ),
-        ],
-      ],
     );
   }
 

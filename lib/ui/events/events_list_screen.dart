@@ -251,7 +251,7 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen>
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.75,
+              childAspectRatio: 1.2,
             ),
             itemCount: events.length,
             itemBuilder: (context, index) {
