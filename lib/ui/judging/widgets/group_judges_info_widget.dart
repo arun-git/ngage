@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/models.dart';
 import '../../../providers/group_providers.dart';
-import '../../../providers/auth_providers.dart';
 import '../../../providers/member_providers.dart';
 
 /// Widget that shows group-level judges who can judge events (Admin only)

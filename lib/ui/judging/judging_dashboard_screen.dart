@@ -4,7 +4,6 @@ import '../../models/models.dart';
 import '../../providers/judging_providers.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/submission_providers.dart';
-import '../../providers/auth_providers.dart';
 import '../../providers/member_providers.dart';
 import '../../providers/group_providers.dart';
 import 'widgets/rubric_management_widget.dart';

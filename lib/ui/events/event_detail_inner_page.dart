@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
-import '../../providers/event_submission_integration_providers.dart';
 import '../../providers/submission_providers.dart';
 
 import '../../providers/member_providers.dart';
 import '../../providers/group_providers.dart';
-import '../../services/event_submission_integration_service.dart';
 import '../widgets/event_banner_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
 import '../submissions/widgets/deadline_status_widget.dart';
