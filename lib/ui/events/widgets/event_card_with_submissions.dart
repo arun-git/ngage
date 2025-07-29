@@ -4,6 +4,7 @@ import '../../../models/event.dart';
 import '../../../models/submission.dart';
 import '../../../models/enums.dart';
 import '../../../providers/event_submission_integration_providers.dart';
+import '../../../providers/auth_providers.dart';
 import '../../../services/event_submission_integration_service.dart';
 import '../../submissions/widgets/deadline_countdown_widget.dart';
 import '../../submissions/widgets/deadline_status_widget.dart';
@@ -566,7 +567,12 @@ class EventCardWithSubmissions extends ConsumerWidget {
   void _manageEvent(BuildContext context) {
     // Navigate to event management screen
     // This would be implemented based on your navigation structure
-    print('Manage event: ${event.title}');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:
+            Text('Event management for "${event.title}" - Feature coming soon'),
+      ),
+    );
   }
 
   void _createSubmission(BuildContext context) {
@@ -574,10 +580,23 @@ class EventCardWithSubmissions extends ConsumerWidget {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => SubmissionScreen(
-          eventId: event.id,
-          teamId: teamId!,
-          memberId: 'current_member_id', // This should come from auth state
+        builder: (context) => Consumer(
+          builder: (context, ref, child) {
+            final currentMember = ref.watch(currentMemberProvider);
+            if (currentMember == null) {
+              return const Scaffold(
+                body: Center(
+                  child: Text('Authentication required'),
+                ),
+              );
+            }
+
+            return SubmissionScreen(
+              eventId: event.id,
+              teamId: teamId!,
+              memberId: currentMember.id,
+            );
+          },
         ),
       ),
     );
@@ -612,7 +631,12 @@ class EventCardWithSubmissions extends ConsumerWidget {
   void _viewEventDetails(BuildContext context) {
     // Navigate to event details screen
     // This would be implemented based on your navigation structure
-    // For now, just print - you would navigate to EventDetailInnerPage
-    print('View event details: ${event.title}');
+    // For now, show a snackbar - you would navigate to EventDetailInnerPage
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:
+            Text('Event details for "${event.title}" - Feature coming soon'),
+      ),
+    );
   }
 }

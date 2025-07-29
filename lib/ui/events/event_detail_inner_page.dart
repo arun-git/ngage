@@ -7,6 +7,7 @@ import '../../providers/judging_providers.dart';
 
 import '../../providers/member_providers.dart';
 import '../../providers/group_providers.dart';
+import '../../providers/team_providers.dart';
 import '../widgets/event_banner_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
 import '../submissions/widgets/deadline_status_widget.dart';
@@ -463,7 +464,7 @@ class EventDetailInnerPage extends ConsumerWidget {
                 const Spacer(),
                 if (event.status == EventStatus.active)
                   ElevatedButton.icon(
-                    onPressed: () => _createSubmission(context, event),
+                    onPressed: () => _createSubmission(context, ref, event),
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('Submit Entry'),
                   ),
@@ -581,13 +582,69 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  void _createSubmission(BuildContext context, Event event) {
-    // In a real app, you'd get the current user's team ID and member ID from auth state
-    SubmissionNavigationService.showSubmissionActionDialog(
-      context,
-      event: event,
-      teamId: 'current_team_id', // This should come from current user's team
-      memberId: 'current_member_id', // This should come from auth state
+  void _createSubmission(BuildContext context, WidgetRef ref, Event event) {
+    final activeMemberAsync = ref.read(activeMemberProvider);
+
+    activeMemberAsync.when(
+      data: (member) {
+        if (member == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Please log in to create a submission')),
+          );
+          return;
+        }
+
+        // Get member's teams and find the one for this group
+        final memberTeamsAsync = ref.read(memberTeamsProvider(member.id));
+
+        memberTeamsAsync.when(
+          data: (teams) {
+            // Find the team that belongs to this event's group
+            final groupTeams =
+                teams.where((team) => team.groupId == event.groupId).toList();
+            final groupTeam = groupTeams.isNotEmpty ? groupTeams.first : null;
+
+            if (groupTeam == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        'You must be part of a team in this group to create a submission')),
+              );
+              return;
+            }
+
+            SubmissionNavigationService.showSubmissionActionDialog(
+              context,
+              event: event,
+              teamId: groupTeam.id,
+              memberId: member.id,
+            );
+          },
+          loading: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Loading team information...')),
+            );
+          },
+          error: (error, _) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content:
+                      SelectableText('Error loading team information: $error')),
+            );
+          },
+        );
+      },
+      loading: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Loading user information...')),
+        );
+      },
+      error: (error, _) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading user information: $error')),
+        );
+      },
     );
   }
 
