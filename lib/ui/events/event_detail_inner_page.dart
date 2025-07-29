@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/models.dart';
 import '../../providers/event_providers.dart';
 import '../../providers/submission_providers.dart';
+import '../../providers/judging_providers.dart';
 
 import '../../providers/member_providers.dart';
 import '../../providers/group_providers.dart';
@@ -15,6 +16,10 @@ import '../../services/submission_navigation_service.dart';
 
 import '../judging/widgets/judge_navigation_widget.dart';
 import '../judging/widgets/group_judges_info_widget.dart';
+import '../judging/widgets/rubric_management_widget.dart';
+import '../judging/widgets/score_aggregation_widget.dart';
+import '../judging/widgets/leaderboard_widget.dart';
+import '../judging/judge_submission_screen.dart';
 
 /// Inner page showing event details that replaces the group content
 class EventDetailInnerPage extends ConsumerWidget {
@@ -51,96 +56,6 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  /*PreferredSizeWidget _buildEventAppBar(
-      BuildContext context, WidgetRef ref, Event event) {
-    // Get current member from auth state
-    final activeMemberAsync = ref.watch(activeMemberProvider);
-
-    return AppBar(
-      title: Text(event.title),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: onBack,
-      ),
-      actions: [
-        activeMemberAsync.when(
-          data: (member) {
-            if (member == null) return const SizedBox.shrink();
-
-            // Check if current member is an admin in this group
-            final membershipAsync = ref.watch(groupMembershipProvider((
-              groupId: event.groupId,
-              memberId: member.id,
-            )));
-
-            return membershipAsync.when(
-              data: (membership) {
-                // Only show menu actions to admin users
-                if (membership == null || !membership.isAdmin) {
-                  return const SizedBox.shrink();
-                }
-
-                return PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  tooltip: 'Event Actions (Admin)',
-                  onSelected: (action) =>
-                      _handleMenuAction(context, ref, event, action),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: ListTile(
-                        leading: Icon(Icons.edit, color: Colors.red),
-                        title: Text('Edit Event'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'clone',
-                      child: ListTile(
-                        leading: Icon(Icons.copy, color: Colors.blue),
-                        title: Text('Clone Event'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'access',
-                      child: ListTile(
-                        leading: Icon(Icons.security, color: Colors.orange),
-                        title: Text('Manage Access'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'prerequisites',
-                      child: ListTile(
-                        leading: Icon(Icons.checklist, color: Colors.purple),
-                        title: Text('Prerequisites'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: ListTile(
-                        leading: Icon(Icons.delete, color: Colors.red),
-                        title: Text('Delete Event'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ],
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            );
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
-        ),
-      ],
-    );
-  }*/
-
   Widget _buildEventDetailContent(
       BuildContext context, WidgetRef ref, Event event) {
     return Scaffold(
@@ -155,11 +70,6 @@ class EventDetailInnerPage extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            // Access Control
-            //_buildAccessSection(context, event),
-
-            //const SizedBox(height: 24),
-
             // Judging Criteria (if any)
             if (event.judgingCriteria.isNotEmpty) ...[
               _buildJudgingSection(context, event),
@@ -171,12 +81,12 @@ class EventDetailInnerPage extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Judge Navigation (if user is a judge)
-            JudgeNavigationWidget(
+            /*JudgeNavigationWidget(
               eventId: event.id,
               currentUserId:
                   'current_user_id', // Note: This is used for dashboard navigation
               event: event,
-            ),
+            ),*/
             // const SizedBox(height: 16),
 
             // Group Judges Information (for admins)
@@ -453,89 +363,7 @@ class EventDetailInnerPage extends ConsumerWidget {
 
   Widget _buildSubmissionsSection(
       BuildContext context, WidgetRef ref, Event event) {
-    final submissionsAsync =
-        ref.watch(eventSubmissionsStreamProvider(event.id));
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.assignment,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Submissions',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const Spacer(),
-                if (event.status == EventStatus.active)
-                  ElevatedButton.icon(
-                    onPressed: () => _createSubmission(context, event),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Submit Entry'),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Deadline countdown if active
-            if (event.submissionDeadline != null &&
-                event.status == EventStatus.active) ...[
-              DeadlineCountdownWidget(
-                event: event,
-                compact: true,
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // Submissions list
-            submissionsAsync.when(
-              data: (submissions) =>
-                  _buildSubmissionsList(context, submissions),
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-              error: (error, stack) => Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: Theme.of(context).colorScheme.error,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Error loading submissions: $error',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return _buildJudgingDashboardContent(context, ref, event);
   }
 
   Widget _buildSubmissionsList(
@@ -647,6 +475,178 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildJudgingDashboardContent(
+      BuildContext context, WidgetRef ref, Event event) {
+    // Get current member from auth state
+    final activeMemberAsync = ref.watch(activeMemberProvider);
+
+    return activeMemberAsync.when(
+      data: (member) {
+        if (member == null) return const SizedBox.shrink();
+
+        // Check if current member has judge or admin permissions in this group
+        final membershipAsync = ref.watch(groupMembershipProvider((
+          groupId: event.groupId,
+          memberId: member.id,
+        )));
+
+        return membershipAsync.when(
+          data: (membership) {
+            if (membership == null || !membership.canJudge) {
+              return _buildRegularSubmissionsView(context, ref, event);
+            }
+
+            return _buildJudgingDashboardTabs(context, ref, event, member.id);
+          },
+          loading: () => _buildRegularSubmissionsView(context, ref, event),
+          error: (_, __) => _buildRegularSubmissionsView(context, ref, event),
+        );
+      },
+      loading: () => _buildRegularSubmissionsView(context, ref, event),
+      error: (_, __) => _buildRegularSubmissionsView(context, ref, event),
+    );
+  }
+
+  Widget _buildRegularSubmissionsView(
+      BuildContext context, WidgetRef ref, Event event) {
+    final submissionsAsync =
+        ref.watch(eventSubmissionsStreamProvider(event.id));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.assignment,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Submissions',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const Spacer(),
+                if (event.status == EventStatus.active)
+                  ElevatedButton.icon(
+                    onPressed: () => _createSubmission(context, event),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Submit Entry'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Deadline countdown if active
+            if (event.submissionDeadline != null &&
+                event.status == EventStatus.active) ...[
+              DeadlineCountdownWidget(
+                event: event,
+                compact: true,
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Submissions list
+            submissionsAsync.when(
+              data: (submissions) =>
+                  _buildSubmissionsList(context, submissions),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, stack) => Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Theme.of(context).colorScheme.error,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Error loading submissions: $error',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJudgingDashboardTabs(
+      BuildContext context, WidgetRef ref, Event event, String currentUserId) {
+    return DefaultTabController(
+      length: 4,
+      child: Card(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.dashboard,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Judging Dashboard',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            TabBar(
+              tabs: const [
+                Tab(icon: Icon(Icons.rule), text: 'Rubrics'),
+                Tab(icon: Icon(Icons.assignment), text: 'Submissions'),
+                Tab(icon: Icon(Icons.analytics), text: 'Analytics'),
+                Tab(icon: Icon(Icons.leaderboard), text: 'Leaderboard'),
+              ],
+              labelColor: Theme.of(context).colorScheme.primary,
+              unselectedLabelColor: Theme.of(context).colorScheme.outline,
+            ),
+            SizedBox(
+              height: 600, // Fixed height for the tab content
+              child: TabBarView(
+                children: [
+                  _buildRubricsTab(context, ref, event.id, currentUserId),
+                  _buildJudgingSubmissionsTab(
+                      context, ref, event.id, currentUserId),
+                  _buildAnalyticsTab(context, ref, event.id),
+                  _buildLeaderboardTab(context, ref, event.id),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _viewSubmissionDetails(BuildContext context, Submission submission) {
     // Navigate to submissions list and highlight the specific submission
     Navigator.of(context).push(
@@ -677,6 +677,309 @@ class EventDetailInnerPage extends ConsumerWidget {
       event: event,
       teamId: 'current_team_id', // This should come from current user's team
       memberId: 'current_member_id', // This should come from auth state
+    );
+  }
+
+  Widget _buildRubricsTab(BuildContext context, WidgetRef ref, String eventId,
+      String currentUserId) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RubricManagementWidget(
+            eventId: eventId,
+            createdBy: currentUserId,
+            onRubricSelected: (rubric) {
+              // Handle rubric selection if needed
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJudgingSubmissionsTab(BuildContext context, WidgetRef ref,
+      String eventId, String currentUserId) {
+    final submissionsAsync = ref.watch(eventSubmissionsStreamProvider(eventId));
+
+    return submissionsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error loading submissions: $error'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () =>
+                  ref.refresh(eventSubmissionsStreamProvider(eventId)),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+      data: (submissions) => _buildJudgingSubmissionsList(
+          context, ref, submissions, currentUserId, eventId),
+    );
+  }
+
+  Widget _buildJudgingSubmissionsList(BuildContext context, WidgetRef ref,
+      List<Submission> submissions, String currentUserId, String eventId) {
+    final submittedSubmissions = submissions
+        .where((s) =>
+            s.status == SubmissionStatus.submitted ||
+            s.status == SubmissionStatus.approved)
+        .toList();
+
+    if (submittedSubmissions.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No submissions to judge yet'),
+            Text(
+              'Submissions will appear here once teams submit their entries.',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: submittedSubmissions.length,
+      itemBuilder: (context, index) {
+        final submission = submittedSubmissions[index];
+        return _buildJudgingSubmissionCard(
+            context, ref, submission, currentUserId, eventId);
+      },
+    );
+  }
+
+  Widget _buildJudgingSubmissionCard(BuildContext context, WidgetRef ref,
+      Submission submission, String currentUserId, String eventId) {
+    final hasJudgeScoredAsync =
+        ref.watch(hasJudgeScoredProvider((submission.id, currentUserId)));
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Team ${submission.teamId}',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Submitted: ${_formatDateTime(submission.submittedAt ?? submission.createdAt)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                _buildJudgingSubmissionStatusChip(submission.status),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Submission content preview
+            if (submission.content.isNotEmpty) ...[
+              Text(
+                'Content:',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              ...submission.content.entries
+                  .take(3)
+                  .map((entry) => SelectableText(
+                        '${entry.key}: ${entry.value.toString()}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      )),
+              if (submission.content.length > 3)
+                SelectableText(
+                  '... and ${submission.content.length - 3} more items',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              const SizedBox(height: 12),
+            ],
+
+            // Judge status and actions
+            hasJudgeScoredAsync.when(
+              data: (hasScored) => Row(
+                children: [
+                  if (hasScored)
+                    const Chip(
+                      avatar: Icon(Icons.check, size: 16),
+                      label: Text('You have scored this'),
+                      backgroundColor: Colors.green,
+                    )
+                  else
+                    const Chip(
+                      avatar: Icon(Icons.pending, size: 16),
+                      label: Text('Pending your score'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  const Spacer(),
+                  ElevatedButton.icon(
+                    onPressed: () => _navigateToJudgeSubmission(
+                        context, submission, eventId, currentUserId),
+                    icon: Icon(hasScored ? Icons.edit : Icons.score),
+                    label: Text(hasScored ? 'Edit Score' : 'Score Now'),
+                  ),
+                ],
+              ),
+              loading: () => const CircularProgressIndicator(),
+              error: (_, __) => const Text('Error loading judge status'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJudgingSubmissionStatusChip(SubmissionStatus status) {
+    Color color;
+    String label;
+
+    switch (status) {
+      case SubmissionStatus.draft:
+        color = Colors.grey;
+        label = 'Draft';
+        break;
+      case SubmissionStatus.submitted:
+        color = Colors.blue;
+        label = 'Submitted';
+        break;
+      case SubmissionStatus.underReview:
+        color = Colors.orange;
+        label = 'Under Review';
+        break;
+      case SubmissionStatus.approved:
+        color = Colors.green;
+        label = 'Approved';
+        break;
+      case SubmissionStatus.rejected:
+        color = Colors.red;
+        label = 'Rejected';
+        break;
+    }
+
+    return Chip(
+      label: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 12),
+      ),
+      backgroundColor: color.withOpacity(0.1),
+      side: BorderSide(color: color),
+    );
+  }
+
+  Widget _buildAnalyticsTab(
+      BuildContext context, WidgetRef ref, String eventId) {
+    final submissionsAsync = ref.watch(eventSubmissionsStreamProvider(eventId));
+
+    return submissionsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
+      data: (submissions) {
+        final submittedSubmissions = submissions
+            .where((s) =>
+                s.status == SubmissionStatus.submitted ||
+                s.status == SubmissionStatus.approved)
+            .toList();
+
+        if (submittedSubmissions.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.analytics, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text('No analytics available yet'),
+                Text(
+                  'Analytics will appear once submissions are scored.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: submittedSubmissions.length,
+          itemBuilder: (context, index) {
+            final submission = submittedSubmissions[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Team ${submission.teamId}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  ScoreAggregationWidget(
+                    submissionId: submission.id,
+                    showIndividualScores: true,
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildLeaderboardTab(
+      BuildContext context, WidgetRef ref, String eventId) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: LeaderboardWidget(
+        eventId: eventId,
+        showCriteriaBreakdown: true,
+      ),
+    );
+  }
+
+  void _navigateToJudgeSubmission(BuildContext context, Submission submission,
+      String eventId, String judgeId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => JudgeSubmissionScreen(
+          submissionId: submission.id,
+          eventId: eventId,
+          judgeId: judgeId,
+        ),
+      ),
     );
   }
 
