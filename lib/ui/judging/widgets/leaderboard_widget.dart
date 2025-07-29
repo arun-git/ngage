@@ -27,27 +27,29 @@ class LeaderboardWidget extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(Icons.leaderboard, color: Theme.of(context).primaryColor),
+                /*Icon(Icons.leaderboard, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   'Leaderboard',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const Spacer(),
+                const Spacer(),*/
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: () => ref.refresh(eventLeaderboardProvider(eventId)),
+                  onPressed: () =>
+                      ref.refresh(eventLeaderboardProvider(eventId)),
                   tooltip: 'Refresh Leaderboard',
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            
             leaderboardAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => _buildErrorWidget(error),
-              data: (leaderboard) => _buildLeaderboardContent(context, leaderboard),
+              data: (leaderboard) =>
+                  _buildLeaderboardContent(context, leaderboard),
             ),
           ],
         ),
@@ -65,7 +67,8 @@ class LeaderboardWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildLeaderboardContent(BuildContext context, Leaderboard leaderboard) {
+  Widget _buildLeaderboardContent(
+      BuildContext context, Leaderboard leaderboard) {
     if (!leaderboard.hasEntries) {
       return const Column(
         children: [
@@ -81,7 +84,7 @@ class LeaderboardWidget extends ConsumerWidget {
       );
     }
 
-    final entries = maxEntries != null 
+    final entries = maxEntries != null
         ? leaderboard.getTopEntries(maxEntries!)
         : leaderboard.entries;
 
@@ -90,15 +93,15 @@ class LeaderboardWidget extends ConsumerWidget {
       children: [
         // Leaderboard metadata
         _buildLeaderboardStats(context, leaderboard),
-        
+
         const SizedBox(height: 16),
-        
+
         // Top 3 podium (if showing full leaderboard)
         if (maxEntries == null && entries.length >= 3) ...[
           _buildPodium(context, leaderboard.getTopEntries(3)),
           const SizedBox(height: 24),
         ],
-        
+
         // Full leaderboard table
         _buildLeaderboardTable(context, entries),
       ],
@@ -107,7 +110,7 @@ class LeaderboardWidget extends ConsumerWidget {
 
   Widget _buildLeaderboardStats(BuildContext context, Leaderboard leaderboard) {
     final metadata = leaderboard.metadata;
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -153,7 +156,8 @@ class LeaderboardWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildStatItem(
+      BuildContext context, String label, String value, IconData icon) {
     return Column(
       children: [
         Icon(icon, size: 16, color: Colors.grey[600]),
@@ -161,8 +165,8 @@ class LeaderboardWidget extends ConsumerWidget {
         Text(
           value,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         Text(
           label,
@@ -181,11 +185,11 @@ class LeaderboardWidget extends ConsumerWidget {
           // Second place
           if (topThree.length > 1)
             Expanded(child: _buildPodiumPlace(context, topThree[1], 2, 140)),
-          
+
           // First place
           if (topThree.isNotEmpty)
             Expanded(child: _buildPodiumPlace(context, topThree[0], 1, 180)),
-          
+
           // Third place
           if (topThree.length > 2)
             Expanded(child: _buildPodiumPlace(context, topThree[2], 3, 100)),
@@ -194,10 +198,11 @@ class LeaderboardWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildPodiumPlace(BuildContext context, LeaderboardEntry entry, int place, double height) {
+  Widget _buildPodiumPlace(
+      BuildContext context, LeaderboardEntry entry, int place, double height) {
     Color color;
     IconData icon;
-    
+
     switch (place) {
       case 1:
         color = Colors.amber;
@@ -225,44 +230,45 @@ class LeaderboardWidget extends ConsumerWidget {
           // Trophy icon
           Icon(icon, color: color, size: 32),
           const SizedBox(height: 8),
-          
+
           // Team name
           Text(
             entry.teamName,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          
+
           // Score
           Text(
             entry.averageScore.toStringAsFixed(1),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Podium base
           Container(
             height: height - 100,
             decoration: BoxDecoration(
               color: color.withOpacity(0.3),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
               border: Border.all(color: color),
             ),
             child: Center(
               child: Text(
                 place.toString(),
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ),
           ),
@@ -271,7 +277,8 @@ class LeaderboardWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildLeaderboardTable(BuildContext context, List<LeaderboardEntry> entries) {
+  Widget _buildLeaderboardTable(
+      BuildContext context, List<LeaderboardEntry> entries) {
     return Column(
       children: [
         // Table header
@@ -283,22 +290,37 @@ class LeaderboardWidget extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              const SizedBox(width: 40, child: Text('Rank', style: TextStyle(fontWeight: FontWeight.bold))),
-              const Expanded(flex: 3, child: Text('Team', style: TextStyle(fontWeight: FontWeight.bold))),
-              const Expanded(flex: 2, child: Text('Score', style: TextStyle(fontWeight: FontWeight.bold))),
-              const Expanded(flex: 2, child: Text('Submissions', style: TextStyle(fontWeight: FontWeight.bold))),
+              const SizedBox(
+                  width: 40,
+                  child: Text('Rank',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              const Expanded(
+                  flex: 3,
+                  child: Text('Team',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              const Expanded(
+                  flex: 2,
+                  child: Text('Score',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              const Expanded(
+                  flex: 2,
+                  child: Text('Submissions',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
               if (showCriteriaBreakdown)
-                const Expanded(flex: 3, child: Text('Breakdown', style: TextStyle(fontWeight: FontWeight.bold))),
+                const Expanded(
+                    flex: 3,
+                    child: Text('Breakdown',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
         ),
-        
+
         // Table rows
         ...entries.asMap().entries.map((entryData) {
           final index = entryData.key;
           final entry = entryData.value;
           final isEven = index % 2 == 0;
-          
+
           return Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
@@ -367,7 +389,7 @@ class LeaderboardWidget extends ConsumerWidget {
         default:
           color = Colors.blue;
       }
-      
+
       return Container(
         width: 24,
         height: 24,
@@ -387,7 +409,7 @@ class LeaderboardWidget extends ConsumerWidget {
         ),
       );
     }
-    
+
     return Text(
       position.toString(),
       style: const TextStyle(fontWeight: FontWeight.w500),
@@ -402,16 +424,18 @@ class LeaderboardWidget extends ConsumerWidget {
     return Wrap(
       spacing: 4,
       runSpacing: 2,
-      children: entry.criteriaScores.entries.take(3).map((criteriaEntry) => 
-        Chip(
-          label: Text(
-            '${_formatCriterionName(criteriaEntry.key)}: ${criteriaEntry.value.toStringAsFixed(1)}',
-            style: const TextStyle(fontSize: 10),
-          ),
-          backgroundColor: _getScoreColor(criteriaEntry.value).withOpacity(0.1),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        )
-      ).toList(),
+      children: entry.criteriaScores.entries
+          .take(3)
+          .map((criteriaEntry) => Chip(
+                label: Text(
+                  '${_formatCriterionName(criteriaEntry.key)}: ${criteriaEntry.value.toStringAsFixed(1)}',
+                  style: const TextStyle(fontSize: 10),
+                ),
+                backgroundColor:
+                    _getScoreColor(criteriaEntry.value).withOpacity(0.1),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ))
+          .toList(),
     );
   }
 
@@ -426,17 +450,20 @@ class LeaderboardWidget extends ConsumerWidget {
   String _formatCriterionName(String criterion) {
     // Convert camelCase or snake_case to Title Case
     return criterion
-        .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
+        .replaceAllMapped(
+            RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
         .replaceAll('_', ' ')
         .split(' ')
-        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .map((word) => word.isEmpty
+            ? ''
+            : word[0].toUpperCase() + word.substring(1).toLowerCase())
         .join(' ');
   }
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inHours < 1) {
