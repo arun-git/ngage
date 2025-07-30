@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'file_preview_widget.dart';
 
 /// Widget for handling file uploads with preview and progress tracking
 class FileUploadWidget extends StatelessWidget {
@@ -47,7 +48,7 @@ class FileUploadWidget extends StatelessWidget {
                   ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
 
             // Upload progress indicator
@@ -68,7 +69,8 @@ class FileUploadWidget extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                    color:
+                        Theme.of(context).colorScheme.outline.withOpacity(0.5),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -83,8 +85,8 @@ class FileUploadWidget extends StatelessWidget {
                     Text(
                       'No $title uploaded',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
                     ),
                   ],
                 ),
@@ -98,6 +100,68 @@ class FileUploadWidget extends StatelessWidget {
   }
 
   Widget _buildFileList(BuildContext context) {
+    // For small number of files, show grid preview
+    if (files.length <= 6) {
+      return _buildGridPreview(context);
+    } else {
+      // For many files, show list view
+      return _buildListPreview(context);
+    }
+  }
+
+  Widget _buildGridPreview(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 1,
+      ),
+      itemCount: files.length,
+      itemBuilder: (context, index) {
+        final fileUrl = files[index];
+        final fileName = _extractFileName(fileUrl);
+
+        return Stack(
+          children: [
+            FilePreviewWidget(
+              fileUrl: fileUrl,
+              fileType: fileType,
+              fileName: fileName,
+              showFileName: false,
+            ),
+            // Remove button overlay
+            if (canEdit)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon:
+                        const Icon(Icons.close, color: Colors.white, size: 16),
+                    onPressed: () => _confirmRemove(context, fileUrl, fileName),
+                    tooltip: 'Remove file',
+                    constraints: const BoxConstraints(
+                      minWidth: 24,
+                      minHeight: 24,
+                    ),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildListPreview(BuildContext context) {
     return Column(
       children: files.asMap().entries.map((entry) {
         final index = entry.key;
@@ -107,8 +171,15 @@ class FileUploadWidget extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: CircleAvatar(
-              child: Icon(_getFileTypeIcon()),
+            leading: SizedBox(
+              width: 56,
+              height: 56,
+              child: FilePreviewWidget(
+                fileUrl: fileUrl,
+                fileType: fileType,
+                fileName: fileName,
+                showFileName: false,
+              ),
             ),
             title: Text(
               fileName,
@@ -180,7 +251,8 @@ class FileUploadWidget extends StatelessWidget {
     }
   }
 
-  Future<void> _confirmRemove(BuildContext context, String fileUrl, String fileName) async {
+  Future<void> _confirmRemove(
+      BuildContext context, String fileUrl, String fileName) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

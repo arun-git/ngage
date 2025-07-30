@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/submission.dart';
 import 'submission_status_indicator.dart';
+import 'submission_files_preview.dart';
 
 /// Reusable card widget for displaying submission information
 class SubmissionCard extends StatelessWidget {
@@ -36,7 +37,7 @@ class SubmissionCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       showTeamInfo ? 'Team Submission' : 'Submission',
-                      style: compact 
+                      style: compact
                           ? Theme.of(context).textTheme.titleSmall
                           : Theme.of(context).textTheme.titleMedium,
                     ),
@@ -47,10 +48,10 @@ class SubmissionCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               if (!compact) ...[
                 const SizedBox(height: 8),
-                
+
                 // Submission info
                 Row(
                   children: [
@@ -69,7 +70,7 @@ class SubmissionCard extends StatelessWidget {
                   ],
                 ),
               ],
-              
+
               // Content preview
               if (submission.textContent?.isNotEmpty == true) ...[
                 SizedBox(height: compact ? 4 : 8),
@@ -80,39 +81,45 @@ class SubmissionCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
-              
-              // File counts
+
+              // File previews or counts
               if (submission.allFileUrls.isNotEmpty) ...[
                 SizedBox(height: compact ? 4 : 8),
-                Wrap(
-                  spacing: compact ? 8 : 16,
-                  children: [
-                    if (submission.photoUrls.isNotEmpty)
-                      _buildFileCount(
-                        context,
-                        Icons.photo,
-                        submission.photoUrls.length,
-                        'Photos',
-                        compact,
-                      ),
-                    if (submission.videoUrls.isNotEmpty)
-                      _buildFileCount(
-                        context,
-                        Icons.video_file,
-                        submission.videoUrls.length,
-                        'Videos',
-                        compact,
-                      ),
-                    if (submission.documentUrls.isNotEmpty)
-                      _buildFileCount(
-                        context,
-                        Icons.description,
-                        submission.documentUrls.length,
-                        'Documents',
-                        compact,
-                      ),
-                  ],
-                ),
+                if (compact)
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      if (submission.photoUrls.isNotEmpty)
+                        _buildFileCount(
+                          context,
+                          Icons.photo,
+                          submission.photoUrls.length,
+                          'Photos',
+                          compact,
+                        ),
+                      if (submission.videoUrls.isNotEmpty)
+                        _buildFileCount(
+                          context,
+                          Icons.video_file,
+                          submission.videoUrls.length,
+                          'Videos',
+                          compact,
+                        ),
+                      if (submission.documentUrls.isNotEmpty)
+                        _buildFileCount(
+                          context,
+                          Icons.description,
+                          submission.documentUrls.length,
+                          'Documents',
+                          compact,
+                        ),
+                    ],
+                  )
+                else
+                  SubmissionFilesPreview(
+                    submission: submission,
+                    maxPreviewFiles: 3,
+                  ),
               ],
             ],
           ),
@@ -150,7 +157,7 @@ class SubmissionCard extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
     } else if (difference.inHours > 0) {
