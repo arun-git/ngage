@@ -12,8 +12,8 @@ import '../widgets/event_banner_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
 import '../submissions/widgets/deadline_status_widget.dart';
 import '../submissions/widgets/submission_feed_card.dart';
-import '../submissions/widgets/staggered_media_feed.dart';
-import '../submissions/submissions_list_screen.dart';
+
+import '../submissions/submission_screen.dart';
 import '../../services/submission_navigation_service.dart';
 
 import '../judging/widgets/rubric_management_widget.dart';
@@ -369,12 +369,14 @@ class EventDetailInnerPage extends ConsumerWidget {
   }
 
   void _viewSubmissionDetails(BuildContext context, Submission submission) {
-    // Navigate to submissions list and highlight the specific submission
+    // Navigate directly to the specific submission screen
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => SubmissionsListScreen(
+        builder: (context) => SubmissionScreen(
           eventId: submission.eventId,
-          isJudgeView: true,
+          teamId: submission.teamId,
+          memberId: submission.submittedBy,
+          submissionId: submission.id,
         ),
       ),
     );

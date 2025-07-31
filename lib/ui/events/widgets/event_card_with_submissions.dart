@@ -9,7 +9,6 @@ import '../../../services/event_submission_integration_service.dart';
 import '../../submissions/widgets/deadline_countdown_widget.dart';
 import '../../submissions/widgets/deadline_status_widget.dart';
 import '../../submissions/submission_screen.dart';
-import '../../submissions/submissions_list_screen.dart';
 
 /// Enhanced event card that displays submission information and status
 class EventCardWithSubmissions extends ConsumerWidget {
@@ -105,7 +104,7 @@ class EventCardWithSubmissions extends ConsumerWidget {
               Row(
                 children: [
                   TextButton.icon(
-                    onPressed: () => _viewSubmissions(context),
+                    onPressed: () => _viewSubmissions(context, ref),
                     icon: const Icon(Icons.list, size: 16),
                     label: const Text('View Submissions'),
                   ),
@@ -553,14 +552,48 @@ class EventCardWithSubmissions extends ConsumerWidget {
     }
   }
 
-  void _viewSubmissions(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SubmissionsListScreen(
-          eventId: event.id,
-          isJudgeView: true,
-        ),
-      ),
+  void _viewSubmissions(BuildContext context, WidgetRef ref) {
+    final eventStatsAsync =
+        ref.read(eventWithSubmissionStatsProvider(event.id));
+
+    eventStatsAsync.when(
+      data: (stats) {
+        if (stats.submissions.isNotEmpty) {
+          // Navigate to the first submission
+          final firstSubmission = stats.submissions.first;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => SubmissionScreen(
+                eventId: firstSubmission.eventId,
+                teamId: firstSubmission.teamId,
+                memberId: firstSubmission.submittedBy,
+                submissionId: firstSubmission.id,
+              ),
+            ),
+          );
+        } else {
+          // Show message when no submissions exist
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No submissions available for this event yet.'),
+            ),
+          );
+        }
+      },
+      loading: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Loading submissions...'),
+          ),
+        );
+      },
+      error: (error, stack) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading submissions: $error'),
+          ),
+        );
+      },
     );
   }
 

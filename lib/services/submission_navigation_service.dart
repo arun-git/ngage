@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/event.dart';
 import '../models/submission.dart';
 import '../ui/submissions/submission_screen.dart';
-import '../ui/submissions/submissions_list_screen.dart';
 
 /// Service for handling submission-related navigation
 class SubmissionNavigationService {
@@ -56,24 +55,6 @@ class SubmissionNavigationService {
           teamId: submission.teamId,
           memberId: submission.submittedBy,
           submissionId: submission.id,
-        ),
-      ),
-    );
-  }
-
-  /// Navigate to submissions list for an event
-  static Future<void> navigateToSubmissionsList(
-    BuildContext context, {
-    required String eventId,
-    String? teamId,
-    bool isJudgeView = false,
-  }) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SubmissionsListScreen(
-          eventId: eventId,
-          teamId: teamId,
-          isJudgeView: isJudgeView,
         ),
       ),
     );
