@@ -31,24 +31,34 @@ class StaggeredMediaFeed extends StatelessWidget {
   Widget _buildMediaGrid(BuildContext context, List<MediaFile> mediaFiles) {
     if (mediaFiles.isEmpty) return const SizedBox.shrink();
 
-    // Different layouts based on number of files
-    if (mediaFiles.length == 1) {
-      return _buildSingleMedia(context, mediaFiles[0]);
-    } else if (mediaFiles.length == 2) {
-      return _buildTwoMediaLayout(context, mediaFiles);
-    } else if (mediaFiles.length == 3) {
-      return _buildThreeMediaLayout(context, mediaFiles);
-    } else if (mediaFiles.length == 4) {
-      return _buildFourMediaLayout(context, mediaFiles);
-    } else {
-      return _buildFiveOrMoreMediaLayout(context, mediaFiles);
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Make media more compact on desktop
+        final isDesktop = constraints.maxWidth > 768;
+        final maxHeight =
+            isDesktop ? 300.0 : 400.0; // Reduced height on desktop
+
+        // Different layouts based on number of files
+        if (mediaFiles.length == 1) {
+          return _buildSingleMedia(context, mediaFiles[0], maxHeight);
+        } else if (mediaFiles.length == 2) {
+          return _buildTwoMediaLayout(context, mediaFiles, maxHeight);
+        } else if (mediaFiles.length == 3) {
+          return _buildThreeMediaLayout(context, mediaFiles, maxHeight);
+        } else if (mediaFiles.length == 4) {
+          return _buildFourMediaLayout(context, mediaFiles, maxHeight);
+        } else {
+          return _buildFiveOrMoreMediaLayout(context, mediaFiles, maxHeight);
+        }
+      },
+    );
   }
 
-  Widget _buildSingleMedia(BuildContext context, MediaFile media) {
+  Widget _buildSingleMedia(
+      BuildContext context, MediaFile media, double maxHeight) {
     return Container(
-      constraints: const BoxConstraints(
-        maxHeight: 400,
+      constraints: BoxConstraints(
+        maxHeight: maxHeight,
         maxWidth: double.infinity,
       ),
       child: ClipRRect(
@@ -59,9 +69,11 @@ class StaggeredMediaFeed extends StatelessWidget {
   }
 
   Widget _buildTwoMediaLayout(
-      BuildContext context, List<MediaFile> mediaFiles) {
+      BuildContext context, List<MediaFile> mediaFiles, double maxHeight) {
+    final height = (maxHeight * 0.6).clamp(200.0, 250.0); // More compact height
+
     return SizedBox(
-      height: 250,
+      height: height,
       child: Row(
         children: [
           Expanded(
@@ -89,9 +101,11 @@ class StaggeredMediaFeed extends StatelessWidget {
   }
 
   Widget _buildThreeMediaLayout(
-      BuildContext context, List<MediaFile> mediaFiles) {
+      BuildContext context, List<MediaFile> mediaFiles, double maxHeight) {
+    final height = (maxHeight * 0.6).clamp(200.0, 250.0); // More compact height
+
     return SizedBox(
-      height: 250,
+      height: height,
       child: Row(
         children: [
           // First image takes 2/3 of the width
@@ -139,9 +153,11 @@ class StaggeredMediaFeed extends StatelessWidget {
   }
 
   Widget _buildFourMediaLayout(
-      BuildContext context, List<MediaFile> mediaFiles) {
+      BuildContext context, List<MediaFile> mediaFiles, double maxHeight) {
+    final height = (maxHeight * 0.6).clamp(200.0, 250.0); // More compact height
+
     return SizedBox(
-      height: 250,
+      height: height,
       child: Column(
         children: [
           // Top row with 2 images
@@ -203,11 +219,12 @@ class StaggeredMediaFeed extends StatelessWidget {
   }
 
   Widget _buildFiveOrMoreMediaLayout(
-      BuildContext context, List<MediaFile> mediaFiles) {
+      BuildContext context, List<MediaFile> mediaFiles, double maxHeight) {
     final remainingCount = mediaFiles.length - 4;
+    final height = (maxHeight * 0.6).clamp(200.0, 250.0); // More compact height
 
     return SizedBox(
-      height: 250,
+      height: height,
       child: Column(
         children: [
           // Top row with 2 images

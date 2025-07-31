@@ -720,60 +720,93 @@ class EventDetailInnerPage extends ConsumerWidget {
     }
 
     if (canJudge) {
-      // Judge view - show judging cards
-      return ListView.builder(
-        itemCount: submittedSubmissions.length,
-        itemBuilder: (context, index) {
-          return _buildJudgingSubmissionCard(context, ref,
-              submittedSubmissions[index], currentUserId, eventId);
-        },
+      // Judge view - show judging cards with responsive width
+      return _buildResponsiveContent(
+        context,
+        ListView.builder(
+          itemCount: submittedSubmissions.length,
+          itemBuilder: (context, index) {
+            return _buildJudgingSubmissionCard(context, ref,
+                submittedSubmissions[index], currentUserId, eventId);
+          },
+        ),
       );
     } else {
-      // Regular member view - show Staggered media feed
-      return ListView(
-        children: [
-          // Summary info
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .primaryContainer
-                  .withOpacity(0.3),
-              borderRadius: BorderRadius.circular(8),
+      // Regular member view - show Staggered media feed with responsive width
+      return _buildResponsiveContent(
+        context,
+        ListView(
+          children: [
+            // Summary info
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${submittedSubmissions.length} submission${submittedSubmissions.length == 1 ? '' : 's'} received',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${submittedSubmissions.length} submission${submittedSubmissions.length == 1 ? '' : 's'} received',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Individual submission feed cards
-          ...submittedSubmissions
-              .map((submission) => SubmissionFeedCard(
-                    submission: submission,
-                    showTeamInfo: true,
-                    teamName: _getTeamName(ref, submission.teamId),
-                    onTap: () => _viewSubmissionDetails(context, submission),
-                  ))
-              .toList(),
-        ],
+            // Individual submission feed cards
+            ...submittedSubmissions
+                .map((submission) => SubmissionFeedCard(
+                      submission: submission,
+                      showTeamInfo: true,
+                      teamName: _getTeamName(ref, submission.teamId),
+                      onTap: () => _viewSubmissionDetails(context, submission),
+                    ))
+                .toList(),
+          ],
+        ),
       );
     }
+  }
+
+  /// Builds responsive content with proper padding for desktop
+  Widget _buildResponsiveContent(BuildContext context, Widget child) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Check if we're on desktop (width > 768px)
+        final isDesktop = constraints.maxWidth > 768;
+
+        if (isDesktop) {
+          // On desktop, center the content with max width and padding
+          final maxWidth = constraints.maxWidth * 0.6; // 60% of available width
+          final constrainedWidth =
+              maxWidth.clamp(400.0, 800.0); // Min 400px, Max 800px
+
+          return Center(
+            child: Container(
+              width: constrainedWidth,
+              child: child,
+            ),
+          );
+        } else {
+          // On mobile, use full width
+          return child;
+        }
+      },
+    );
   }
 
   Widget _buildJudgingSubmissionCard(BuildContext context, WidgetRef ref,

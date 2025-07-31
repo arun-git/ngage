@@ -20,50 +20,63 @@ class SubmissionFeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with team info and status
-            _buildHeader(context),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // More compact margins on desktop
+        final isDesktop = constraints.maxWidth > 768;
+        final bottomMargin = isDesktop ? 12.0 : 16.0;
 
-            // Text content if available
-            if (submission.textContent?.isNotEmpty == true)
-              _buildTextContent(context),
+        return Card(
+          margin: EdgeInsets.only(bottom: bottomMargin),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with team info and status
+                _buildHeader(context, isDesktop),
 
-            // Media content in staggered style
-            if (_hasMediaContent()) _buildMediaContent(context),
+                // Text content if available
+                if (submission.textContent?.isNotEmpty == true)
+                  _buildTextContent(context, isDesktop),
 
-            // Footer with interaction info
-            _buildFooter(context),
-          ],
-        ),
-      ),
+                // Media content in staggered style
+                if (_hasMediaContent()) _buildMediaContent(context, isDesktop),
+
+                // Footer with interaction info
+                _buildFooter(context, isDesktop),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isDesktop) {
+    final padding = isDesktop ? 12.0 : 16.0; // More compact padding on desktop
+    final avatarRadius =
+        isDesktop ? 18.0 : 20.0; // Slightly smaller avatar on desktop
+
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(padding),
       child: Row(
         children: [
           // Team avatar
           CircleAvatar(
-            radius: 20,
+            radius: avatarRadius,
             backgroundColor: Theme.of(context).colorScheme.primary,
             child: Text(
               teamName?.substring(0, 1).toUpperCase() ?? 'T',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
+                fontSize: isDesktop ? 14 : 16, // Smaller font on desktop
               ),
             ),
           ),
@@ -101,28 +114,36 @@ class SubmissionFeedCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTextContent(BuildContext context) {
+  Widget _buildTextContent(BuildContext context, bool isDesktop) {
+    final horizontalPadding = isDesktop ? 12.0 : 16.0;
+    final bottomPadding = isDesktop ? 12.0 : 16.0;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+          horizontalPadding, 0, horizontalPadding, bottomPadding),
       child: Text(
         submission.textContent!,
         style: Theme.of(context).textTheme.bodyMedium,
-        maxLines: 4,
+        maxLines: isDesktop ? 3 : 4, // Fewer lines on desktop for compactness
         overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
-  Widget _buildMediaContent(BuildContext context) {
+  Widget _buildMediaContent(BuildContext context, bool isDesktop) {
+    final horizontalPadding = isDesktop ? 12.0 : 16.0;
+    final bottomPadding = isDesktop ? 12.0 : 16.0;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+          horizontalPadding, 0, horizontalPadding, bottomPadding),
       child: StaggeredMediaFeed(
         submissions: [submission],
       ),
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter(BuildContext context, bool isDesktop) {
     final hasFiles = submission.allFileUrls.isNotEmpty;
     final fileCount = submission.allFileUrls.length;
 
@@ -130,8 +151,12 @@ class SubmissionFeedCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final horizontalPadding = isDesktop ? 12.0 : 16.0;
+    final bottomPadding = isDesktop ? 12.0 : 16.0;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+          horizontalPadding, 0, horizontalPadding, bottomPadding),
       child: Row(
         children: [
           if (hasFiles) ...[
@@ -150,9 +175,15 @@ class SubmissionFeedCard extends StatelessWidget {
           ],
           const Spacer(),
 
-          // View details button
+          // View details button - more compact on desktop
           TextButton(
             onPressed: onTap,
+            style: isDesktop
+                ? TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  )
+                : null,
             child: const Text('View Details'),
           ),
         ],
