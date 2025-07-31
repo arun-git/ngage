@@ -59,26 +59,118 @@ class EventDetailInnerPage extends ConsumerWidget {
   Widget _buildEventDetailContent(
       BuildContext context, WidgetRef ref, Event event) {
     return Scaffold(
-      //appBar: _buildEventAppBar(context, ref, event),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Compact header with banner image on left and info on right
-            _buildCompactHeader(context, event),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              expandedHeight: 200.0,
+              floating: false,
+              pinned: true,
+              automaticallyImplyLeading: false,
+              flexibleSpace: FlexibleSpaceBar(
+                background: _buildExpandedHeader(context, event),
+                collapseMode: CollapseMode.parallax,
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0),
+                child: Container(
+                  height: 1,
+                  color: Theme.of(context).dividerColor,
+                ),
+              ),
+            ),
+            if (event.judgingCriteria.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: _buildJudgingSection(context, event),
+                ),
+              ),
+          ];
+        },
+        body: _buildSubmissionsSection(context, ref, event),
+      ),
+    );
+  }
 
-            const SizedBox(height: 24),
+  Widget _buildExpandedHeader(BuildContext context, Event event) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40), // Account for status bar
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Banner image on the left
+              if (event.bannerImageUrl != null) ...[
+                Container(
+                  width: 120,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: EventBannerImage(
+                      imageUrl: event.bannerImageUrl!,
+                      width: 120,
+                      height: 90,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
 
-            // Judging Criteria (if any)
-            if (event.judgingCriteria.isNotEmpty) ...[
-              _buildJudgingSection(context, event),
-              const SizedBox(height: 24),
+              // Event info on the right
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title and description
+                    Text(
+                      event.title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      event.description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Scheduling information
+                    _buildCompactScheduling(context, event, isExpanded: true),
+                  ],
+                ),
+              ),
             ],
-
-            // Submissions Section
-            _buildSubmissionsSection(context, ref, event),
-            const SizedBox(height: 24),
+          ),
+        ],
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.8),
           ],
         ),
       ),
@@ -154,7 +246,11 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildCompactScheduling(BuildContext context, Event event) {
+  Widget _buildCompactScheduling(BuildContext context, Event event,
+      {bool isExpanded = false}) {
+    final textColor = isExpanded ? Colors.white.withOpacity(0.9) : null;
+    final iconColor = isExpanded ? Colors.white : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -164,7 +260,8 @@ class EventDetailInnerPage extends ConsumerWidget {
             icon: Icons.play_arrow,
             label: 'Start',
             value: _formatDateTime(event.startTime!),
-            color: Colors.green,
+            color: isExpanded ? Colors.white : Colors.green,
+            textColor: textColor,
           ),
           const SizedBox(height: 8),
         ],
@@ -174,7 +271,8 @@ class EventDetailInnerPage extends ConsumerWidget {
             icon: Icons.stop,
             label: 'End',
             value: _formatDateTime(event.endTime!),
-            color: Colors.red,
+            color: isExpanded ? Colors.white : Colors.red,
+            textColor: textColor,
           ),
           const SizedBox(height: 8),
         ],
@@ -187,14 +285,16 @@ class EventDetailInnerPage extends ConsumerWidget {
                   icon: Icons.access_time,
                   label: 'Deadline',
                   value: _formatDateTime(event.submissionDeadline!),
-                  color: Colors.orange,
+                  color: isExpanded ? Colors.white : Colors.orange,
+                  textColor: textColor,
                 ),
               ),
               const SizedBox(width: 8),
-              DeadlineStatusWidget(
-                event: event,
-                showTime: false,
-              ),
+              if (!isExpanded)
+                DeadlineStatusWidget(
+                  event: event,
+                  showTime: false,
+                ),
             ],
           ),
         ],
@@ -203,14 +303,14 @@ class EventDetailInnerPage extends ConsumerWidget {
             children: [
               Icon(
                 Icons.schedule,
-                color: Theme.of(context).colorScheme.outline,
+                color: iconColor ?? Theme.of(context).colorScheme.outline,
                 size: 16,
               ),
               const SizedBox(width: 4),
               Text(
                 'Not scheduled',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: textColor ?? Theme.of(context).colorScheme.outline,
                     ),
               ),
             ],
@@ -226,6 +326,7 @@ class EventDetailInnerPage extends ConsumerWidget {
     required String label,
     required String value,
     required Color color,
+    Color? textColor,
   }) {
     return Row(
       children: [
@@ -234,7 +335,7 @@ class EventDetailInnerPage extends ConsumerWidget {
         Text(
           '$label: ',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
+                color: textColor ?? Theme.of(context).colorScheme.outline,
                 fontWeight: FontWeight.w500,
               ),
         ),
@@ -242,6 +343,7 @@ class EventDetailInnerPage extends ConsumerWidget {
           child: Text(
             value,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: textColor,
                   fontWeight: FontWeight.w500,
                 ),
             overflow: TextOverflow.ellipsis,
@@ -330,10 +432,11 @@ class EventDetailInnerPage extends ConsumerWidget {
 
         return DefaultTabController(
           length: tabCount,
-          child: Card(
-            child: Column(
-              children: [
-                TabBar(
+          child: Column(
+            children: [
+              Container(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: TabBar(
                   tabs: [
                     const Tab(
                         icon: Icon(Icons.assignment), text: 'Submissions'),
@@ -345,21 +448,20 @@ class EventDetailInnerPage extends ConsumerWidget {
                   labelColor: Theme.of(context).colorScheme.primary,
                   unselectedLabelColor: Theme.of(context).colorScheme.outline,
                 ),
-                SizedBox(
-                  height: 600, // Fixed height for the tab content
-                  child: TabBarView(
-                    children: [
-                      _buildEventSubmissionsTab(
-                          context, ref, event.id, currentUserId),
-                      _buildLeaderboardTab(context, ref, event.id),
-                      _buildAnalyticsTab(context, ref, event.id),
-                      if (isAdmin)
-                        _buildRubricsTab(context, ref, event.id, currentUserId),
-                    ],
-                  ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildEventSubmissionsTab(
+                        context, ref, event.id, currentUserId),
+                    _buildLeaderboardTab(context, ref, event.id),
+                    _buildAnalyticsTab(context, ref, event.id),
+                    if (isAdmin)
+                      _buildRubricsTab(context, ref, event.id, currentUserId),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -451,17 +553,19 @@ class EventDetailInnerPage extends ConsumerWidget {
   Widget _buildRubricsTab(BuildContext context, WidgetRef ref, String eventId,
       String currentUserId) {
     // Since this tab is only shown to admins, we can directly show the rubric management
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RubricManagementWidget(
-            eventId: eventId,
-            createdBy: currentUserId,
-            onRubricSelected: (rubric) {
-              // Handle rubric selection if needed
-            },
+          Expanded(
+            child: RubricManagementWidget(
+              eventId: eventId,
+              createdBy: currentUserId,
+              onRubricSelected: (rubric) {
+                // Handle rubric selection if needed
+              },
+            ),
           ),
         ],
       ),
@@ -519,7 +623,7 @@ class EventDetailInnerPage extends ConsumerWidget {
       data: (membership) {
         final canJudge = membership?.canJudge ?? false;
 
-        return SingleChildScrollView(
+        return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,18 +633,6 @@ class EventDetailInnerPage extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    /* Icon(
-                      Icons.assignment,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Submissions',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const Spacer(),*/
                     if (event.status == EventStatus.active)
                       ElevatedButton.icon(
                         onPressed: () => _createSubmission(context, ref, event),
@@ -563,8 +655,10 @@ class EventDetailInnerPage extends ConsumerWidget {
               ],
 
               // Submissions list
-              _buildSubmissionsListContent(
-                  context, ref, submissions, currentUserId, eventId, canJudge),
+              Expanded(
+                child: _buildSubmissionsListContent(context, ref, submissions,
+                    currentUserId, eventId, canJudge),
+              ),
             ],
           ),
         );
@@ -611,16 +705,16 @@ class EventDetailInnerPage extends ConsumerWidget {
 
     if (canJudge) {
       // Judge view - show judging cards
-      return Column(
-        children: submittedSubmissions
-            .map((submission) => _buildJudgingSubmissionCard(
-                context, ref, submission, currentUserId, eventId))
-            .toList(),
+      return ListView.builder(
+        itemCount: submittedSubmissions.length,
+        itemBuilder: (context, index) {
+          return _buildJudgingSubmissionCard(context, ref,
+              submittedSubmissions[index], currentUserId, eventId);
+        },
       );
     } else {
       // Regular member view - show Staggered media feed
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      return ListView(
         children: [
           // Summary info
           Container(
@@ -868,11 +962,9 @@ class EventDetailInnerPage extends ConsumerWidget {
           );
         }
 
-        return ListView.builder(
+        return ListView(
           padding: const EdgeInsets.all(16.0),
-          itemCount: submittedSubmissions.length,
-          itemBuilder: (context, index) {
-            final submission = submittedSubmissions[index];
+          children: submittedSubmissions.map((submission) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 24.0),
               child: Column(
@@ -892,7 +984,7 @@ class EventDetailInnerPage extends ConsumerWidget {
                 ],
               ),
             );
-          },
+          }).toList(),
         );
       },
     );
@@ -900,7 +992,7 @@ class EventDetailInnerPage extends ConsumerWidget {
 
   Widget _buildLeaderboardTab(
       BuildContext context, WidgetRef ref, String eventId) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16.0),
       child: LeaderboardWidget(
         eventId: eventId,
