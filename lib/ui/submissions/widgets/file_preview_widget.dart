@@ -249,15 +249,16 @@ class _FilePreviewModalState extends State<FilePreviewModal> {
                     const BorderRadius.vertical(top: Radius.circular(12)),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Expanded(
+                  /* Expanded(
                     child: Text(
                       widget.fileName,
                       style: Theme.of(context).textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
+                  ),*/
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
