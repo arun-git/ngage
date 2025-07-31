@@ -994,9 +994,12 @@ class EventDetailInnerPage extends ConsumerWidget {
 
   /// Get team name for display (placeholder implementation)
   String? _getTeamName(WidgetRef ref, String teamId) {
-    // This is a placeholder - you might want to implement actual team name fetching
-    // For now, return null to use the default team display
-    return null;
+    final teamAsync = ref.watch(teamProvider(teamId));
+    return teamAsync.when(
+      data: (team) => team?.name,
+      loading: () => null,
+      error: (_, __) => null,
+    );
   }
 
   /// Build draft event with admin access check
