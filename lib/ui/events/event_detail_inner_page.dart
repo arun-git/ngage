@@ -11,7 +11,8 @@ import '../../providers/team_providers.dart';
 import '../widgets/event_banner_image.dart';
 import '../submissions/widgets/deadline_countdown_widget.dart';
 import '../submissions/widgets/deadline_status_widget.dart';
-import '../submissions/widgets/submission_card.dart';
+import '../submissions/widgets/submission_feed_card.dart';
+import '../submissions/widgets/staggered_media_feed.dart';
 import '../submissions/submissions_list_screen.dart';
 import '../../services/submission_navigation_service.dart';
 
@@ -615,7 +616,7 @@ class EventDetailInnerPage extends ConsumerWidget {
             .toList(),
       );
     } else {
-      // Regular member view - show simple submission list
+      // Regular member view - show Staggered media feed
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -649,16 +650,13 @@ class EventDetailInnerPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Submissions list
+          // Individual submission feed cards
           ...submittedSubmissions
-              .map((submission) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: SubmissionCard(
-                      submission: submission,
-                      compact: true,
-                      showTeamInfo: true,
-                      onTap: () => _viewSubmissionDetails(context, submission),
-                    ),
+              .map((submission) => SubmissionFeedCard(
+                    submission: submission,
+                    showTeamInfo: true,
+                    teamName: _getTeamName(ref, submission.teamId),
+                    onTap: () => _viewSubmissionDetails(context, submission),
                   ))
               .toList(),
         ],
@@ -982,6 +980,21 @@ class EventDetailInnerPage extends ConsumerWidget {
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
 
     return '$displayHour:$minute $period';
+  }
+
+  /// Check if any submissions have media files
+  bool _hasAnyMediaFiles(List<Submission> submissions) {
+    return submissions.any((submission) =>
+        submission.photoUrls.isNotEmpty ||
+        submission.videoUrls.isNotEmpty ||
+        submission.documentUrls.isNotEmpty);
+  }
+
+  /// Get team name for display (placeholder implementation)
+  String? _getTeamName(WidgetRef ref, String teamId) {
+    // This is a placeholder - you might want to implement actual team name fetching
+    // For now, return null to use the default team display
+    return null;
   }
 
   /// Build draft event with admin access check
