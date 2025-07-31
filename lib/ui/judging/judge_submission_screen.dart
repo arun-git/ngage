@@ -4,6 +4,7 @@ import '../../models/models.dart';
 import '../../providers/judging_providers.dart';
 import '../../providers/submission_providers.dart';
 import 'widgets/scoring_form_widget.dart';
+import '../submissions/widgets/staggered_media_feed.dart';
 
 /// Screen for judges to evaluate submissions
 class JudgeSubmissionScreen extends ConsumerStatefulWidget {
@@ -48,8 +49,9 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
               Text('Error loading submission: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () =>
-                    ref.refresh(submissionStreamProvider(widget.submissionId)),
+                onPressed: () {
+                  ref.invalidate(submissionStreamProvider(widget.submissionId));
+                },
                 child: const Text('Retry'),
               ),
             ],
@@ -66,8 +68,9 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
                 Text('Error loading rubrics: $error'),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () =>
-                      ref.refresh(eventRubricsProvider(widget.eventId)),
+                  onPressed: () {
+                    ref.invalidate(eventRubricsProvider(widget.eventId));
+                  },
                   child: const Text('Retry'),
                 ),
               ],
@@ -115,141 +118,118 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Submission details
+          // Submission details with responsive layout
           _buildSubmissionCard(submission),
 
           const SizedBox(height: 24),
 
-          // Scoring forms for each rubric
+          // Scoring forms for each rubric with responsive layout
           ...rubrics.map((rubric) => Padding(
                 padding: const EdgeInsets.only(bottom: 24.0),
-                child: ScoringFormWidget(
-                  submissionId: widget.submissionId,
-                  eventId: widget.eventId,
-                  judgeId: widget.judgeId,
-                  rubric: rubric,
-                  existingScore: existingScore,
-                  onScoreSubmitted: () {
-                    // Refresh the score data
-                    ref.refresh(judgeScoreProvider(
-                        (widget.submissionId, widget.judgeId)));
-                  },
+                child: _buildResponsiveContent(
+                  context,
+                  ScoringFormWidget(
+                    submissionId: widget.submissionId,
+                    eventId: widget.eventId,
+                    judgeId: widget.judgeId,
+                    rubric: rubric,
+                    existingScore: existingScore,
+                    onScoreSubmitted: () {
+                      // Refresh the score data
+                      ref.invalidate(judgeScoreProvider(
+                          (widget.submissionId, widget.judgeId)));
+                    },
+                  ),
                 ),
               )),
 
-          // Judge comments section (if not already in rubric)
+          // Judge comments section (if not already in rubric) with responsive layout
           if (rubrics.every((r) => r.criteria.isEmpty))
-            _buildCommentsOnlySection(existingScore),
+            _buildResponsiveContent(
+              context,
+              _buildCommentsOnlySection(existingScore),
+            ),
         ],
       ),
     );
   }
 
   Widget _buildSubmissionCard(Submission submission) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.assignment, size: 24),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Submission Details',
-                    style: Theme.of(context).textTheme.titleLarge,
+    return _buildResponsiveContent(
+      context,
+      Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Text content if available
+              if (submission.textContent?.isNotEmpty == true) ...[
+                Text(
+                  submission.textContent!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Media content in staggered style
+              if (_hasMediaContent(submission)) ...[
+                StaggeredMediaFeed(
+                  submissions: [submission],
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // File attachments summary
+              if (submission.allFileUrls.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceVariant
+                        .withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.attachment,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${submission.allFileUrls.length} file${submission.allFileUrls.length == 1 ? '' : 's'} attached',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                    ],
                   ),
                 ),
-                _buildStatusChip(submission.status),
+                const SizedBox(height: 16),
               ],
-            ),
-            const SizedBox(height: 16),
 
-            // Submission content
-            if (submission.content.isNotEmpty) ...[
-              Text(
-                'Content:',
-                style: Theme.of(context).textTheme.titleMedium,
+              // Submission metadata
+              Row(
+                children: [
+                  const Icon(Icons.schedule, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Submitted: ${_formatDateTime(submission.submittedAt ?? submission.createdAt)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              ...submission.content.entries
-                  .map((entry) => _buildContentItem(entry.key, entry.value)),
-              const SizedBox(height: 16),
             ],
-
-            // Submission metadata
-            Row(
-              children: [
-                const Icon(Icons.schedule, size: 16, color: Colors.grey),
-                const SizedBox(width: 4),
-                Text(
-                  'Submitted: ${_formatDateTime(submission.submittedAt ?? submission.createdAt)}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(SubmissionStatus status) {
-    Color color;
-    String label;
-
-    switch (status) {
-      case SubmissionStatus.draft:
-        color = Colors.grey;
-        label = 'Draft';
-        break;
-      case SubmissionStatus.submitted:
-        color = Colors.blue;
-        label = 'Submitted';
-        break;
-      case SubmissionStatus.underReview:
-        color = Colors.orange;
-        label = 'Under Review';
-        break;
-      case SubmissionStatus.approved:
-        color = Colors.green;
-        label = 'Approved';
-        break;
-      case SubmissionStatus.rejected:
-        color = Colors.red;
-        label = 'Rejected';
-        break;
-    }
-
-    return Chip(
-      label: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 12),
-      ),
-      backgroundColor: color.withOpacity(0.1),
-      side: BorderSide(color: color),
-    );
-  }
-
-  Widget _buildContentItem(String key, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$key:',
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          Expanded(
-            child: Text(value.toString()),
-          ),
-        ],
       ),
     );
   }
@@ -260,14 +240,24 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
     );
 
     return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Judge Comments',
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: [
+                const Icon(Icons.comment, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  'Judge Comments',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -281,7 +271,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
               maxLength: 2000,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () async {
                 try {
                   await ref.read(judgingServiceProvider).addJudgeComment(
@@ -310,12 +300,47 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
                   }
                 }
               },
-              child: const Text('Save Comment'),
+              icon: const Icon(Icons.save),
+              label: const Text('Save Comment'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Builds responsive content with proper padding for desktop
+  Widget _buildResponsiveContent(BuildContext context, Widget child) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Check if we're on desktop (width > 768px)
+        final isDesktop = constraints.maxWidth > 768;
+
+        if (isDesktop) {
+          // On desktop, center the content with max width and padding
+          final maxWidth = constraints.maxWidth * 0.7; // 70% of available width
+          final constrainedWidth =
+              maxWidth.clamp(400.0, 900.0); // Min 400px, Max 900px
+
+          return Center(
+            child: SizedBox(
+              width: constrainedWidth,
+              child: child,
+            ),
+          );
+        } else {
+          // On mobile, use full width
+          return child;
+        }
+      },
+    );
+  }
+
+  /// Check if submission has media content
+  bool _hasMediaContent(Submission submission) {
+    return submission.photoUrls.isNotEmpty ||
+        submission.videoUrls.isNotEmpty ||
+        submission.documentUrls.isNotEmpty;
   }
 
   String _formatDateTime(DateTime dateTime) {

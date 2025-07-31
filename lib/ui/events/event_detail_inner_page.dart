@@ -650,67 +650,57 @@ class EventDetailInnerPage extends ConsumerWidget {
       );
     }
 
-    if (canJudge) {
-      // Judge view - show judging cards with responsive width
-      return _buildResponsiveContent(
-        context,
-        ListView.builder(
-          itemCount: submittedSubmissions.length,
-          itemBuilder: (context, index) {
-            return _buildJudgingSubmissionCard(context, ref,
-                submittedSubmissions[index], currentUserId, eventId);
-          },
-        ),
-      );
-    } else {
-      // Regular member view - show Staggered media feed with responsive width
-      return _buildResponsiveContent(
-        context,
-        ListView(
-          children: [
-            // Summary info
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primaryContainer
-                    .withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${submittedSubmissions.length} submission${submittedSubmissions.length == 1 ? '' : 's'} received',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                ],
-              ),
+    // Use staggered media view for both judge and regular member views
+    return _buildResponsiveContent(
+      context,
+      ListView(
+        children: [
+          // Summary info with role-specific messaging
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(height: 16),
+            child: Row(
+              children: [
+                Icon(
+                  canJudge ? Icons.gavel : Icons.info_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  canJudge
+                      ? '${submittedSubmissions.length} submission${submittedSubmissions.length == 1 ? '' : 's'} to judge'
+                      : '${submittedSubmissions.length} submission${submittedSubmissions.length == 1 ? '' : 's'} received',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
-            // Individual submission feed cards
-            ...submittedSubmissions
-                .map((submission) => SubmissionFeedCard(
-                      submission: submission,
-                      showTeamInfo: true,
-                      teamName: _getTeamName(ref, submission.teamId),
-                      onTap: () => _viewSubmissionDetails(context, submission),
-                    ))
-                .toList(),
-          ],
-        ),
-      );
-    }
+          // Individual submission feed cards with role-specific actions
+          ...submittedSubmissions
+              .map((submission) => _buildSubmissionFeedCardWithActions(
+                    context,
+                    ref,
+                    submission,
+                    currentUserId,
+                    eventId,
+                    canJudge,
+                  ))
+              .toList(),
+        ],
+      ),
+    );
   }
 
   /// Builds responsive content with proper padding for desktop
@@ -727,7 +717,7 @@ class EventDetailInnerPage extends ConsumerWidget {
               maxWidth.clamp(400.0, 800.0); // Min 400px, Max 800px
 
           return Center(
-            child: Container(
+            child: SizedBox(
               width: constrainedWidth,
               child: child,
             ),
@@ -740,77 +730,38 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildJudgingSubmissionCard(BuildContext context, WidgetRef ref,
-      Submission submission, String currentUserId, String eventId) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Team ${submission.teamId}',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Submitted: ${_formatDateTime(submission.submittedAt ?? submission.createdAt)}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                _buildJudgingSubmissionStatusChip(submission.status),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Submission content preview
-            if (submission.content.isNotEmpty) ...[
-              Text(
-                'Content:',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              ...submission.content.entries
-                  .take(3)
-                  .map((entry) => SelectableText(
-                        '${entry.key}: ${entry.value.toString()}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      )),
-              if (submission.content.length > 3)
-                SelectableText(
-                  '... and ${submission.content.length - 3} more items',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                ),
-              const SizedBox(height: 12),
-            ],
-
-            // Judge status and actions - only show for judges
-            _buildJudgeActions(
-                context, ref, submission, currentUserId, eventId),
-          ],
+  /// Builds submission feed card with role-specific actions and info
+  Widget _buildSubmissionFeedCardWithActions(
+      BuildContext context,
+      WidgetRef ref,
+      Submission submission,
+      String currentUserId,
+      String eventId,
+      bool canJudge) {
+    return Column(
+      children: [
+        // Base submission feed card
+        SubmissionFeedCard(
+          submission: submission,
+          showTeamInfo: true,
+          teamName: _getTeamName(ref, submission.teamId),
+          onTap: () => _viewSubmissionDetails(context, submission),
         ),
-      ),
+
+        // Role-specific actions and info
+        if (canJudge) ...[
+          const SizedBox(height: 8),
+          _buildJudgeActionsCard(
+              context, ref, submission, currentUserId, eventId),
+        ],
+
+        const SizedBox(height: 16),
+      ],
     );
   }
 
-  Widget _buildJudgeActions(BuildContext context, WidgetRef ref,
+  /// Builds judge-specific actions card that appears below the submission feed card
+  Widget _buildJudgeActionsCard(BuildContext context, WidgetRef ref,
       Submission submission, String currentUserId, String eventId) {
     // Get event to check group membership
     final eventAsync = ref.watch(eventStreamProvider(eventId));
@@ -838,31 +789,70 @@ class EventDetailInnerPage extends ConsumerWidget {
                 .watch(hasJudgeScoredProvider((submission.id, currentUserId)));
 
             return hasJudgeScoredAsync.when(
-              data: (hasScored) => Row(
-                children: [
-                  if (hasScored)
-                    const Chip(
-                      avatar: Icon(Icons.check, size: 16),
-                      label: Text('You have scored this'),
-                      backgroundColor: Colors.green,
-                    )
-                  else
-                    const Chip(
-                      avatar: Icon(Icons.pending, size: 16),
-                      label: Text('Pending your score'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  const Spacer(),
-                  ElevatedButton.icon(
-                    onPressed: () => _navigateToJudgeSubmission(
-                        context, submission, eventId, currentUserId),
-                    icon: Icon(hasScored ? Icons.edit : Icons.score),
-                    label: Text(hasScored ? 'Edit Score' : 'Score Now'),
+              data: (hasScored) => Card(
+                margin: EdgeInsets.zero,
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceVariant
+                    .withOpacity(0.5),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      // Judge status chip
+                      if (hasScored)
+                        Chip(
+                          avatar: const Icon(Icons.check, size: 16),
+                          label: const Text('Scored'),
+                          backgroundColor: Colors.green.withOpacity(0.2),
+                          labelStyle: TextStyle(
+                            color: Colors.green.shade700,
+                            fontSize: 12,
+                          ),
+                        )
+                      else
+                        Chip(
+                          avatar: const Icon(Icons.pending, size: 16),
+                          label: const Text('Pending Score'),
+                          backgroundColor: Colors.orange.withOpacity(0.2),
+                          labelStyle: TextStyle(
+                            color: Colors.orange.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
+
+                      const Spacer(),
+
+                      // Judge action button
+                      ElevatedButton.icon(
+                        onPressed: () => _navigateToJudgeSubmission(
+                            context, submission, eventId, currentUserId),
+                        icon: Icon(
+                          hasScored ? Icons.edit : Icons.score,
+                          size: 16,
+                        ),
+                        label: Text(
+                          hasScored ? 'Edit Score' : 'Score Now',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          minimumSize: Size.zero,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-              loading: () => const CircularProgressIndicator(),
-              error: (_, __) => const Text('Error loading judge status'),
+              loading: () => const Card(
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+              error: (_, __) => const SizedBox.shrink(),
             );
           },
           loading: () => const SizedBox.shrink(),
@@ -871,43 +861,6 @@ class EventDetailInnerPage extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildJudgingSubmissionStatusChip(SubmissionStatus status) {
-    Color color;
-    String label;
-
-    switch (status) {
-      case SubmissionStatus.draft:
-        color = Colors.grey;
-        label = 'Draft';
-        break;
-      case SubmissionStatus.submitted:
-        color = Colors.blue;
-        label = 'Submitted';
-        break;
-      case SubmissionStatus.underReview:
-        color = Colors.orange;
-        label = 'Under Review';
-        break;
-      case SubmissionStatus.approved:
-        color = Colors.green;
-        label = 'Approved';
-        break;
-      case SubmissionStatus.rejected:
-        color = Colors.red;
-        label = 'Rejected';
-        break;
-    }
-
-    return Chip(
-      label: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 12),
-      ),
-      backgroundColor: color.withOpacity(0.1),
-      side: BorderSide(color: color),
     );
   }
 
