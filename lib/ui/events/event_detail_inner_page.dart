@@ -65,7 +65,7 @@ class EventDetailInnerPage extends ConsumerWidget {
             SliverAppBar(
               expandedHeight: 200.0,
               floating: false,
-              pinned: true,
+              pinned: false,
               automaticallyImplyLeading: false,
               flexibleSpace: FlexibleSpaceBar(
                 background: _buildExpandedHeader(context, event),
@@ -96,10 +96,21 @@ class EventDetailInnerPage extends ConsumerWidget {
   Widget _buildExpandedHeader(BuildContext context, Event event) {
     return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.8),
+          ],
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 40), // Account for status bar
+
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -136,13 +147,44 @@ class EventDetailInnerPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and description
-                    Text(
-                      event.title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    // Title row with Submit Entry button
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event.title,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                           ),
+                        ),
+                        if (event.status == EventStatus.active) ...[
+                          const SizedBox(width: 8),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              return ElevatedButton.icon(
+                                onPressed: () =>
+                                    _createSubmission(context, ref, event),
+                                icon: const Icon(Icons.add, size: 14),
+                                label: const Text('Submit Entry'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  elevation: 2,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  textStyle: const TextStyle(fontSize: 12),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -163,16 +205,6 @@ class EventDetailInnerPage extends ConsumerWidget {
             ],
           ),
         ],
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withOpacity(0.8),
-          ],
-        ),
       ),
     );
   }
@@ -628,30 +660,14 @@ class EventDetailInnerPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with submission button for regular members
-              if (!canJudge) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (event.status == EventStatus.active)
-                      ElevatedButton.icon(
-                        onPressed: () => _createSubmission(context, ref, event),
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('Submit Entry'),
-                      ),
-                  ],
+              // Deadline countdown if active (for all users)
+              if (event.submissionDeadline != null &&
+                  event.status == EventStatus.active) ...[
+                DeadlineCountdownWidget(
+                  event: event,
+                  compact: true,
                 ),
                 const SizedBox(height: 16),
-
-                // Deadline countdown if active
-                if (event.submissionDeadline != null &&
-                    event.status == EventStatus.active) ...[
-                  DeadlineCountdownWidget(
-                    event: event,
-                    compact: true,
-                  ),
-                  const SizedBox(height: 16),
-                ],
               ],
 
               // Submissions list
