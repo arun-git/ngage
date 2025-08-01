@@ -56,6 +56,17 @@ class EventSubmissionIntegrationService {
     }
   }
 
+  /// Get member's submission for a specific event
+  Future<Submission?> getMemberSubmissionForEvent(
+      String eventId, String memberId) async {
+    final submissions = await _submissionService.getEventSubmissions(eventId);
+    try {
+      return submissions.firstWhere((s) => s.submittedBy == memberId);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Check if team can submit to event
   Future<bool> canTeamSubmitToEvent(String eventId, String teamId) async {
     final event = await _eventService.getEventById(eventId);
@@ -67,9 +78,26 @@ class EventSubmissionIntegrationService {
     // Check if team is eligible for the event
     if (!event.isTeamEligible(teamId)) return false;
 
-    // Check if team has already submitted (and event doesn't allow multiple submissions)
+    // Note: Removed the check for existing team submissions since we now allow
+    // multiple individual submissions from the same team
+    return true;
+  }
+
+  /// Check if member can submit to event
+  Future<bool> canMemberSubmitToEvent(
+      String eventId, String memberId, String teamId) async {
+    final event = await _eventService.getEventById(eventId);
+    if (event == null) return false;
+
+    // Check if event allows submissions
+    if (!event.areSubmissionsOpen) return false;
+
+    // Check if team is eligible for the event
+    if (!event.isTeamEligible(teamId)) return false;
+
+    // Check if member has already submitted to this event
     final hasSubmitted =
-        await _submissionService.hasTeamSubmitted(eventId, teamId);
+        await _submissionService.hasMemberSubmitted(eventId, memberId);
     if (hasSubmitted) return false;
 
     return true;

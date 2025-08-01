@@ -33,6 +33,16 @@ final teamSubmissionForEventProvider =
       params.eventId, params.teamId);
 });
 
+/// Provider for member's submission for a specific event
+final memberSubmissionForEventProvider =
+    FutureProvider.family<Submission?, ({String eventId, String memberId})>(
+        (ref, params) async {
+  final integrationService =
+      ref.watch(eventSubmissionIntegrationServiceProvider);
+  return await integrationService.getMemberSubmissionForEvent(
+      params.eventId, params.memberId);
+});
+
 /// Provider for checking if team can submit to event
 final canTeamSubmitToEventProvider =
     FutureProvider.family<bool, ({String eventId, String teamId})>(
@@ -41,6 +51,15 @@ final canTeamSubmitToEventProvider =
       ref.watch(eventSubmissionIntegrationServiceProvider);
   return await integrationService.canTeamSubmitToEvent(
       params.eventId, params.teamId);
+});
+
+/// Provider for checking if member can submit to event
+final canMemberSubmitToEventProvider = FutureProvider.family<bool,
+    ({String eventId, String memberId, String teamId})>((ref, params) async {
+  final integrationService =
+      ref.watch(eventSubmissionIntegrationServiceProvider);
+  return await integrationService.canMemberSubmitToEvent(
+      params.eventId, params.memberId, params.teamId);
 });
 
 /// Provider for events with submission status for a team

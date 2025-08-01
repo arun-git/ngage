@@ -207,6 +207,11 @@ class SubmissionService {
     return await _repository.hasTeamSubmitted(eventId, teamId);
   }
 
+  /// Check if member has already submitted for an event
+  Future<bool> hasMemberSubmitted(String eventId, String memberId) async {
+    return await _repository.hasMemberSubmitted(eventId, memberId);
+  }
+
   /// Get submission count for an event
   Future<int> getSubmissionCount(String eventId) async {
     return await _repository.getSubmissionCount(eventId);

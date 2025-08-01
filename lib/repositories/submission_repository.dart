@@ -183,6 +183,18 @@ class SubmissionRepository {
     return query.docs.isNotEmpty;
   }
 
+  /// Check if a member has already submitted for an event
+  Future<bool> hasMemberSubmitted(String eventId, String memberId) async {
+    final query = await _collection
+        .where('eventId', isEqualTo: eventId)
+        .where('submittedBy', isEqualTo: memberId)
+        .where('status', whereNotIn: ['draft'])
+        .limit(1)
+        .get();
+
+    return query.docs.isNotEmpty;
+  }
+
   /// Get submission count for an event
   Future<int> getSubmissionCount(String eventId) async {
     final query = await _collection

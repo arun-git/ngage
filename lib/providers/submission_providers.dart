@@ -57,6 +57,14 @@ final hasTeamSubmittedProvider =
   return submissionService.hasTeamSubmitted(params.eventId, params.teamId);
 });
 
+/// Provider for checking if a member has submitted for an event
+final hasMemberSubmittedProvider =
+    FutureProvider.family<bool, ({String eventId, String memberId})>(
+        (ref, params) async {
+  final submissionService = ref.watch(submissionServiceProvider);
+  return submissionService.hasMemberSubmitted(params.eventId, params.memberId);
+});
+
 /// Provider for getting submission count for an event
 final submissionCountProvider =
     FutureProvider.family<int, String>((ref, eventId) async {

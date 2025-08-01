@@ -495,17 +495,17 @@ class EventDetailInnerPage extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
-                    'You must be part of a team in this group to create a submission'),
+                    'You must be part of a team in this group to create an individual submission'),
               ),
             );
             return;
           }
 
-          // Check if there's already a submission for this team and event
+          // Check if there's already a submission for this member and event
           final submissionService = ref.read(submissionServiceProvider);
-          final teamSubmissions =
-              await submissionService.getTeamSubmissions(groupTeam.id);
-          final existingSubmission = teamSubmissions
+          final memberSubmissions =
+              await submissionService.getMemberSubmissions(member.id);
+          final existingSubmission = memberSubmissions
               .where((submission) => submission.eventId == event.id)
               .firstOrNull;
 
