@@ -750,7 +750,7 @@ class EventDetailInnerPage extends ConsumerWidget {
 
         // Role-specific actions and info
         if (canJudge) ...[
-          const SizedBox(height: 8),
+          //const SizedBox(height: 8),
           _buildJudgeActionsCard(
               context, ref, submission, currentUserId, eventId),
         ],
