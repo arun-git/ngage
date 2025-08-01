@@ -31,6 +31,7 @@ class SubmissionScreen extends ConsumerStatefulWidget {
 class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _textController = TextEditingController();
+  final _descriptionFocusNode = FocusNode();
 
   Submission? _submission;
   Event? _event;
@@ -44,17 +45,18 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     super.initState();
     _loadSubmission();
     _loadEvent();
+    _descriptionFocusNode.addListener(_onDescriptionFocusChange);
   }
 
   @override
   void dispose() {
+    _descriptionFocusNode.removeListener(_onDescriptionFocusChange);
+    _descriptionFocusNode.dispose();
     _textController.dispose();
     super.dispose();
   }
 
   Future<void> _loadSubmission() async {
-    if (widget.submissionId == null) return;
-
     setState(() {
       _isLoading = true;
       _error = null;
@@ -62,18 +64,34 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     try {
       final submissionService = ref.read(submissionServiceProvider);
-      final submission =
-          await submissionService.getSubmission(widget.submissionId!);
 
-      if (submission != null) {
+      if (widget.submissionId == null) {
+        // Create new submission on page load when submission is null
+        final submission = await submissionService.createSubmission(
+          eventId: widget.eventId,
+          teamId: widget.teamId,
+          submittedBy: widget.memberId,
+          initialContent: {'text': ''},
+        );
         setState(() {
           _submission = submission;
-          _textController.text = submission.textContent ?? '';
+          _textController.text = '';
         });
       } else {
-        setState(() {
-          _error = 'Submission not found';
-        });
+        // Load existing submission
+        final submission =
+            await submissionService.getSubmission(widget.submissionId!);
+
+        if (submission != null) {
+          setState(() {
+            _submission = submission;
+            _textController.text = submission.textContent ?? '';
+          });
+        } else {
+          setState(() {
+            _error = 'Submission not found';
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -101,6 +119,47 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     }
   }
 
+  void _onDescriptionFocusChange() {
+    if (!_descriptionFocusNode.hasFocus) {
+      // Field lost focus, trigger autosave
+      _autoSaveDescription();
+    }
+  }
+
+  Future<void> _autoSaveDescription() async {
+    if (_submission?.canBeEdited != true) return;
+    if (_textController.text.trim() == _submission?.textContent?.trim()) return;
+
+    await _saveDescriptionSilently();
+  }
+
+  Future<void> _saveDescriptionSilently() async {
+    try {
+      final submissionService = ref.read(submissionServiceProvider);
+
+      if (_submission == null) return;
+
+      // Update existing submission silently
+      final updatedContent = Map<String, dynamic>.from(_submission!.content);
+      updatedContent['text'] = _textController.text.trim();
+
+      final updatedSubmission = await submissionService.updateSubmissionContent(
+        submissionId: _submission!.id,
+        content: updatedContent,
+      );
+
+      // Update local state without showing loading or snackbar
+      if (mounted) {
+        setState(() {
+          _submission = updatedSubmission;
+        });
+      }
+    } catch (e) {
+      // Silent save - don't show error to user, just log it
+      print('Silent save failed: $e');
+    }
+  }
+
   Future<void> _createOrUpdateSubmission() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -113,30 +172,23 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
       final submissionService = ref.read(submissionServiceProvider);
 
       if (_submission == null) {
-        // Create new submission
-        final submission = await submissionService.createSubmission(
-          eventId: widget.eventId,
-          teamId: widget.teamId,
-          submittedBy: widget.memberId,
-          initialContent: {'text': _textController.text.trim()},
-        );
         setState(() {
-          _submission = submission;
+          _error = 'No submission found to update';
         });
-      } else {
-        // Update existing submission
-        final updatedContent = Map<String, dynamic>.from(_submission!.content);
-        updatedContent['text'] = _textController.text.trim();
-
-        final updatedSubmission =
-            await submissionService.updateSubmissionContent(
-          submissionId: _submission!.id,
-          content: updatedContent,
-        );
-        setState(() {
-          _submission = updatedSubmission;
-        });
+        return;
       }
+
+      // Update existing submission
+      final updatedContent = Map<String, dynamic>.from(_submission!.content);
+      updatedContent['text'] = _textController.text.trim();
+
+      final updatedSubmission = await submissionService.updateSubmissionContent(
+        submissionId: _submission!.id,
+        content: updatedContent,
+      );
+      setState(() {
+        _submission = updatedSubmission;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Submission saved successfully')),
@@ -155,7 +207,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
   Future<void> _uploadFiles(String fileType) async {
     if (_submission == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please save your submission first')),
+        const SnackBar(content: Text('Submission not ready for file upload')),
       );
       return;
     }
@@ -429,6 +481,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _textController,
+                      focusNode: _descriptionFocusNode,
+                      readOnly: _submission?.canBeEdited != true,
                       maxLines: 5,
                       enabled: _submission?.canBeEdited != false,
                       decoration: const InputDecoration(
@@ -444,13 +498,6 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                         }
                         return null;
                       },
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _submission?.canBeEdited != false
-                          ? _createOrUpdateSubmission
-                          : null,
-                      child: const Text('Save Description'),
                     ),
                   ],
                 ),
