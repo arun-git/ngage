@@ -224,9 +224,9 @@ class SubmissionService {
       throw Exception('Submission not found');
     }
 
-    if (!submission.canBeEdited) {
-      throw Exception('Cannot delete submission that is not in draft status');
-    }
+    //if (!submission.canBeEdited) {
+    //  throw Exception('Cannot delete submission that is not in draft status');
+    // }
 
     await _repository.delete(submissionId);
   }

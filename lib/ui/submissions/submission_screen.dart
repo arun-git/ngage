@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/submission.dart';
 import '../../models/event.dart';
+import '../../models/group_member.dart';
 import '../../providers/submission_providers.dart';
 import '../../providers/event_providers.dart';
+import '../../providers/auth_providers.dart';
+import '../../providers/group_providers.dart';
 import 'widgets/file_upload_widget.dart';
 import 'widgets/submission_status_indicator.dart';
 import 'widgets/deadline_countdown_widget.dart';
@@ -35,6 +38,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
   Submission? _submission;
   Event? _event;
+  GroupMember? _currentUserGroupMembership;
   bool _isLoading = false;
   bool _isUploading = false;
   double _uploadProgress = 0.0;
@@ -113,9 +117,33 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
         setState(() {
           _event = event;
         });
+        // Load group membership after event is loaded
+        _loadCurrentUserGroupMembership();
       }
     } catch (e) {
       print('Failed to load event: $e');
+    }
+  }
+
+  Future<void> _loadCurrentUserGroupMembership() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      if (authState.currentMember == null || _event == null) return;
+
+      final groupMembershipAsync = await ref.read(
+        groupMembershipProvider((
+          groupId: _event!.groupId,
+          memberId: authState.currentMember!.id,
+        )).future,
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentUserGroupMembership = groupMembershipAsync;
+        });
+      }
+    } catch (e) {
+      print('Failed to load group membership: $e');
     }
   }
 
@@ -371,6 +399,90 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     }
   }
 
+  bool _canDeleteSubmission() {
+    if (_submission == null) return false;
+
+    final authState = ref.read(authStateProvider);
+    final currentMember = authState.currentMember;
+
+    if (currentMember == null) return false;
+
+    // Owner of the submission can delete it
+    if (_submission!.submittedBy == currentMember.id) {
+      return true;
+    }
+
+    // Group admin can delete any submission
+    if (_currentUserGroupMembership?.isAdmin == true) {
+      return true;
+    }
+
+    return false;
+  }
+
+  Future<void> _deleteSubmission() async {
+    if (_submission == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Submission'),
+        content: const Text(
+          'Are you sure you want to delete this submission? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final submissionService = ref.read(submissionServiceProvider);
+      await submissionService.deleteSubmission(_submission!.id);
+
+      // Invalidate relevant providers to refresh data across the app
+      ref.invalidate(eventSubmissionsProvider(_submission!.eventId));
+      ref.invalidate(eventSubmissionsStreamProvider(_submission!.eventId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Submission deleted successfully')),
+        );
+        Navigator.of(context).pop(); // Go back to previous screen
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to delete submission: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -379,6 +491,28 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
         actions: [
           if (_submission != null)
             SubmissionStatusIndicator(status: _submission!.status),
+          if (_submission != null && _canDeleteSubmission())
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                switch (value) {
+                  case 'delete':
+                    _deleteSubmission();
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete Submission'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
       body: _isLoading
