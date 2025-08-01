@@ -487,7 +487,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_submission == null ? 'New Submission' : 'Edit Submission'),
+        title: Text(_submission == null
+            ? 'New Submission'
+            : (_submission!.canBeEdited ? 'Edit Submission' : '')),
         actions: [
           if (_submission != null)
             SubmissionStatusIndicator(status: _submission!.status),
@@ -617,7 +619,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                       controller: _textController,
                       focusNode: _descriptionFocusNode,
                       readOnly: _submission?.canBeEdited != true,
-                      maxLines: 5,
+                      maxLines: 3,
                       enabled: _submission?.canBeEdited != false,
                       decoration: const InputDecoration(
                         hintText: 'Describe your submission...',
