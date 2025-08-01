@@ -29,7 +29,8 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
   Widget build(BuildContext context) {
     final submissionAsync =
         ref.watch(submissionStreamProvider(widget.submissionId));
-    final eventRubricsAsync = ref.watch(eventRubricsProvider(widget.eventId));
+    final eventRubricsAsync =
+        ref.watch(eventRubricsStreamProvider(widget.eventId));
     final existingScoreAsync =
         ref.watch(judgeScoreProvider((widget.submissionId, widget.judgeId)));
 
@@ -69,7 +70,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    ref.invalidate(eventRubricsProvider(widget.eventId));
+                    ref.invalidate(eventRubricsStreamProvider(widget.eventId));
                   },
                   child: const Text('Retry'),
                 ),

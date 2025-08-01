@@ -31,7 +31,7 @@ class _RubricManagementWidgetState
   @override
   Widget build(BuildContext context) {
     final availableRubricsAsync =
-        ref.watch(eventRubricsProvider(widget.eventId ?? ''));
+        ref.watch(eventRubricsStreamProvider(widget.eventId ?? ''));
     final templateRubricsAsync = ref.watch(templateRubricsProvider);
 
     return Card(
@@ -104,8 +104,7 @@ class _RubricManagementWidgetState
       onRubricCreated: (rubric) {
         setState(() => _showCreateForm = false);
         widget.onRubricSelected?.call(rubric);
-        // Refresh the rubrics list
-        ref.refresh(eventRubricsProvider(widget.eventId ?? ''));
+        // Stream provider will automatically update
       },
     );
   }
@@ -221,8 +220,7 @@ class _RubricManagementWidgetState
           ),
         );
 
-        // Refresh the rubrics list
-        ref.refresh(eventRubricsProvider(widget.eventId ?? ''));
+        // Stream provider will automatically update
         widget.onRubricSelected?.call(cloned);
       }
     } catch (e) {

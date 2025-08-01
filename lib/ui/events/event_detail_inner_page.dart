@@ -447,70 +447,135 @@ class EventDetailInnerPage extends ConsumerWidget {
     );
   }
 
-  void _createSubmission(BuildContext context, WidgetRef ref, Event event) {
+  Future<void> _createSubmission(
+      BuildContext context, WidgetRef ref, Event event) async {
     final activeMemberAsync = ref.read(activeMemberProvider);
 
-    activeMemberAsync.when(
-      data: (member) {
-        if (member == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Please log in to create a submission')),
-          );
-          return;
-        }
-
-        // Get member's teams and find the one for this group
-        final memberTeamsAsync = ref.read(memberTeamsProvider(member.id));
-
-        memberTeamsAsync.when(
-          data: (teams) {
-            // Find the team that belongs to this event's group
-            final groupTeams =
-                teams.where((team) => team.groupId == event.groupId).toList();
-            final groupTeam = groupTeams.isNotEmpty ? groupTeams.first : null;
-
-            if (groupTeam == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text(
-                        'You must be part of a team in this group to create a submission')),
-              );
-              return;
-            }
-
-            SubmissionNavigationService.showSubmissionActionDialog(
-              context,
-              event: event,
-              teamId: groupTeam.id,
-              memberId: member.id,
-            );
-          },
-          loading: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Loading team information...')),
-            );
-          },
-          error: (error, _) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content:
-                      SelectableText('Error loading team information: $error')),
-            );
-          },
-        );
-      },
+    final member = activeMemberAsync.when(
+      data: (member) => member,
       loading: () {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Loading user information...')),
         );
+        return null;
       },
       error: (error, _) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading user information: $error')),
         );
+        return null;
       },
     );
+
+    if (member == null) {
+      if (activeMemberAsync.isLoading) return; // Already showed loading message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to create a submission')),
+      );
+      return;
+    }
+
+    // Show loading message while we fetch team information
+    /*ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Loading team information...')),
+    );*/
+
+    try {
+      // Watch the teams provider to get the current teams
+      final memberTeamsAsync = ref.read(memberTeamsProvider(member.id));
+
+      await memberTeamsAsync.when(
+        data: (teams) async {
+          // Find the team that belongs to this event's group
+          final groupTeams =
+              teams.where((team) => team.groupId == event.groupId).toList();
+          final groupTeam = groupTeams.isNotEmpty ? groupTeams.first : null;
+
+          if (groupTeam == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'You must be part of a team in this group to create a submission'),
+              ),
+            );
+            return;
+          }
+
+          // Check if there's already a submission for this team and event
+          final submissionService = ref.read(submissionServiceProvider);
+          final teamSubmissions =
+              await submissionService.getTeamSubmissions(groupTeam.id);
+          final existingSubmission = teamSubmissions
+              .where((submission) => submission.eventId == event.id)
+              .firstOrNull;
+
+          if (context.mounted) {
+            // Navigate directly to submission screen
+            if (existingSubmission != null) {
+              // Edit existing submission
+              await SubmissionNavigationService.navigateToEditSubmission(
+                context,
+                eventId: event.id,
+                teamId: groupTeam.id,
+                memberId: member.id,
+                submissionId: existingSubmission.id,
+              );
+            } else {
+              // Create new submission
+              await SubmissionNavigationService.navigateToCreateSubmission(
+                context,
+                eventId: event.id,
+                teamId: groupTeam.id,
+                memberId: member.id,
+              );
+            }
+          }
+        },
+        loading: () async {
+          // Show loading dialog while teams are loading
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                return const AlertDialog(
+                  content: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 16),
+                      Text('Loading submission page...'),
+                    ],
+                  ),
+                );
+              },
+            );
+
+            // Wait for teams to load and retry
+            await Future.delayed(const Duration(milliseconds: 1000));
+
+            // Dismiss loading dialog
+            if (context.mounted) {
+              Navigator.of(context).pop();
+
+              // Retry the operation by calling _createSubmission again
+              _createSubmission(context, ref, event);
+            }
+          }
+        },
+        error: (error, _) async {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading team information: $error')),
+          );
+        },
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: SelectableText('Unexpected error: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildRubricsTab(BuildContext context, WidgetRef ref, String eventId,
