@@ -58,6 +58,35 @@ final eventRubricsStreamProvider =
   return rubricRepository.streamByEventId(eventId);
 });
 
+/// Stream provider for event rubrics with fallback to global template
+/// If no event-specific rubrics are available, uses the global template with id "rubric_1754073446739_51"
+final eventRubricsWithFallbackStreamProvider =
+    StreamProvider.family<List<ScoringRubric>, String>((ref, eventId) async* {
+  final rubricRepository = ref.read(scoringRubricRepositoryProvider);
+
+  await for (final eventRubrics in rubricRepository.streamByEventId(eventId)) {
+    if (eventRubrics.isNotEmpty) {
+      // Event has specific rubrics, use them
+      yield eventRubrics;
+    } else {
+      // No event rubrics, try to get the global template
+      try {
+        final globalTemplate =
+            await rubricRepository.getById("rubric_1754073446739_51");
+        if (globalTemplate != null) {
+          yield [globalTemplate];
+        } else {
+          // Global template not found, yield empty list
+          yield [];
+        }
+      } catch (e) {
+        // Error fetching global template, yield empty list
+        yield [];
+      }
+    }
+  }
+});
+
 /// Provider for getting a specific scoring rubric
 final scoringRubricProvider =
     FutureProvider.family<ScoringRubric?, String>((ref, rubricId) async {

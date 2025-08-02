@@ -30,7 +30,7 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
     final submissionAsync =
         ref.watch(submissionStreamProvider(widget.submissionId));
     final eventRubricsAsync =
-        ref.watch(eventRubricsStreamProvider(widget.eventId));
+        ref.watch(eventRubricsWithFallbackStreamProvider(widget.eventId));
     final existingScoreAsync =
         ref.watch(judgeScoreProvider((widget.submissionId, widget.judgeId)));
 
@@ -70,7 +70,8 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    ref.invalidate(eventRubricsStreamProvider(widget.eventId));
+                    ref.invalidate(
+                        eventRubricsWithFallbackStreamProvider(widget.eventId));
                   },
                   child: const Text('Retry'),
                 ),
@@ -103,11 +104,12 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
           children: [
             Icon(Icons.rule, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No scoring rubrics available for this event'),
+            Text('No scoring rubrics available'),
             SizedBox(height: 8),
             Text(
-              'Contact the event organizer to set up scoring criteria',
+              'No event-specific rubrics or global template found.\nContact the event organizer to set up scoring criteria.',
               style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -123,6 +125,46 @@ class _JudgeSubmissionScreenState extends ConsumerState<JudgeSubmissionScreen> {
           _buildSubmissionCard(submission),
 
           const SizedBox(height: 24),
+
+          // Show info banner if using global template
+          if (rubrics.length == 1 &&
+              rubrics.first.id == "rubric_1754073446739_51")
+            _buildResponsiveContent(
+              context,
+              Container(
+                margin: const EdgeInsets.only(bottom: 16.0),
+                padding: const EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Using global scoring template (no event-specific rubrics found)',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // Scoring forms for each rubric with responsive layout
           ...rubrics.map((rubric) => Padding(
