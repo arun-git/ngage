@@ -306,6 +306,10 @@ class LeaderboardWidget extends ConsumerWidget {
                   flex: 2,
                   child: Text('Submissions',
                       style: TextStyle(fontWeight: FontWeight.bold))),
+              const Expanded(
+                  flex: 2,
+                  child: Text('Submitted By',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
               if (showCriteriaBreakdown)
                 const Expanded(
                     flex: 3,
@@ -360,6 +364,10 @@ class LeaderboardWidget extends ConsumerWidget {
                   flex: 2,
                   child: Text(entry.submissionCount.toString()),
                 ),
+                Expanded(
+                  flex: 2,
+                  child: _buildSubmittedByWidget(context, entry),
+                ),
                 if (showCriteriaBreakdown)
                   Expanded(
                     flex: 3,
@@ -413,6 +421,22 @@ class LeaderboardWidget extends ConsumerWidget {
     return Text(
       position.toString(),
       style: const TextStyle(fontWeight: FontWeight.w500),
+    );
+  }
+
+  Widget _buildSubmittedByWidget(BuildContext context, LeaderboardEntry entry) {
+    if (entry.submittedBy.isEmpty) {
+      return const Text('-', style: TextStyle(color: Colors.grey));
+    }
+
+    final uniqueSubmitters = entry.uniqueSubmitters;
+    final memberNames = uniqueSubmitters.join(', ');
+
+    return Text(
+      memberNames,
+      style: const TextStyle(fontWeight: FontWeight.w500),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 2,
     );
   }
 

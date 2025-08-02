@@ -9,6 +9,8 @@ class LeaderboardEntry {
   final int submissionCount;
   final int position;
   final Map<String, double> criteriaScores; // Average scores by criterion
+  final List<String>
+      submittedBy; // List of member IDs who submitted for this team
 
   const LeaderboardEntry({
     required this.teamId,
@@ -18,10 +20,13 @@ class LeaderboardEntry {
     required this.submissionCount,
     required this.position,
     this.criteriaScores = const {},
+    this.submittedBy = const [],
   });
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
-    final criteriaScoresMap = json['criteriaScores'] as Map<String, dynamic>? ?? {};
+    final criteriaScoresMap =
+        json['criteriaScores'] as Map<String, dynamic>? ?? {};
+    final submittedByList = json['submittedBy'] as List? ?? [];
     return LeaderboardEntry(
       teamId: json['teamId'] as String,
       teamName: json['teamName'] as String,
@@ -29,7 +34,9 @@ class LeaderboardEntry {
       averageScore: (json['averageScore'] as num).toDouble(),
       submissionCount: json['submissionCount'] as int,
       position: json['position'] as int,
-      criteriaScores: criteriaScoresMap.map((k, v) => MapEntry(k, (v as num).toDouble())),
+      criteriaScores:
+          criteriaScoresMap.map((k, v) => MapEntry(k, (v as num).toDouble())),
+      submittedBy: submittedByList.cast<String>(),
     );
   }
 
@@ -42,6 +49,7 @@ class LeaderboardEntry {
       'submissionCount': submissionCount,
       'position': position,
       'criteriaScores': criteriaScores,
+      'submittedBy': submittedBy,
     };
   }
 
@@ -53,6 +61,7 @@ class LeaderboardEntry {
     int? submissionCount,
     int? position,
     Map<String, double>? criteriaScores,
+    List<String>? submittedBy,
   }) {
     return LeaderboardEntry(
       teamId: teamId ?? this.teamId,
@@ -62,6 +71,7 @@ class LeaderboardEntry {
       submissionCount: submissionCount ?? this.submissionCount,
       position: position ?? this.position,
       criteriaScores: criteriaScores ?? this.criteriaScores,
+      submittedBy: submittedBy ?? this.submittedBy,
     );
   }
 
@@ -69,6 +79,17 @@ class LeaderboardEntry {
   double? getCriteriaScore(String criterion) {
     return criteriaScores[criterion];
   }
+
+  /// Get the number of unique members who submitted for this team
+  int get uniqueSubmittersCount => submittedBy.toSet().length;
+
+  /// Check if a specific member submitted for this team
+  bool hasSubmitterWithId(String memberId) {
+    return submittedBy.contains(memberId);
+  }
+
+  /// Get all unique submitter IDs
+  List<String> get uniqueSubmitters => submittedBy.toSet().toList();
 
   /// Check if this is a winning position (top 3)
   bool get isWinningPosition => position <= 3;
@@ -79,7 +100,7 @@ class LeaderboardEntry {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is LeaderboardEntry &&
         other.teamId == teamId &&
         other.teamName == teamName &&
@@ -87,7 +108,8 @@ class LeaderboardEntry {
         other.averageScore == averageScore &&
         other.submissionCount == submissionCount &&
         other.position == position &&
-        _mapEquals(other.criteriaScores, criteriaScores);
+        _mapEquals(other.criteriaScores, criteriaScores) &&
+        _listEquals(other.submittedBy, submittedBy);
   }
 
   @override
@@ -100,24 +122,35 @@ class LeaderboardEntry {
       submissionCount,
       position,
       criteriaScores.toString(),
+      submittedBy.toString(),
     );
   }
 
   bool _mapEquals(Map<String, double> map1, Map<String, double> map2) {
     if (map1.length != map2.length) return false;
-    
+
     for (final key in map1.keys) {
       if (!map2.containsKey(key) || map1[key] != map2[key]) {
         return false;
       }
     }
-    
+
+    return true;
+  }
+
+  bool _listEquals(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+
     return true;
   }
 
   @override
   String toString() {
-    return 'LeaderboardEntry(position: $position, team: $teamName, score: $totalScore)';
+    return 'LeaderboardEntry(position: $position, team: $teamName, score: $totalScore, submitters: $uniqueSubmittersCount)';
   }
 }
 
@@ -237,21 +270,21 @@ class Leaderboard {
 
     // Additional business logic validation
     final additionalErrors = <String>[];
-    
+
     // Check for duplicate team IDs
     final teamIds = entries.map((e) => e.teamId).toList();
     final uniqueTeamIds = teamIds.toSet();
     if (teamIds.length != uniqueTeamIds.length) {
       additionalErrors.add('Team IDs must be unique in leaderboard');
     }
-    
+
     // Check for duplicate positions
     final positions = entries.map((e) => e.position).toList();
     final uniquePositions = positions.toSet();
     if (positions.length != uniquePositions.length) {
       additionalErrors.add('Positions must be unique in leaderboard');
     }
-    
+
     // Validate position sequence (should be 1, 2, 3, ...)
     if (entries.isNotEmpty) {
       final sortedPositions = List<int>.from(positions)..sort();
@@ -262,11 +295,11 @@ class Leaderboard {
         }
       }
     }
-    
+
     // Validate each entry
     for (int i = 0; i < entries.length; i++) {
       final entry = entries[i];
-      
+
       if (entry.teamId.isEmpty) {
         additionalErrors.add('Entry ${i + 1} must have a team ID');
       }
@@ -280,7 +313,8 @@ class Leaderboard {
         additionalErrors.add('Entry ${i + 1} average score cannot be negative');
       }
       if (entry.submissionCount < 0) {
-        additionalErrors.add('Entry ${i + 1} submission count cannot be negative');
+        additionalErrors
+            .add('Entry ${i + 1} submission count cannot be negative');
       }
       if (entry.position <= 0) {
         additionalErrors.add('Entry ${i + 1} position must be positive');
@@ -288,19 +322,19 @@ class Leaderboard {
     }
 
     final baseValidation = Validators.combine(results);
-    
+
     if (additionalErrors.isNotEmpty) {
       final allErrors = [...baseValidation.errors, ...additionalErrors];
       return ValidationResult.invalid(allErrors);
     }
-    
+
     return baseValidation;
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is Leaderboard &&
         other.id == id &&
         other.eventId == eventId &&
@@ -322,23 +356,23 @@ class Leaderboard {
 
   bool _listEquals(List<LeaderboardEntry> list1, List<LeaderboardEntry> list2) {
     if (list1.length != list2.length) return false;
-    
+
     for (int i = 0; i < list1.length; i++) {
       if (list1[i] != list2[i]) return false;
     }
-    
+
     return true;
   }
 
   bool _mapEquals(Map<String, dynamic> map1, Map<String, dynamic> map2) {
     if (map1.length != map2.length) return false;
-    
+
     for (final key in map1.keys) {
       if (!map2.containsKey(key) || map1[key] != map2[key]) {
         return false;
       }
     }
-    
+
     return true;
   }
 

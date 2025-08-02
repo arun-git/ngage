@@ -28,7 +28,8 @@ class JudgingService {
         _submissionRepository = submissionRepository ?? SubmissionRepository(),
         _teamRepository = teamRepository ?? TeamRepository(),
         _commentRepository = commentRepository ?? JudgeCommentRepository(),
-        _assignmentRepository = assignmentRepository ?? JudgeAssignmentRepository();
+        _assignmentRepository =
+            assignmentRepository ?? JudgeAssignmentRepository();
 
   // ===== JUDGE COLLABORATION FEATURES =====
 
@@ -139,7 +140,8 @@ class JudgingService {
     List<String> permissions = const [],
   }) async {
     // Check if judge is already assigned
-    final existingAssignment = await _assignmentRepository.getAssignment(eventId, judgeId);
+    final existingAssignment =
+        await _assignmentRepository.getAssignment(eventId, judgeId);
     if (existingAssignment != null && existingAssignment.isActive) {
       throw Exception('Judge is already assigned to this event');
     }
@@ -166,7 +168,8 @@ class JudgingService {
     required String eventId,
     required String judgeId,
   }) async {
-    final assignment = await _assignmentRepository.getActiveAssignment(eventId, judgeId);
+    final assignment =
+        await _assignmentRepository.getActiveAssignment(eventId, judgeId);
     if (assignment == null) {
       throw Exception('Judge is not assigned to this event');
     }
@@ -192,7 +195,8 @@ class JudgingService {
     JudgeRole? role,
     List<String>? permissions,
   }) async {
-    final assignment = await _assignmentRepository.getActiveAssignment(eventId, judgeId);
+    final assignment =
+        await _assignmentRepository.getActiveAssignment(eventId, judgeId);
     if (assignment == null) {
       throw Exception('Judge is not assigned to this event');
     }
@@ -212,7 +216,8 @@ class JudgingService {
     required String judgeId,
     required String permission,
   }) async {
-    final assignment = await _assignmentRepository.getActiveAssignment(eventId, judgeId);
+    final assignment =
+        await _assignmentRepository.getActiveAssignment(eventId, judgeId);
     if (assignment == null) {
       throw Exception('Judge is not assigned to this event');
     }
@@ -227,7 +232,8 @@ class JudgingService {
     required String judgeId,
     required String permission,
   }) async {
-    final assignment = await _assignmentRepository.getActiveAssignment(eventId, judgeId);
+    final assignment =
+        await _assignmentRepository.getActiveAssignment(eventId, judgeId);
     if (assignment == null) {
       throw Exception('Judge is not assigned to this event');
     }
@@ -242,7 +248,8 @@ class JudgingService {
     required String judgeId,
     required String permission,
   }) async {
-    final assignment = await _assignmentRepository.getActiveAssignment(eventId, judgeId);
+    final assignment =
+        await _assignmentRepository.getActiveAssignment(eventId, judgeId);
     if (assignment == null) return false;
 
     return assignment.hasPermission(permission);
@@ -250,7 +257,8 @@ class JudgingService {
 
   /// Check if a judge is assigned to an event
   Future<bool> isJudgeAssigned(String eventId, String judgeId) async {
-    return await _assignmentRepository.isJudgeActivelyAssigned(eventId, judgeId);
+    return await _assignmentRepository.isJudgeActivelyAssigned(
+        eventId, judgeId);
   }
 
   /// Get lead judges for an event
@@ -285,13 +293,13 @@ class JudgingService {
     required String action,
   }) async {
     await _validateJudgeAssignment(eventId, judgeId);
-    
+
     final hasPermission = await hasJudgePermission(
       eventId: eventId,
       judgeId: judgeId,
       permission: action,
     );
-    
+
     if (!hasPermission) {
       throw Exception('Judge does not have permission for action: $action');
     }
@@ -314,9 +322,9 @@ class JudgingService {
 
     // Check if judge has already scored this submission
     final existingScore = await getJudgeScore(submissionId, judgeId);
-    
+
     final now = DateTime.now();
-    
+
     if (existingScore != null) {
       // Update existing score
       final updatedScore = existingScore.copyWith(
@@ -324,12 +332,12 @@ class JudgingService {
         comments: comments,
         updatedAt: now,
       );
-      
+
       // Calculate total score if rubric is provided
-      final finalScore = rubric != null 
+      final finalScore = rubric != null
           ? updatedScore.calculateTotalScore(rubric)
           : updatedScore;
-      
+
       return await _scoreRepository.update(finalScore);
     } else {
       // Create new score
@@ -343,12 +351,11 @@ class JudgingService {
         createdAt: now,
         updatedAt: now,
       );
-      
+
       // Calculate total score if rubric is provided
-      final finalScore = rubric != null 
-          ? newScore.calculateTotalScore(rubric)
-          : newScore;
-      
+      final finalScore =
+          rubric != null ? newScore.calculateTotalScore(rubric) : newScore;
+
       return await _scoreRepository.create(finalScore);
     }
   }
@@ -360,7 +367,8 @@ class JudgingService {
 
   /// Get score by a specific judge for a submission
   Future<Score?> getJudgeScore(String submissionId, String judgeId) async {
-    return await _scoreRepository.getBySubmissionAndJudge(submissionId, judgeId);
+    return await _scoreRepository.getBySubmissionAndJudge(
+        submissionId, judgeId);
   }
 
   /// Add private judge comment
@@ -371,7 +379,7 @@ class JudgingService {
     required String comment,
   }) async {
     final existingScore = await getJudgeScore(submissionId, judgeId);
-    
+
     if (existingScore != null) {
       // Update existing score with comment
       final updatedScore = existingScore.copyWith(
@@ -391,15 +399,16 @@ class JudgingService {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      
+
       await _scoreRepository.create(newScore);
     }
   }
 
   /// Calculate aggregated scores for a submission
-  Future<AggregatedScore> calculateSubmissionAggregation(String submissionId) async {
+  Future<AggregatedScore> calculateSubmissionAggregation(
+      String submissionId) async {
     final scores = await _scoreRepository.getBySubmissionId(submissionId);
-    
+
     if (scores.isEmpty) {
       return AggregatedScore(
         submissionId: submissionId,
@@ -417,17 +426,20 @@ class JudgingService {
         .where((s) => s.totalScore != null)
         .map((s) => s.totalScore!)
         .toList();
-    
+
     final totalSum = totalScores.fold(0.0, (a, b) => a + b);
-    final averageTotal = totalScores.isNotEmpty ? totalSum / totalScores.length : 0.0;
+    final averageTotal =
+        totalScores.isNotEmpty ? totalSum / totalScores.length : 0.0;
 
     // Calculate criteria averages
     final Map<String, List<double>> criteriaScores = {};
-    
+
     for (final score in scores) {
       for (final entry in score.scores.entries) {
         if (entry.value is num) {
-          criteriaScores.putIfAbsent(entry.key, () => []).add((entry.value as num).toDouble());
+          criteriaScores
+              .putIfAbsent(entry.key, () => [])
+              .add((entry.value as num).toDouble());
         }
       }
     }
@@ -458,9 +470,11 @@ class JudgingService {
     // Get all submissions for the event
     final submissions = await _submissionRepository.getByEventId(eventId);
     final submittedSubmissions = submissions
-        .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.approved)
+        .where((s) =>
+            s.status == SubmissionStatus.submitted ||
+            s.status == SubmissionStatus.approved)
         .toList();
-    
+
     if (submittedSubmissions.isEmpty) {
       return Leaderboard(
         id: _generateLeaderboardId(),
@@ -472,58 +486,63 @@ class JudgingService {
 
     // Get all scores for these submissions
     final submissionIds = submittedSubmissions.map((s) => s.id).toList();
-    final scoresBySubmission = await _scoreRepository.getBySubmissionIds(submissionIds);
+    final scoresBySubmission =
+        await _scoreRepository.getBySubmissionIds(submissionIds);
 
     // Calculate team scores
     final Map<String, TeamScoreData> teamScores = {};
-    
+
     for (final submission in submittedSubmissions) {
       final submissionScores = scoresBySubmission[submission.id] ?? [];
-      
+
       if (submissionScores.isNotEmpty) {
         final aggregation = await calculateSubmissionAggregation(submission.id);
         final teamId = submission.teamId;
-        
+
         if (!teamScores.containsKey(teamId)) {
           teamScores[teamId] = TeamScoreData(
             teamId: teamId,
             totalScore: 0.0,
             submissionCount: 0,
             criteriaScores: {},
+            submittedBy: <String>{},
           );
         }
-        
+
         final teamData = teamScores[teamId]!;
         teamData.totalScore += aggregation.averageScore;
         teamData.submissionCount += 1;
-        
+        teamData.submittedBy.add(submission.submittedBy); // Track who submitted
+
         // Aggregate criteria scores
         for (final entry in aggregation.criteriaAverages.entries) {
-          teamData.criteriaScores.putIfAbsent(entry.key, () => []).add(entry.value);
+          teamData.criteriaScores
+              .putIfAbsent(entry.key, () => [])
+              .add(entry.value);
         }
       }
     }
 
     // Calculate final team averages and create leaderboard entries
     final List<LeaderboardEntry> entries = [];
-    
+
     for (final teamData in teamScores.values) {
       // Get team name
       final team = await _teamRepository.getTeamById(teamData.teamId);
       final teamName = team?.name ?? 'Unknown Team';
-      
+
       // Calculate average score
-      final averageScore = teamData.submissionCount > 0 
-          ? teamData.totalScore / teamData.submissionCount 
+      final averageScore = teamData.submissionCount > 0
+          ? teamData.totalScore / teamData.submissionCount
           : 0.0;
-      
+
       // Calculate criteria averages
       final Map<String, double> finalCriteriaScores = {};
       for (final entry in teamData.criteriaScores.entries) {
         final sum = entry.value.fold(0.0, (a, b) => a + b);
         finalCriteriaScores[entry.key] = sum / entry.value.length;
       }
-      
+
       entries.add(LeaderboardEntry(
         teamId: teamData.teamId,
         teamName: teamName,
@@ -532,12 +551,13 @@ class JudgingService {
         submissionCount: teamData.submissionCount,
         position: 0, // Will be set after sorting
         criteriaScores: finalCriteriaScores,
+        submittedBy: teamData.submittedBy.toList(), // Convert Set to List
       ));
     }
 
     // Sort by average score (descending) and assign positions
     entries.sort((a, b) => b.averageScore.compareTo(a.averageScore));
-    
+
     final List<LeaderboardEntry> rankedEntries = [];
     for (int i = 0; i < entries.length; i++) {
       rankedEntries.add(entries[i].copyWith(position: i + 1));
@@ -550,7 +570,8 @@ class JudgingService {
       calculatedAt: DateTime.now(),
       metadata: {
         'totalSubmissions': submittedSubmissions.length,
-        'totalScores': scoresBySubmission.values.expand((scores) => scores).length,
+        'totalScores':
+            scoresBySubmission.values.expand((scores) => scores).length,
         'teamsWithScores': teamScores.length,
       },
     );
@@ -632,7 +653,7 @@ class JudgingService {
   /// Get scoring statistics for an event
   Future<Map<String, dynamic>> getEventScoringStats(String eventId) async {
     final scores = await _scoreRepository.getByEventId(eventId);
-    
+
     if (scores.isEmpty) {
       return {
         'totalScores': 0,
@@ -644,13 +665,15 @@ class JudgingService {
     }
 
     final totalScores = scores.length;
-    final totalScore = scores.fold<double>(0.0, (sum, score) => sum + (score.totalScore ?? 0.0));
+    final totalScore = scores.fold<double>(
+        0.0, (sum, score) => sum + (score.totalScore ?? 0.0));
     final averageScore = totalScore / totalScores;
-    
+
     // Count judge participation
     final judgeParticipation = <String, int>{};
     for (final score in scores) {
-      judgeParticipation[score.judgeId] = (judgeParticipation[score.judgeId] ?? 0) + 1;
+      judgeParticipation[score.judgeId] =
+          (judgeParticipation[score.judgeId] ?? 0) + 1;
     }
 
     return {
@@ -663,13 +686,14 @@ class JudgingService {
   }
 
   /// Validate score against rubric
-  bool validateScoreAgainstRubric(Map<String, dynamic> scores, ScoringRubric rubric) {
+  bool validateScoreAgainstRubric(
+      Map<String, dynamic> scores, ScoringRubric rubric) {
     // Check if all required criteria are present
     for (final criterion in rubric.criteria) {
       if (criterion.required && !scores.containsKey(criterion.key)) {
         return false;
       }
-      
+
       // Validate score values
       if (scores.containsKey(criterion.key)) {
         if (!criterion.isValidScore(scores[criterion.key])) {
@@ -677,16 +701,21 @@ class JudgingService {
         }
       }
     }
-    
+
     return true;
   }
 
   /// Generate unique IDs
-  String _generateScoreId() => 'score_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-  String _generateRubricId() => 'rubric_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-  String _generateLeaderboardId() => 'leaderboard_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-  String _generateCommentId() => 'comment_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-  String _generateAssignmentId() => 'assignment_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
+  String _generateScoreId() =>
+      'score_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
+  String _generateRubricId() =>
+      'rubric_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
+  String _generateLeaderboardId() =>
+      'leaderboard_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
+  String _generateCommentId() =>
+      'comment_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
+  String _generateAssignmentId() =>
+      'assignment_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
 }
 
 /// Aggregated score data for a submission
@@ -729,11 +758,13 @@ class TeamScoreData {
   double totalScore;
   int submissionCount;
   final Map<String, List<double>> criteriaScores;
+  final Set<String> submittedBy; // Track unique member IDs who submitted
 
   TeamScoreData({
     required this.teamId,
     required this.totalScore,
     required this.submissionCount,
     required this.criteriaScores,
+    required this.submittedBy,
   });
 }

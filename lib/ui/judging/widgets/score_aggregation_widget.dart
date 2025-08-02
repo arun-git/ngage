@@ -343,7 +343,7 @@ class ScoreAggregationWidget extends ConsumerWidget {
                 Icon(Icons.person, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 4),
                 Text(
-                  'Judge ${score.judgeId.substring(0, 8)}...',
+                  'Judge ${score.judgeId.length > 8 ? score.judgeId.substring(0, 8) : score.judgeId}${score.judgeId.length > 8 ? '...' : ''}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
