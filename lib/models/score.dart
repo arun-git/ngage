@@ -2,7 +2,7 @@ import 'validation.dart';
 import 'scoring_rubric.dart';
 
 /// Score model for submission evaluations
-/// 
+///
 /// Represents a score given by a judge for a specific submission.
 /// Supports flexible scoring criteria and aggregation.
 class Score {
@@ -125,8 +125,9 @@ class Score {
     }
 
     // Normalize to 0-100 scale if weights don't add up to 1
-    final normalizedTotal = totalWeight > 0 ? (total / totalWeight) * 100 : 0.0;
-    
+    //TODO: final normalizedTotal = totalWeight > 0 ? (total / totalWeight) * 100 : 0.0;
+    final normalizedTotal = totalWeight > 0 ? (total / totalWeight) : 0.0;
+
     return copyWith(
       totalScore: normalizedTotal,
       updatedAt: DateTime.now(),
@@ -146,14 +147,14 @@ class Score {
   /// Get completion percentage
   double getCompletionPercentage(ScoringRubric rubric) {
     if (rubric.criteria.isEmpty) return 100.0;
-    
+
     int scoredCriteria = 0;
     for (final criterion in rubric.criteria) {
       if (scores.containsKey(criterion.key)) {
         scoredCriteria++;
       }
     }
-    
+
     return (scoredCriteria / rubric.criteria.length) * 100;
   }
 
@@ -170,41 +171,42 @@ class Score {
 
     // Additional business logic validation
     final additionalErrors = <String>[];
-    
+
     // Validate total score range
     if (totalScore != null && (totalScore! < 0 || totalScore! > 100)) {
       additionalErrors.add('Total score must be between 0 and 100');
     }
-    
+
     // Validate comments length
     if (comments != null && comments!.length > 2000) {
       additionalErrors.add('Comments must not exceed 2000 characters');
     }
-    
+
     // Validate individual scores
     for (final entry in scores.entries) {
       final value = entry.value;
       if (value is num) {
         if (value < 0 || value > 100) {
-          additionalErrors.add('Score for ${entry.key} must be between 0 and 100');
+          additionalErrors
+              .add('Score for ${entry.key} must be between 0 and 100');
         }
       }
     }
 
     final baseValidation = Validators.combine(results);
-    
+
     if (additionalErrors.isNotEmpty) {
       final allErrors = [...baseValidation.errors, ...additionalErrors];
       return ValidationResult.invalid(allErrors);
     }
-    
+
     return baseValidation;
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    
+
     return other is Score &&
         other.id == id &&
         other.submissionId == submissionId &&
@@ -235,13 +237,13 @@ class Score {
   /// Helper method to compare maps
   bool _mapEquals(Map<String, dynamic> map1, Map<String, dynamic> map2) {
     if (map1.length != map2.length) return false;
-    
+
     for (final key in map1.keys) {
       if (!map2.containsKey(key) || map1[key] != map2[key]) {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -250,6 +252,3 @@ class Score {
     return 'Score(id: $id, submissionId: $submissionId, judgeId: $judgeId, totalScore: $totalScore)';
   }
 }
-
-
-

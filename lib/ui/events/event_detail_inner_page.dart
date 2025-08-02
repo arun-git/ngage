@@ -19,7 +19,9 @@ import '../../services/submission_navigation_service.dart';
 import '../judging/widgets/rubric_management_widget.dart';
 import '../judging/widgets/score_aggregation_widget.dart';
 import '../judging/widgets/leaderboard_widget.dart';
+import '../leaderboard/widgets/individual_leaderboard_widget.dart';
 import '../judging/judge_submission_screen.dart';
+import '../../providers/leaderboard_providers.dart';
 
 /// Inner page showing event details that replaces the group content
 class EventDetailInnerPage extends ConsumerWidget {
@@ -990,11 +992,33 @@ class EventDetailInnerPage extends ConsumerWidget {
 
   Widget _buildLeaderboardTab(
       BuildContext context, WidgetRef ref, String eventId) {
+    final individualLeaderboardAsync =
+        ref.watch(individualLeaderboardStreamProvider(eventId));
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: LeaderboardWidget(
-        eventId: eventId,
-        showCriteriaBreakdown: true,
+      child: individualLeaderboardAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error loading leaderboard: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () =>
+                    ref.refresh(individualLeaderboardStreamProvider(eventId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        data: (leaderboard) => IndividualLeaderboardWidget(
+          leaderboard: leaderboard,
+          showCriteriaBreakdown: true,
+        ),
       ),
     );
   }

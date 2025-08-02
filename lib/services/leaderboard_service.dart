@@ -8,7 +8,7 @@ import '../repositories/event_repository.dart';
 import 'judging_service.dart';
 
 /// Service for managing leaderboards and scoring display
-/// 
+///
 /// Provides real-time score calculation, ranking, and trend tracking
 /// for individual and team leaderboards.
 class LeaderboardService {
@@ -16,16 +16,19 @@ class LeaderboardService {
   final SubmissionRepository _submissionRepository;
   final EventRepository _eventRepository;
   final JudgingService _judgingService;
+  final TeamRepository _teamRepository;
 
   LeaderboardService({
     ScoreRepository? scoreRepository,
     SubmissionRepository? submissionRepository,
     EventRepository? eventRepository,
-    JudgingService? judgingService, required TeamRepository teamRepository,
+    JudgingService? judgingService,
+    required TeamRepository teamRepository,
   })  : _scoreRepository = scoreRepository ?? ScoreRepository(),
         _submissionRepository = submissionRepository ?? SubmissionRepository(),
         _eventRepository = eventRepository ?? EventRepository(),
-        _judgingService = judgingService ?? JudgingService();
+        _judgingService = judgingService ?? JudgingService(),
+        _teamRepository = teamRepository;
 
   // ===== REAL-TIME LEADERBOARD CALCULATION =====
 
@@ -35,13 +38,16 @@ class LeaderboardService {
   }
 
   /// Calculate individual member leaderboard for an event
-  Future<IndividualLeaderboard> calculateIndividualLeaderboard(String eventId) async {
+  Future<IndividualLeaderboard> calculateIndividualLeaderboard(
+      String eventId) async {
     // Get all submissions for the event
     final submissions = await _submissionRepository.getByEventId(eventId);
     final submittedSubmissions = submissions
-        .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.approved)
+        .where((s) =>
+            s.status == SubmissionStatus.submitted ||
+            s.status == SubmissionStatus.approved)
         .toList();
-    
+
     if (submittedSubmissions.isEmpty) {
       return IndividualLeaderboard(
         id: _generateLeaderboardId(),
@@ -53,18 +59,20 @@ class LeaderboardService {
 
     // Get all scores for these submissions
     final submissionIds = submittedSubmissions.map((s) => s.id).toList();
-    final scoresBySubmission = await _scoreRepository.getBySubmissionIds(submissionIds);
+    final scoresBySubmission =
+        await _scoreRepository.getBySubmissionIds(submissionIds);
 
     // Calculate individual member scores
     final Map<String, IndividualScoreData> memberScores = {};
-    
+
     for (final submission in submittedSubmissions) {
       final submissionScores = scoresBySubmission[submission.id] ?? [];
-      
+
       if (submissionScores.isNotEmpty) {
-        final aggregation = await _judgingService.calculateSubmissionAggregation(submission.id);
+        final aggregation =
+            await _judgingService.calculateSubmissionAggregation(submission.id);
         final memberId = submission.submittedBy;
-        
+
         if (!memberScores.containsKey(memberId)) {
           memberScores[memberId] = IndividualScoreData(
             memberId: memberId,
@@ -73,40 +81,65 @@ class LeaderboardService {
             criteriaScores: {},
           );
         }
-        
+
         final memberData = memberScores[memberId]!;
         memberData.totalScore += aggregation.averageScore;
         memberData.submissionCount += 1;
-        
+
         // Aggregate criteria scores
         for (final entry in aggregation.criteriaAverages.entries) {
-          memberData.criteriaScores.putIfAbsent(entry.key, () => []).add(entry.value);
+          memberData.criteriaScores
+              .putIfAbsent(entry.key, () => [])
+              .add(entry.value);
         }
       }
     }
 
     // Calculate final member averages and create leaderboard entries
     final List<IndividualLeaderboardEntry> entries = [];
-    
+
     for (final memberData in memberScores.values) {
       // Get member name (placeholder - would need member service)
-      final memberName = 'Member ${memberData.memberId.substring(0, 8)}';
-      
+      final memberIdDisplay = memberData.memberId.length > 12
+          ? memberData.memberId.substring(0, 12)
+          : memberData.memberId;
+      final memberName = memberIdDisplay;
+
+      // Get team information for the member
+      String? teamId;
+      String? teamName;
+      try {
+        final memberTeams =
+            await _teamRepository.getTeamsByMember(memberData.memberId);
+        if (memberTeams.isNotEmpty) {
+          // If member is in multiple teams, take the first one
+          final team = memberTeams.first;
+          teamId = team.id;
+          teamName = team.name;
+        }
+      } catch (e) {
+        // If team lookup fails, continue without team info
+        teamId = null;
+        teamName = null;
+      }
+
       // Calculate average score
-      final averageScore = memberData.submissionCount > 0 
-          ? memberData.totalScore / memberData.submissionCount 
+      final averageScore = memberData.submissionCount > 0
+          ? memberData.totalScore / memberData.submissionCount
           : 0.0;
-      
+
       // Calculate criteria averages
       final Map<String, double> finalCriteriaScores = {};
       for (final entry in memberData.criteriaScores.entries) {
         final sum = entry.value.fold(0.0, (a, b) => a + b);
         finalCriteriaScores[entry.key] = sum / entry.value.length;
       }
-      
+
       entries.add(IndividualLeaderboardEntry(
         memberId: memberData.memberId,
         memberName: memberName,
+        teamId: teamId,
+        teamName: teamName,
         totalScore: memberData.totalScore,
         averageScore: averageScore,
         submissionCount: memberData.submissionCount,
@@ -117,7 +150,7 @@ class LeaderboardService {
 
     // Sort by average score (descending) and assign positions
     entries.sort((a, b) => b.averageScore.compareTo(a.averageScore));
-    
+
     final List<IndividualLeaderboardEntry> rankedEntries = [];
     for (int i = 0; i < entries.length; i++) {
       rankedEntries.add(entries[i].copyWith(position: i + 1));
@@ -130,7 +163,8 @@ class LeaderboardService {
       calculatedAt: DateTime.now(),
       metadata: {
         'totalSubmissions': submittedSubmissions.length,
-        'totalScores': scoresBySubmission.values.expand((scores) => scores).length,
+        'totalScores':
+            scoresBySubmission.values.expand((scores) => scores).length,
         'membersWithScores': memberScores.length,
       },
     );
@@ -145,19 +179,19 @@ class LeaderboardService {
     int? offset,
   }) async {
     final baseLeaderboard = await calculateEventLeaderboard(eventId);
-    
+
     var entries = List<LeaderboardEntry>.from(baseLeaderboard.entries);
-    
+
     // Apply filters
     if (filter != null) {
       entries = _applyLeaderboardFilter(entries, filter);
     }
-    
+
     // Apply sorting
     if (sort != null) {
       entries = _applyLeaderboardSort(entries, sort);
     }
-    
+
     // Apply pagination
     if (offset != null) {
       entries = entries.skip(offset).toList();
@@ -165,13 +199,13 @@ class LeaderboardService {
     if (limit != null) {
       entries = entries.take(limit).toList();
     }
-    
+
     // Recalculate positions after filtering
     final rankedEntries = <LeaderboardEntry>[];
     for (int i = 0; i < entries.length; i++) {
       rankedEntries.add(entries[i].copyWith(position: i + 1));
     }
-    
+
     return baseLeaderboard.copyWith(
       entries: rankedEntries,
       metadata: {
@@ -196,9 +230,9 @@ class LeaderboardService {
   }) async {
     // Get team's submissions within date range
     final submissions = await _submissionRepository.getByTeamId(teamId);
-    
+
     var filteredSubmissions = submissions;
-    
+
     // Apply date filters
     if (startDate != null) {
       filteredSubmissions = filteredSubmissions
@@ -210,21 +244,22 @@ class LeaderboardService {
           .where((s) => s.createdAt.isBefore(endDate))
           .toList();
     }
-    
+
     // Apply limit
     if (limit != null) {
       filteredSubmissions = filteredSubmissions.take(limit).toList();
     }
-    
+
     // Get scores for each submission
     final List<ScoreHistoryEntry> entries = [];
-    
+
     for (final submission in filteredSubmissions) {
-      final aggregation = await _judgingService.calculateSubmissionAggregation(submission.id);
-      
+      final aggregation =
+          await _judgingService.calculateSubmissionAggregation(submission.id);
+
       // Get event details
       final event = await _eventRepository.getEventById(submission.eventId);
-      
+
       entries.add(ScoreHistoryEntry(
         submissionId: submission.id,
         eventId: submission.eventId,
@@ -236,10 +271,10 @@ class LeaderboardService {
         submittedAt: submission.submittedAt ?? submission.createdAt,
       ));
     }
-    
+
     // Sort by submission date
     entries.sort((a, b) => a.submittedAt.compareTo(b.submittedAt));
-    
+
     return ScoreHistory(
       teamId: teamId,
       entries: entries,
@@ -268,7 +303,7 @@ class LeaderboardService {
       startDate: period != null ? DateTime.now().subtract(period) : null,
       limit: dataPoints,
     );
-    
+
     if (history.entries.isEmpty) {
       return ScoreTrend(
         teamId: teamId,
@@ -279,21 +314,23 @@ class LeaderboardService {
         calculatedAt: DateTime.now(),
       );
     }
-    
+
     // Calculate trend
     final scores = history.entries.map((e) => e.score).toList();
     final trendDirection = _calculateTrendDirection(scores);
     final trendPercentage = _calculateTrendPercentage(scores);
     final averageScore = scores.fold(0.0, (a, b) => a + b) / scores.length;
-    
+
     // Create data points for visualization
-    final List<ScoreTrendPoint> trendDataPoints = history.entries.map((entry) => ScoreTrendPoint(
-      timestamp: entry.submittedAt,
-      score: entry.score,
-      eventName: entry.eventName,
-      submissionId: entry.submissionId,
-    )).toList();
-    
+    final List<ScoreTrendPoint> trendDataPoints = history.entries
+        .map((entry) => ScoreTrendPoint(
+              timestamp: entry.submittedAt,
+              score: entry.score,
+              eventName: entry.eventName,
+              submissionId: entry.submissionId,
+            ))
+        .toList();
+
     return ScoreTrend(
       teamId: teamId,
       trendDirection: trendDirection,
@@ -331,31 +368,22 @@ class LeaderboardService {
   Stream<Leaderboard> streamEventLeaderboard(String eventId) async* {
     // Initial calculation
     yield await calculateEventLeaderboard(eventId);
-    
-    // Stream updates when scores change
-    // Get submissions for this event and stream their scores
-    final submissions = await _submissionRepository.getByEventId(eventId);
-    if (submissions.isNotEmpty) {
-      final submissionIds = submissions.map((s) => s.id).toList();
-      await for (final _ in _scoreRepository.streamBySubmissionId(submissionIds.first)) {
-        yield await calculateEventLeaderboard(eventId);
-      }
+
+    // Stream updates when any scores change for this event
+    await for (final _ in _scoreRepository.streamByEventId(eventId)) {
+      yield await calculateEventLeaderboard(eventId);
     }
   }
 
   /// Stream individual leaderboard updates
-  Stream<IndividualLeaderboard> streamIndividualLeaderboard(String eventId) async* {
+  Stream<IndividualLeaderboard> streamIndividualLeaderboard(
+      String eventId) async* {
     // Initial calculation
     yield await calculateIndividualLeaderboard(eventId);
-    
-    // Stream updates when scores change
-    // Get submissions for this event and stream their scores
-    final submissions = await _submissionRepository.getByEventId(eventId);
-    if (submissions.isNotEmpty) {
-      final submissionIds = submissions.map((s) => s.id).toList();
-      await for (final _ in _scoreRepository.streamBySubmissionId(submissionIds.first)) {
-        yield await calculateIndividualLeaderboard(eventId);
-      }
+
+    // Stream updates when any scores change for this event
+    await for (final _ in _scoreRepository.streamByEventId(eventId)) {
+      yield await calculateIndividualLeaderboard(eventId);
     }
   }
 
@@ -367,27 +395,32 @@ class LeaderboardService {
     LeaderboardFilter filter,
   ) {
     var filtered = entries;
-    
+
     if (filter.minScore != null) {
-      filtered = filtered.where((e) => e.averageScore >= filter.minScore!).toList();
+      filtered =
+          filtered.where((e) => e.averageScore >= filter.minScore!).toList();
     }
-    
+
     if (filter.maxScore != null) {
-      filtered = filtered.where((e) => e.averageScore <= filter.maxScore!).toList();
+      filtered =
+          filtered.where((e) => e.averageScore <= filter.maxScore!).toList();
     }
-    
+
     if (filter.minSubmissions != null) {
-      filtered = filtered.where((e) => e.submissionCount >= filter.minSubmissions!).toList();
+      filtered = filtered
+          .where((e) => e.submissionCount >= filter.minSubmissions!)
+          .toList();
     }
-    
+
     if (filter.teamIds != null && filter.teamIds!.isNotEmpty) {
-      filtered = filtered.where((e) => filter.teamIds!.contains(e.teamId)).toList();
+      filtered =
+          filtered.where((e) => filter.teamIds!.contains(e.teamId)).toList();
     }
-    
+
     if (filter.topN != null) {
       filtered = filtered.take(filter.topN!).toList();
     }
-    
+
     return filtered;
   }
 
@@ -398,37 +431,37 @@ class LeaderboardService {
   ) {
     switch (sort.field) {
       case LeaderboardSortField.averageScore:
-        entries.sort((a, b) => sort.ascending 
+        entries.sort((a, b) => sort.ascending
             ? a.averageScore.compareTo(b.averageScore)
             : b.averageScore.compareTo(a.averageScore));
         break;
       case LeaderboardSortField.totalScore:
-        entries.sort((a, b) => sort.ascending 
+        entries.sort((a, b) => sort.ascending
             ? a.totalScore.compareTo(b.totalScore)
             : b.totalScore.compareTo(a.totalScore));
         break;
       case LeaderboardSortField.submissionCount:
-        entries.sort((a, b) => sort.ascending 
+        entries.sort((a, b) => sort.ascending
             ? a.submissionCount.compareTo(b.submissionCount)
             : b.submissionCount.compareTo(a.submissionCount));
         break;
       case LeaderboardSortField.teamName:
-        entries.sort((a, b) => sort.ascending 
+        entries.sort((a, b) => sort.ascending
             ? a.teamName.compareTo(b.teamName)
             : b.teamName.compareTo(a.teamName));
         break;
     }
-    
+
     return entries;
   }
 
   /// Calculate trend direction from score sequence
   TrendDirection _calculateTrendDirection(List<double> scores) {
     if (scores.length < 2) return TrendDirection.stable;
-    
+
     int upward = 0;
     int downward = 0;
-    
+
     for (int i = 1; i < scores.length; i++) {
       if (scores[i] > scores[i - 1]) {
         upward++;
@@ -436,7 +469,7 @@ class LeaderboardService {
         downward++;
       }
     }
-    
+
     if (upward > downward) return TrendDirection.upward;
     if (downward > upward) return TrendDirection.downward;
     return TrendDirection.stable;
@@ -445,17 +478,17 @@ class LeaderboardService {
   /// Calculate trend percentage
   double _calculateTrendPercentage(List<double> scores) {
     if (scores.length < 2) return 0.0;
-    
+
     final firstScore = scores.first;
     final lastScore = scores.last;
-    
+
     if (firstScore == 0) return 0.0;
-    
+
     return ((lastScore - firstScore) / firstScore) * 100;
   }
 
   /// Generate unique leaderboard ID
-  String _generateLeaderboardId() => 
+  String _generateLeaderboardId() =>
       'leaderboard_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
 }
 
@@ -483,7 +516,8 @@ class IndividualLeaderboard {
       id: json['id'] as String,
       eventId: json['eventId'] as String,
       entries: entriesList
-          .map((e) => IndividualLeaderboardEntry.fromJson(e as Map<String, dynamic>))
+          .map((e) =>
+              IndividualLeaderboardEntry.fromJson(e as Map<String, dynamic>))
           .toList(),
       calculatedAt: DateTime.parse(json['calculatedAt'] as String),
       metadata: Map<String, dynamic>.from(json['metadata'] as Map? ?? {}),
@@ -518,14 +552,17 @@ class IndividualLeaderboard {
 
   bool get hasEntries => entries.isNotEmpty;
   int get memberCount => entries.length;
-  IndividualLeaderboardEntry? get firstPlace => 
-      entries.isNotEmpty ? entries.firstWhere((e) => e.position == 1, orElse: () => entries.first) : null;
+  IndividualLeaderboardEntry? get firstPlace => entries.isNotEmpty
+      ? entries.firstWhere((e) => e.position == 1, orElse: () => entries.first)
+      : null;
 }
 
 /// Individual leaderboard entry
 class IndividualLeaderboardEntry {
   final String memberId;
   final String memberName;
+  final String? teamId;
+  final String? teamName;
   final double totalScore;
   final double averageScore;
   final int submissionCount;
@@ -535,6 +572,8 @@ class IndividualLeaderboardEntry {
   const IndividualLeaderboardEntry({
     required this.memberId,
     required this.memberName,
+    this.teamId,
+    this.teamName,
     required this.totalScore,
     required this.averageScore,
     required this.submissionCount,
@@ -543,15 +582,19 @@ class IndividualLeaderboardEntry {
   });
 
   factory IndividualLeaderboardEntry.fromJson(Map<String, dynamic> json) {
-    final criteriaScoresMap = json['criteriaScores'] as Map<String, dynamic>? ?? {};
+    final criteriaScoresMap =
+        json['criteriaScores'] as Map<String, dynamic>? ?? {};
     return IndividualLeaderboardEntry(
       memberId: json['memberId'] as String,
       memberName: json['memberName'] as String,
+      teamId: json['teamId'] as String?,
+      teamName: json['teamName'] as String?,
       totalScore: (json['totalScore'] as num).toDouble(),
       averageScore: (json['averageScore'] as num).toDouble(),
       submissionCount: json['submissionCount'] as int,
       position: json['position'] as int,
-      criteriaScores: criteriaScoresMap.map((k, v) => MapEntry(k, (v as num).toDouble())),
+      criteriaScores:
+          criteriaScoresMap.map((k, v) => MapEntry(k, (v as num).toDouble())),
     );
   }
 
@@ -559,6 +602,8 @@ class IndividualLeaderboardEntry {
     return {
       'memberId': memberId,
       'memberName': memberName,
+      'teamId': teamId,
+      'teamName': teamName,
       'totalScore': totalScore,
       'averageScore': averageScore,
       'submissionCount': submissionCount,
@@ -570,6 +615,8 @@ class IndividualLeaderboardEntry {
   IndividualLeaderboardEntry copyWith({
     String? memberId,
     String? memberName,
+    String? teamId,
+    String? teamName,
     double? totalScore,
     double? averageScore,
     int? submissionCount,
@@ -579,6 +626,8 @@ class IndividualLeaderboardEntry {
     return IndividualLeaderboardEntry(
       memberId: memberId ?? this.memberId,
       memberName: memberName ?? this.memberName,
+      teamId: teamId ?? this.teamId,
+      teamName: teamName ?? this.teamName,
       totalScore: totalScore ?? this.totalScore,
       averageScore: averageScore ?? this.averageScore,
       submissionCount: submissionCount ?? this.submissionCount,

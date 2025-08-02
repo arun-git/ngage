@@ -24,8 +24,8 @@ class IndividualLeaderboardWidget extends StatelessWidget {
     return Column(
       children: [
         // Leaderboard metadata
-        _buildMetadataHeader(context),
-        
+        // _buildMetadataHeader(context),
+
         // Main content based on view mode
         Expanded(
           child: _buildContent(context),
@@ -48,15 +48,15 @@ class IndividualLeaderboardWidget extends StatelessWidget {
           Text(
             'No Individual Scores Available',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.grey[600],
-            ),
+                  color: Colors.grey[600],
+                ),
           ),
           const SizedBox(height: 8),
           Text(
             'Individual rankings will appear once members submit and get scored.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[500],
-            ),
+                  color: Colors.grey[500],
+                ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -64,9 +64,9 @@ class IndividualLeaderboardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadataHeader(BuildContext context) {
+  /*Widget _buildMetadataHeader(BuildContext context) {
     final metadata = leaderboard.metadata;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -116,7 +116,8 @@ class IndividualLeaderboardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadataItem(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildMetadataItem(
+      BuildContext context, String label, String value, IconData icon) {
     return Column(
       children: [
         Icon(icon, size: 20, color: Theme.of(context).primaryColor),
@@ -124,19 +125,19 @@ class IndividualLeaderboardWidget extends StatelessWidget {
         Text(
           value,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+                color: Colors.grey[600],
+              ),
         ),
       ],
     );
   }
-
+*/
   Widget _buildContent(BuildContext context) {
     switch (viewMode) {
       case LeaderboardViewMode.table:
@@ -158,25 +159,48 @@ class IndividualLeaderboardWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: Theme.of(context).primaryColor.withOpacity(0.1),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const SizedBox(width: 50, child: Text('Rank', style: TextStyle(fontWeight: FontWeight.bold))),
-                const Expanded(flex: 3, child: Text('Member', style: TextStyle(fontWeight: FontWeight.bold))),
-                const Expanded(flex: 2, child: Text('Avg Score', style: TextStyle(fontWeight: FontWeight.bold))),
-                const Expanded(flex: 2, child: Text('Total Score', style: TextStyle(fontWeight: FontWeight.bold))),
-                const Expanded(flex: 2, child: Text('Submissions', style: TextStyle(fontWeight: FontWeight.bold))),
+                SizedBox(
+                    width: 50,
+                    child: Text('Rank',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 3,
+                    child: Text('Team',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 2,
+                    child: Text('Submited By',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+
+                /*const Expanded(
+                    flex: 2,
+                    child: Text('Avg Score',
+                        style: TextStyle(fontWeight: FontWeight.bold))),*/
+                Expanded(
+                    flex: 2,
+                    child: Text('Score',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                /*const Expanded(
+                    flex: 2,
+                    child: Text('Submissions',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
                 if (showCriteriaBreakdown)
-                  const Expanded(flex: 3, child: Text('Breakdown', style: TextStyle(fontWeight: FontWeight.bold))),
+                  const Expanded(
+                      flex: 3,
+                      child: Text('Breakdown',
+                          style: TextStyle(fontWeight: FontWeight.bold))),*/
               ],
             ),
           ),
-          
+
           // Table rows
           ...leaderboard.entries.asMap().entries.map((entryData) {
             final index = entryData.key;
             final entry = entryData.value;
             final isEven = index % 2 == 0;
-            
+
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
@@ -197,12 +221,23 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                   Expanded(
                     flex: 3,
                     child: Text(
+                      entry.teamName ?? '-',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        color: entry.teamName != null ? null : Colors.grey[500],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
                       entry.memberName,
                       style: const TextStyle(fontWeight: FontWeight.w500),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Expanded(
+                  /*Expanded(
                     flex: 2,
                     child: Text(
                       entry.averageScore.toStringAsFixed(1),
@@ -211,7 +246,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                         color: _getScoreColor(entry.averageScore),
                       ),
                     ),
-                  ),
+                  ),*/
                   Expanded(
                     flex: 2,
                     child: Text(
@@ -219,7 +254,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ),
-                  Expanded(
+                  /*Expanded(
                     flex: 2,
                     child: Text(entry.submissionCount.toString()),
                   ),
@@ -227,7 +262,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                     Expanded(
                       flex: 3,
                       child: _buildCriteriaBreakdown(context, entry),
-                    ),
+                    ),*/
                 ],
               ),
             );
@@ -243,7 +278,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
       itemCount: leaderboard.entries.length,
       itemBuilder: (context, index) {
         final entry = leaderboard.entries[index];
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
@@ -257,19 +292,40 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                     _buildRankWidget(context, entry.position),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        entry.memberName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.memberName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          if (entry.teamName != null)
+                            Text(
+                              entry.teamName!,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                            ),
+                        ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _getScoreColor(entry.averageScore).withOpacity(0.1),
+                        color:
+                            _getScoreColor(entry.averageScore).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: _getScoreColor(entry.averageScore)),
+                        border: Border.all(
+                            color: _getScoreColor(entry.averageScore)),
                       ),
                       child: Text(
                         entry.averageScore.toStringAsFixed(1),
@@ -281,9 +337,9 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Stats row
                 Row(
                   children: [
@@ -300,9 +356,10 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 // Criteria breakdown
-                if (showCriteriaBreakdown && entry.criteriaScores.isNotEmpty) ...[
+                if (showCriteriaBreakdown &&
+                    entry.criteriaScores.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   _buildCriteriaBreakdown(context, entry),
                 ],
@@ -317,7 +374,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
   Widget _buildPodiumView(BuildContext context) {
     final topThree = leaderboard.entries.take(3).toList();
     final remaining = leaderboard.entries.skip(3).toList();
-    
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -330,7 +387,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
             ),
             const Divider(),
           ],
-          
+
           // Remaining entries
           if (remaining.isNotEmpty) ...[
             Padding(
@@ -341,37 +398,40 @@ class IndividualLeaderboardWidget extends StatelessWidget {
               ),
             ),
             ...remaining.map((entry) => ListTile(
-              leading: CircleAvatar(
-                child: Text(entry.position.toString()),
-              ),
-              title: Text(entry.memberName),
-              subtitle: Text('${entry.submissionCount} submissions'),
-              trailing: Text(
-                entry.averageScore.toStringAsFixed(1),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: _getScoreColor(entry.averageScore),
-                ),
-              ),
-            )),
+                  leading: CircleAvatar(
+                    child: Text(entry.position.toString()),
+                  ),
+                  title: Text(entry.memberName),
+                  subtitle: Text(entry.teamName != null
+                      ? '${entry.teamName} • ${entry.submissionCount} submissions'
+                      : '${entry.submissionCount} submissions'),
+                  trailing: Text(
+                    entry.averageScore.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getScoreColor(entry.averageScore),
+                    ),
+                  ),
+                )),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildPodium(BuildContext context, List<IndividualLeaderboardEntry> topThree) {
+  Widget _buildPodium(
+      BuildContext context, List<IndividualLeaderboardEntry> topThree) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         // Second place
         if (topThree.length > 1)
           Expanded(child: _buildPodiumPlace(context, topThree[1], 2, 180)),
-        
+
         // First place
         if (topThree.isNotEmpty)
           Expanded(child: _buildPodiumPlace(context, topThree[0], 1, 220)),
-        
+
         // Third place
         if (topThree.length > 2)
           Expanded(child: _buildPodiumPlace(context, topThree[2], 3, 140)),
@@ -379,10 +439,11 @@ class IndividualLeaderboardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildPodiumPlace(BuildContext context, IndividualLeaderboardEntry entry, int place, double height) {
+  Widget _buildPodiumPlace(BuildContext context,
+      IndividualLeaderboardEntry entry, int place, double height) {
     Color color;
     IconData icon;
-    
+
     switch (place) {
       case 1:
         color = Colors.amber;
@@ -410,47 +471,64 @@ class IndividualLeaderboardWidget extends StatelessWidget {
           // Trophy icon
           Icon(icon, color: color, size: 40),
           const SizedBox(height: 8),
-          
-          // Member name
+
+          // Member name and team
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Text(
-              entry.memberName,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              children: [
+                Text(
+                  entry.memberName,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (entry.teamName != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    entry.teamName!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
             ),
           ),
-          
+
           // Score
           Text(
             entry.averageScore.toStringAsFixed(1),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Podium base
           Container(
             height: height - 120,
             decoration: BoxDecoration(
               color: color.withOpacity(0.3),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
               border: Border.all(color: color),
             ),
             child: Center(
               child: Text(
                 place.toString(),
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ),
           ),
@@ -475,7 +553,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
         default:
           color = Colors.blue;
       }
-      
+
       return Container(
         width: 32,
         height: 32,
@@ -495,7 +573,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
         ),
       );
     }
-    
+
     return Container(
       width: 32,
       height: 32,
@@ -515,7 +593,8 @@ class IndividualLeaderboardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCriteriaBreakdown(BuildContext context, IndividualLeaderboardEntry entry) {
+  Widget _buildCriteriaBreakdown(
+      BuildContext context, IndividualLeaderboardEntry entry) {
     if (entry.criteriaScores.isEmpty) {
       return const Text('-', style: TextStyle(color: Colors.grey));
     }
@@ -523,17 +602,19 @@ class IndividualLeaderboardWidget extends StatelessWidget {
     return Wrap(
       spacing: 4,
       runSpacing: 2,
-      children: entry.criteriaScores.entries.take(4).map((criteriaEntry) => 
-        Chip(
-          label: Text(
-            '${_formatCriterionName(criteriaEntry.key)}: ${criteriaEntry.value.toStringAsFixed(1)}',
-            style: const TextStyle(fontSize: 11),
-          ),
-          backgroundColor: _getScoreColor(criteriaEntry.value).withOpacity(0.1),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-        )
-      ).toList(),
+      children: entry.criteriaScores.entries
+          .take(4)
+          .map((criteriaEntry) => Chip(
+                label: Text(
+                  '${_formatCriterionName(criteriaEntry.key)}: ${criteriaEntry.value.toStringAsFixed(1)}',
+                  style: const TextStyle(fontSize: 11),
+                ),
+                backgroundColor:
+                    _getScoreColor(criteriaEntry.value).withOpacity(0.1),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ))
+          .toList(),
     );
   }
 
@@ -574,25 +655,13 @@ class IndividualLeaderboardWidget extends StatelessWidget {
   String _formatCriterionName(String criterion) {
     // Convert camelCase or snake_case to Title Case
     return criterion
-        .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
+        .replaceAllMapped(
+            RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
         .replaceAll('_', ' ')
         .split(' ')
-        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .map((word) => word.isEmpty
+            ? ''
+            : word[0].toUpperCase() + word.substring(1).toLowerCase())
         .join(' ');
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inHours < 1) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inDays < 1) {
-      return '${difference.inHours}h ago';
-    } else {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-    }
   }
 }
