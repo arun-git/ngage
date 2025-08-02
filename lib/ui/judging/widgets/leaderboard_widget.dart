@@ -62,7 +62,7 @@ class LeaderboardWidget extends ConsumerWidget {
       children: [
         const Icon(Icons.error, size: 48, color: Colors.red),
         const SizedBox(height: 8),
-        Text('Error loading leaderboard: $error'),
+        SelectableText('Error loading leaderboard: $error'),
       ],
     );
   }

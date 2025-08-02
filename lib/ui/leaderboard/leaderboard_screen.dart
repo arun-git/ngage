@@ -26,14 +26,14 @@ class LeaderboardScreen extends ConsumerStatefulWidget {
 class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Filter and sort state
   LeaderboardFilter? _currentFilter;
   LeaderboardSort _currentSort = const LeaderboardSort(
     field: LeaderboardSortField.averageScore,
     ascending: false,
   );
-  
+
   // Display options
   bool _showCriteriaBreakdown = false;
   bool _autoRefresh = true;
@@ -60,7 +60,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
           IconButton(
             icon: Icon(_autoRefresh ? Icons.sync : Icons.sync_disabled),
             onPressed: () => setState(() => _autoRefresh = !_autoRefresh),
-            tooltip: _autoRefresh ? 'Disable Auto Refresh' : 'Enable Auto Refresh',
+            tooltip:
+                _autoRefresh ? 'Disable Auto Refresh' : 'Enable Auto Refresh',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -111,11 +112,13 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
             currentFilter: _currentFilter,
             currentSort: _currentSort,
             showCriteriaBreakdown: _showCriteriaBreakdown,
-            onFilterChanged: (filter) => setState(() => _currentFilter = filter),
+            onFilterChanged: (filter) =>
+                setState(() => _currentFilter = filter),
             onSortChanged: (sort) => setState(() => _currentSort = sort),
-            onShowCriteriaChanged: (show) => setState(() => _showCriteriaBreakdown = show),
+            onShowCriteriaChanged: (show) =>
+                setState(() => _showCriteriaBreakdown = show),
           ),
-          
+
           // Main content
           Expanded(
             child: TabBarView(
@@ -123,10 +126,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
               children: [
                 // Team leaderboard
                 _buildTeamLeaderboard(),
-                
+
                 // Individual leaderboard
                 _buildIndividualLeaderboard(),
-                
+
                 // Trends and analytics
                 _buildTrendsView(),
               ],
@@ -146,8 +149,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
 
     if (_autoRefresh) {
       // Use stream provider for real-time updates
-      final leaderboardAsync = ref.watch(eventLeaderboardStreamProvider(widget.eventId));
-      
+      final leaderboardAsync =
+          ref.watch(eventLeaderboardStreamProvider(widget.eventId));
+
       return leaderboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _buildErrorWidget(error),
@@ -162,8 +166,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
       );
     } else {
       // Use future provider for manual refresh
-      final leaderboardAsync = ref.watch(filteredLeaderboardProvider(leaderboardRequest));
-      
+      final leaderboardAsync =
+          ref.watch(filteredLeaderboardProvider(leaderboardRequest));
+
       return leaderboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _buildErrorWidget(error),
@@ -181,8 +186,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
 
   Widget _buildIndividualLeaderboard() {
     if (_autoRefresh) {
-      final leaderboardAsync = ref.watch(individualLeaderboardStreamProvider(widget.eventId));
-      
+      final leaderboardAsync =
+          ref.watch(individualLeaderboardStreamProvider(widget.eventId));
+
       return leaderboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _buildErrorWidget(error),
@@ -193,8 +199,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
         ),
       );
     } else {
-      final leaderboardAsync = ref.watch(individualLeaderboardProvider(widget.eventId));
-      
+      final leaderboardAsync =
+          ref.watch(individualLeaderboardProvider(widget.eventId));
+
       return leaderboardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _buildErrorWidget(error),
@@ -215,9 +222,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
         children: [
           // Event statistics
           _buildEventStatistics(),
-          
+
           const SizedBox(height: 24),
-          
+
           // Score trends for highlighted team
           if (widget.initialTeamId != null) ...[
             Text(
@@ -231,7 +238,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
             ),
             const SizedBox(height: 24),
           ],
-          
+
           // Leaderboard history
           _buildLeaderboardHistory(),
         ],
@@ -240,8 +247,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   }
 
   Widget _buildEventStatistics() {
-    final statisticsAsync = ref.watch(leaderboardStatisticsProvider(widget.eventId));
-    
+    final statisticsAsync =
+        ref.watch(leaderboardStatisticsProvider(widget.eventId));
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -253,7 +261,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            
             statisticsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Text('Error loading statistics: $error'),
@@ -315,7 +322,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -330,9 +338,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           Text(
             label,
@@ -348,9 +356,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
       eventId: widget.eventId,
       limit: 10,
     );
-    
-    final snapshotsAsync = ref.watch(leaderboardSnapshotsProvider(snapshotsRequest));
-    
+
+    final snapshotsAsync =
+        ref.watch(leaderboardSnapshotsProvider(snapshotsRequest));
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -362,7 +371,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            
             snapshotsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Text('Error loading history: $error'),
@@ -382,19 +390,22 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     }
 
     return Column(
-      children: snapshots.take(5).map((snapshot) => ListTile(
-        leading: CircleAvatar(
-          child: Text(snapshot.teamCount.toString()),
-        ),
-        title: Text('${snapshot.teamCount} teams'),
-        subtitle: Text(_formatDateTime(snapshot.calculatedAt)),
-        trailing: snapshot.firstPlace != null
-            ? Text(
-                '${snapshot.firstPlace!.teamName}: ${snapshot.firstPlace!.averageScore.toStringAsFixed(1)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              )
-            : null,
-      )).toList(),
+      children: snapshots
+          .take(5)
+          .map((snapshot) => ListTile(
+                leading: CircleAvatar(
+                  child: Text(snapshot.teamCount.toString()),
+                ),
+                title: Text('${snapshot.teamCount} teams'),
+                subtitle: Text(_formatDateTime(snapshot.calculatedAt)),
+                trailing: snapshot.firstPlace != null
+                    ? Text(
+                        '${snapshot.firstPlace!.teamName}: ${snapshot.firstPlace!.averageScore.toStringAsFixed(1)}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )
+                    : null,
+              ))
+          .toList(),
     );
   }
 
@@ -405,7 +416,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
         children: [
           const Icon(Icons.error, size: 64, color: Colors.red),
           const SizedBox(height: 16),
-          Text(
+          SelectableText(
             'Error loading leaderboard',
             style: Theme.of(context).textTheme.titleLarge,
           ),
@@ -434,7 +445,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inHours < 1) {

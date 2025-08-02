@@ -1085,7 +1085,7 @@ class _GroupLeaderboardTab extends ConsumerWidget {
                 color: Colors.red,
               ),
               const SizedBox(height: 16),
-              Text(
+              SelectableText(
                 'Error loading leaderboards',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
