@@ -1005,7 +1005,7 @@ class EventDetailInnerPage extends ConsumerWidget {
             children: [
               const Icon(Icons.error, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Error loading leaderboard: $error'),
+              SelectableText('Error loading leaderboard: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () =>
