@@ -3,7 +3,7 @@ import '../../../services/leaderboard_service.dart';
 import '../leaderboard_screen.dart';
 
 /// Widget for displaying individual member leaderboard
-class IndividualLeaderboardWidget extends StatelessWidget {
+class IndividualLeaderboardWidget extends StatefulWidget {
   final IndividualLeaderboard leaderboard;
   final LeaderboardViewMode viewMode;
   final bool showCriteriaBreakdown;
@@ -16,8 +16,56 @@ class IndividualLeaderboardWidget extends StatelessWidget {
   });
 
   @override
+  State<IndividualLeaderboardWidget> createState() =>
+      _IndividualLeaderboardWidgetState();
+}
+
+class _IndividualLeaderboardWidgetState
+    extends State<IndividualLeaderboardWidget> {
+  late ScrollController _tableScrollController;
+  late ScrollController _cardsScrollController;
+  late ScrollController _podiumScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tableScrollController = ScrollController();
+    _cardsScrollController = ScrollController();
+    _podiumScrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _tableScrollController.dispose();
+    _cardsScrollController.dispose();
+    _podiumScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(IndividualLeaderboardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset scroll positions when view mode changes
+    if (oldWidget.viewMode != widget.viewMode) {
+      _resetScrollPositions();
+    }
+  }
+
+  void _resetScrollPositions() {
+    if (_tableScrollController.hasClients) {
+      _tableScrollController.jumpTo(0);
+    }
+    if (_cardsScrollController.hasClients) {
+      _cardsScrollController.jumpTo(0);
+    }
+    if (_podiumScrollController.hasClients) {
+      _podiumScrollController.jumpTo(0);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (!leaderboard.hasEntries) {
+    if (!widget.leaderboard.hasEntries) {
       return _buildEmptyState(context);
     }
 
@@ -28,6 +76,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
 
         // Main content based on view mode
         Expanded(
+          key: ValueKey('${widget.viewMode}_${widget.leaderboard.id}'),
           child: _buildContent(context),
         ),
       ],
@@ -139,7 +188,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
   }
 */
   Widget _buildContent(BuildContext context) {
-    switch (viewMode) {
+    switch (widget.viewMode) {
       case LeaderboardViewMode.table:
         return _buildTableView(context);
       case LeaderboardViewMode.cards:
@@ -151,6 +200,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
 
   Widget _buildTableView(BuildContext context) {
     return SingleChildScrollView(
+      controller: _tableScrollController,
       child: Column(
         children: [
           // Table header
@@ -196,7 +246,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
           ),
 
           // Table rows
-          ...leaderboard.entries.asMap().entries.map((entryData) {
+          ...widget.leaderboard.entries.asMap().entries.map((entryData) {
             final index = entryData.key;
             final entry = entryData.value;
             final isEven = index % 2 == 0;
@@ -274,10 +324,11 @@ class IndividualLeaderboardWidget extends StatelessWidget {
 
   Widget _buildCardsView(BuildContext context) {
     return ListView.builder(
+      controller: _cardsScrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: leaderboard.entries.length,
+      itemCount: widget.leaderboard.entries.length,
       itemBuilder: (context, index) {
-        final entry = leaderboard.entries[index];
+        final entry = widget.leaderboard.entries[index];
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -358,7 +409,7 @@ class IndividualLeaderboardWidget extends StatelessWidget {
                 ),
 
                 // Criteria breakdown
-                if (showCriteriaBreakdown &&
+                if (widget.showCriteriaBreakdown &&
                     entry.criteriaScores.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   _buildCriteriaBreakdown(context, entry),
@@ -372,10 +423,11 @@ class IndividualLeaderboardWidget extends StatelessWidget {
   }
 
   Widget _buildPodiumView(BuildContext context) {
-    final topThree = leaderboard.entries.take(3).toList();
-    final remaining = leaderboard.entries.skip(3).toList();
+    final topThree = widget.leaderboard.entries.take(3).toList();
+    final remaining = widget.leaderboard.entries.skip(3).toList();
 
     return SingleChildScrollView(
+      controller: _podiumScrollController,
       child: Column(
         children: [
           // Podium
