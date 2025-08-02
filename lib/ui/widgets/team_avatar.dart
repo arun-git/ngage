@@ -13,7 +13,7 @@ class TeamAvatar extends StatelessWidget {
   const TeamAvatar({
     super.key,
     required this.team,
-    this.radius = 24,
+    this.radius = 25,
     this.onTap,
     this.showBorder = false,
     this.isSquare = false,
